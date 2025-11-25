@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIキャリアメンター問診 (2つのアプローチ比較)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .mic-active {
+            animation: pulse 1.5s infinite;
+            background-color: #ef4444 !important;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            animation: typing 1s infinite ease-in-out;
+            margin: 0 2px;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col font-sans text-gray-800">
+
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-4 text-blue-800"><i class="fas fa-key mr-2"></i>API設定</h2>
+            <p class="mb-4 text-gray-600 text-sm">OpenAIのAPIキーを入力してください。<br>キーはブラウザ内にのみ一時保存され、外部には送信されません。</p>
+            <input type="password" id="apiKeyInput" placeholder="sk-..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+            <button onclick="saveApiKey()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-md">開始する</button>
+            <p class="mt-4 text-xs text-gray-400 text-center">※ GPT-4oモデルを使用します。</p>
+        </div>
+    </div>
+
+    <!-- Header & Mode Switcher -->
+    <header class="bg-white shadow-sm z-10">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-700 flex items-center">
+                <i class="fas fa-user-md mr-2 text-blue-500"></i>AIキャリアメンター
+            </h1>
+            <div class="flex bg-gray-100 p-1 rounded-lg">
+                <button onclick="setMode('step')" id="btn-mode-step" class="px-4 py-2 rounded-md text-sm font-medium transition duration-200 shadow-sm bg-white text-blue-600">
+                    ① 順次ヒアリング
+                </button>
+                <button onclick="setMode('free')" id="btn-mode-free" class="px-4 py-2 rounded-md text-sm font-medium transition duration-200 text-gray-500 hover:text-gray-700">
+                    ② 自由対話＆分析
+                </button>
+            </div>
+            <div class="text-xs text-gray-400" id="api-status">API Key: 未設定</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full p-4 gap-4">
+        
+        <!-- Left: Chat Interface -->
+        <div class="flex-1 bg-white rounded-xl shadow-lg flex flex-col overflow-hidden border border-gray-200">
+            <!-- Mode Description -->
+            <div id="mode-description" class="bg-blue-50 p-3 text-xs text-blue-800 border-b border-blue-100 flex items-start">
+                <i class="fas fa-info-circle mt-0.5 mr-2"></i>
+                <span id="mode-text">質問に一つずつ答えながら、7つの項目を埋めていくオーソドックスなスタイルです。</span>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                <!-- Initial Message -->
+                <div class="flex justify-start">
+                    <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none py-3 px-4 shadow-sm max-w-[80%]">
+                        <p class="text-gray-800 text-sm">こんにちは。キャリアメンターのAIです。本日はどのようなキャリアのご相談でしょうか？お話を聞きながら、ご自身の状況を整理していきましょう。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading/Processing Indicator -->
+            <div id="processing-indicator" class="hidden px-4 py-2 text-xs text-gray-500 bg-gray-50 flex items-center">
+                <div class="typing-indicator mr-2"><span></span><span></span><span></span></div>
+                <span id="status-text">考え中...</span>
+            </div>
+
+            <!-- Controls -->
+            <div class="p-4 bg-white border-t border-gray-200">
+                <div class="flex items-center gap-2">
+                    <button id="mic-btn" onclick="toggleRecording()" class="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition shadow-lg">
+                        <i class="fas fa-microphone text-xl"></i>
+                    </button>
+                    <div class="flex-1 relative">
+                        <input type="text" id="text-input" placeholder="ここに入力もできます..." class="w-full border border-gray-300 rounded-full py-3 px-5 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="if(event.key==='Enter') sendText()">
+                        <button onclick="sendText()" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-600 hover:bg-blue-50 rounded-full p-2 transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Action Button for Approach 2 -->
+                <div id="analyze-action-area" class="hidden mt-3 pt-2 border-t border-dashed border-gray-200">
+                     <button onclick="triggerAnalysis()" class="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2 rounded-lg text-sm font-semibold transition flex items-center justify-center">
+                        <i class="fas fa-magic mr-2"></i> 今までの話を整理してカルテを作成する
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Karte / Data Panel -->
+        <div class="w-80 bg-white rounded-xl shadow-lg flex flex-col overflow-hidden border border-gray-200 hidden md:flex">
+            <div class="p-3 bg-gray-800 text-white font-bold text-sm flex justify-between items-center">
+                <span><i class="fas fa-clipboard-list mr-2"></i>キャリアカルテ</span>
+                <span class="text-xs bg-gray-700 px-2 py-0.5 rounded" id="progress-percent">0%</span>
+            </div>
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50" id="karte-container">
+                <!-- Template for Items -->
+                <div class="karte-item" id="item-A">
+                    <div class="text-xs font-bold text-gray-500 mb-1">A. 主訴 (いま困っていること)</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+                <div class="karte-item" id="item-B">
+                    <div class="text-xs font-bold text-gray-500 mb-1">B. キャリア歴 (経験・転機)</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+                <div class="karte-item" id="item-C">
+                    <div class="text-xs font-bold text-gray-500 mb-1">C. 現在の業務状況</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+                <div class="karte-item" id="item-D">
+                    <div class="text-xs font-bold text-gray-500 mb-1">D. キャリア観・価値観</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+                <div class="karte-item" id="item-E">
+                    <div class="text-xs font-bold text-gray-500 mb-1">E. 将来イメージ (3~5年後)</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+                <div class="karte-item" id="item-F">
+                    <div class="text-xs font-bold text-gray-500 mb-1">F. 学び・成長ニーズ</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+                <div class="karte-item" id="item-G">
+                    <div class="text-xs font-bold text-gray-500 mb-1">G. 面談で話したいテーマ</div>
+                    <div class="bg-white p-2 rounded border border-gray-200 text-sm min-h-[40px] text-gray-400 italic">未聴取</div>
+                </div>
+            </div>
+            <div class="p-2 border-t border-gray-200 text-xs text-center text-gray-400">
+                会話から自動抽出・更新されます
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Configuration & State ---
+        let apiKey = "";
+        let currentMode = "step"; // 'step' or 'free'
+        let conversationHistory = []; // {role: 'user'|'assistant', content: string}
+        let karteData = {
+            A: null, B: null, C: null, D: null, E: null, F: null, G: null
+        };
+        
+        // Audio handling
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // --- UI Logic ---
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput').value;
+            if (input.trim().length > 10) {
+                apiKey = input.trim();
+                document.getElementById('apiKeyModal').classList.add('hidden');
+                document.getElementById('api-status').innerText = "API Key: 設定済";
+                document.getElementById('api-status').classList.remove('text-gray-400');
+                document.getElementById('api-status').classList.add('text-green-500');
+                
+                // Initialize conversation logic
+                initializeConversation();
+            } else {
+                alert("有効なAPIキーを入力してください。");
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // UI Update
+            const btnStep = document.getElementById('btn-mode-step');
+            const btnFree = document.getElementById('btn-mode-free');
+            const desc = document.getElementById('mode-text');
+            const analyzeArea = document.getElementById('analyze-action-area');
+            
+            if (mode === 'step') {
+                btnStep.className = "px-4 py-2 rounded-md text-sm font-medium transition duration-200 shadow-sm bg-white text-blue-600";
+                btnFree.className = "px-4 py-2 rounded-md text-sm font-medium transition duration-200 text-gray-500 hover:text-gray-700";
+                desc.textContent = "質問に一つずつ答えながら、7つの項目を埋めていくオーソドックスなスタイルです。";
+                analyzeArea.classList.add('hidden');
+            } else {
+                btnFree.className = "px-4 py-2 rounded-md text-sm font-medium transition duration-200 shadow-sm bg-white text-indigo-600";
+                btnStep.className = "px-4 py-2 rounded-md text-sm font-medium transition duration-200 text-gray-500 hover:text-gray-700";
+                desc.textContent = "まずは自由に話してください。AIは傾聴に徹し、最後に情報を整理して足りない部分を確認します。";
+                analyzeArea.classList.remove('hidden');
+            }
+
+            // Reset conversation for new mode
+            resetConversation();
+        }
+
+        function resetConversation() {
+            conversationHistory = [];
+            karteData = { A: null, B: null, C: null, D: null, E: null, F: null, G: null };
+            updateKarteUI();
+            document.getElementById('chat-container').innerHTML = '';
+            
+            // Initial greeting logic based on mode
+            initializeConversation();
+        }
+
+        function initializeConversation() {
+            let initialMessage = "";
+            if (currentMode === 'step') {
+                initialMessage = "こんにちは。キャリアメンターです。まずは、現在一番気になっていることや、今日ご相談されたい「主訴」についてお聞かせいただけますか？";
+            } else {
+                initialMessage = "こんにちは。キャリアメンターです。本日はどのようなことでも構いませんので、現在のお仕事の状況やキャリアについて、思いつくままにお話しください。";
+            }
+            addMessageToChat('assistant', initialMessage);
+            conversationHistory.push({ role: "assistant", content: initialMessage });
+        }
+
+        function addMessageToChat(role, text) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = role === 'user' 
+                ? "bg-blue-600 text-white rounded-2xl rounded-tr-none py-3 px-4 shadow-md max-w-[80%]" 
+                : "bg-white border border-gray-200 rounded-2xl rounded-tl-none py-3 px-4 shadow-sm max-w-[80%]";
+            
+            bubble.innerHTML = `<p class="text-sm whitespace-pre-wrap">${text}</p>`;
+            div.appendChild(bubble);
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateKarteUI() {
+            let filledCount = 0;
+            const keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+            
+            keys.forEach(key => {
+                const el = document.querySelector(`#item-${key} div:last-child`);
+                if (karteData[key]) {
+                    el.textContent = karteData[key];
+                    el.classList.remove('text-gray-400', 'italic');
+                    el.classList.add('text-gray-800', 'bg-blue-50');
+                    filledCount++;
+                } else {
+                    el.textContent = "未聴取";
+                    el.classList.add('text-gray-400', 'italic');
+                    el.classList.remove('text-gray-800', 'bg-blue-50');
+                }
+            });
+
+            const percent = Math.round((filledCount / 7) * 100);
+            document.getElementById('progress-percent').textContent = `${percent}%`;
+        }
+
+        // --- Audio & API Logic ---
+
+        async function toggleRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("お使いのブラウザはマイク録音に対応していません。");
+                return;
+            }
+
+            const btn = document.getElementById('mic-btn');
+
+            if (!isRecording) {
+                // Start Recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        await processAudio(audioBlob);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.classList.add('mic-active');
+                    btn.innerHTML = '<i class="fas fa-stop text-xl"></i>';
+                } catch (err) {
+                    console.error("Mic Error:", err);
+                    alert("マイクへのアクセスが許可されていません。");
+                }
+            } else {
+                // Stop Recording
+                mediaRecorder.stop();
+                isRecording = false;
+                btn.classList.remove('mic-active');
+                btn.innerHTML = '<i class="fas fa-microphone text-xl"></i>';
+                
+                // Stop all tracks to release mic
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        async function sendText() {
+            const input = document.getElementById('text-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            input.value = '';
+            addMessageToChat('user', text);
+            conversationHistory.push({ role: "user", content: text });
+            
+            await runLLMProcess();
+        }
+
+        async function processAudio(audioBlob) {
+            setLoading(true, "音声を文字変換中...");
+            
+            // 1. Whisper API (STT)
+            const formData = new FormData();
+            formData.append("file", audioBlob, "recording.webm");
+            formData.append("model", "whisper-1");
+            formData.append("language", "ja");
+
+            try {
+                const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${apiKey}` },
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error("STT Error");
+                
+                const data = await response.json();
+                const userText = data.text;
+                
+                addMessageToChat('user', userText);
+                conversationHistory.push({ role: "user", content: userText });
+                
+                await runLLMProcess();
+
+            } catch (err) {
+                console.error(err);
+                alert("音声認識に失敗しました。APIキーなどを確認してください。");
+                setLoading(false);
+            }
+        }
+
+        async function runLLMProcess(forceAnalysis = false) {
+            setLoading(true, "AI思考中...");
+
+            // Determine System Prompt based on Mode
+            let systemPrompt = "";
+            let model = "gpt-4o";
+
+            const itemDescriptions = `
+                A. 主訴 (いま困っていること話したいこと)
+                B. キャリア歴 (経験・強み・転機)
+                C. 現在の業務状況 (役割・満足点・不満点)
+                D. キャリア観・価値観
+                E. 将来イメージ (3~5年後)
+                F. 学び・成長ニーズ
+                G. 面談で話したいテーマ (期待点)
+            `;
+
+            if (currentMode === 'step') {
+                // Approach 1: Sequential Filling (DST)
+                systemPrompt = `
+                    あなたはプロフェッショナルなキャリアメンターです。
+                    以下の7つの項目を埋めるために、ユーザーと対話してください。
+                    
+                    # 目標項目
+                    ${itemDescriptions}
+
+                    # 現在のカルテ状況(JSON)
+                    ${JSON.stringify(karteData)}
+
+                    # 指示
+                    1. ユーザーの発言から情報を抽出し、カルテ項目の更新を行ってください。
+                    2. まだ埋まっていない項目について、自然な会話の流れで質問してください。一度に多くの質問をせず、1つずつ丁寧に聞いてください。
+                    3. ユーザーが話しやすいように、共感や相槌を交えてください。
+                    4. すべての項目が埋まったら、完了した旨を伝え、まとめを提示してください。
+
+                    # 出力フォーマット (JSONのみ)
+                    必ず以下のJSON形式で出力してください。Markdownコードブロックは不要です。
+                    {
+                        "reply": "ユーザーへの返答",
+                        "updated_karte": { "A": "...", "B": "..." } (更新があった項目のみ記述、なければ空オブジェクト),
+                        "is_complete": boolean
+                    }
+                `;
+            } else {
+                // Approach 2: Free Talk or Analysis
+                if (!forceAnalysis) {
+                    // Phase 1: Elicitation / Active Listening
+                    systemPrompt = `
+                        あなたはプロフェッショナルなキャリアメンターです。
+                        現在は「自由対話モード」です。
+                        
+                        # 目標
+                        ユーザーにとにかく自由に話をさせ、思考を発散させてください。
+                        特定の項目を埋めようと焦る必要はありません。
+                        ユーザーの発言に対して「それはどういうことですか？」「具体的には？」など、深掘りする質問（Probing）や、共感を示してください。
+                        
+                        # 禁止事項
+                        - 構造的に整理しようとしすぎないでください。
+                        - まだまとめに入らないでください。
+                        
+                        # 出力フォーマット (JSONのみ)
+                        {
+                            "reply": "ユーザーへの深掘り質問や共感の言葉",
+                            "updated_karte": {} (この段階では基本更新しないが、明確な事実があれば入れても良い),
+                            "is_complete": false
+                        }
+                    `;
+                } else {
+                    // Phase 2: Analysis & Gap Filling
+                    systemPrompt = `
+                        あなたはプロフェッショナルなキャリアメンターです。
+                        これまでの会話履歴を分析し、以下の7項目を整理してください。
+                        
+                        # 目標項目
+                        ${itemDescriptions}
+
+                        # 現在のカルテ状況
+                        ${JSON.stringify(karteData)}
+
+                        # 指示
+                        1. 会話履歴から情報を抽出し、カルテを最大限埋めてください。
+                        2. もし未記入の項目（null）があれば、それを埋めるための追加質問を作成してください。
+                        3. すべて埋まっている場合は、全体のまとめを作成し、素晴らしいキャリアビジョンであると伝えてください。
+
+                        # 出力フォーマット (JSONのみ)
+                        {
+                            "reply": "まとめ、または追加の質問",
+                            "updated_karte": { ...全ての項目を埋める努力をする... },
+                            "is_complete": boolean (全て埋まったらtrue)
+                        }
+                    `;
+                }
+            }
+
+            try {
+                const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            ...conversationHistory
+                        ],
+                        response_format: { type: "json_object" } // Force JSON
+                    })
+                });
+
+                if (!response.ok) throw new Error("LLM Error");
+                
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+                const parsed = JSON.parse(content);
+
+                // Update State
+                if (parsed.updated_karte) {
+                    Object.keys(parsed.updated_karte).forEach(k => {
+                        if (parsed.updated_karte[k]) karteData[k] = parsed.updated_karte[k];
+                    });
+                    updateKarteUI();
+                }
+
+                // AI Reply
+                addMessageToChat('assistant', parsed.reply);
+                conversationHistory.push({ role: "assistant", content: parsed.reply });
+
+                // Text to Speech
+                await playTextToSpeech(parsed.reply);
+
+            } catch (err) {
+                console.error(err);
+                alert("AIの応答生成に失敗しました。");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function triggerAnalysis() {
+            // Button specifically for Approach 2 to trigger "Phase 2"
+            await runLLMProcess(true);
+        }
+
+        async function playTextToSpeech(text) {
+            setLoading(true, "音声生成中...");
+            
+            try {
+                const response = await fetch("https://api.openai.com/v1/audio/speech", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "tts-1",
+                        input: text,
+                        voice: "fable" // alloy, echo, fable, onyx, nova, shimmer
+                    })
+                });
+
+                if (!response.ok) throw new Error("TTS Error");
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.playbackRate = 1.5; // Play TTS audio 50% faster
+                audio.play();
+
+            } catch (err) {
+                console.error("TTS failed", err);
+                // TTS failure shouldn't stop the app, just silent
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(isLoading, text = "") {
+            const indicator = document.getElementById('processing-indicator');
+            const statusText = document.getElementById('status-text');
+            if (isLoading) {
+                indicator.classList.remove('hidden');
+                statusText.textContent = text;
+            } else {
+                indicator.classList.add('hidden');
+            }
+        }
+
+    </script>
+</body>
+</html>
