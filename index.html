@@ -536,7 +536,7 @@
                     body: JSON.stringify({
                         model: "tts-1",
                         input: text,
-                        voice: "alloy" // alloy, echo, fable, onyx, nova, shimmer
+                        voice: "fable" // alloy, echo, fable, onyx, nova, shimmer
                     })
                 });
 
@@ -545,6 +545,7 @@
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 const audio = new Audio(url);
+                audio.playbackRate = 1.5; // Play TTS audio 50% faster
                 audio.play();
 
             } catch (err) {
