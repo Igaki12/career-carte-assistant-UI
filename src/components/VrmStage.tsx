@@ -1,9 +1,11 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Fade, Text } from '@chakra-ui/react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Color, Group, Object3D, Vector3 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRM, VRMExpressionPresetName, VRMHumanBoneName, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+
+const MODEL_PATH = `${import.meta.env.BASE_URL}models/sample.vrm`;
 
 type ModelProps = {
   isSpeaking: boolean;
@@ -33,11 +35,11 @@ const VrmModel = ({ isSpeaking, conversationStarted, onReady }: ModelProps) => {
   useEffect(() => {
     let disposed = false;
     const loader = new GLTFLoader();
-    loader.crossOrigin = 'anonymous';
-    loader.register((parser) => new VRMLoaderPlugin(parser));
+    loader.setCrossOrigin('anonymous');
+    loader.register((parser) => new VRMLoaderPlugin(parser, { autoUpdateHumanBones: true }));
 
     loader
-      .loadAsync('/models/sample.vrm')
+      .loadAsync(MODEL_PATH)
       .then((gltf) => {
         if (disposed) return;
         const vrm = gltf.userData.vrm as VRM | undefined;
@@ -46,8 +48,9 @@ const VrmModel = ({ isSpeaking, conversationStarted, onReady }: ModelProps) => {
           return;
         }
         VRMUtils.removeUnnecessaryVertices(vrm.scene);
-        VRMUtils.removeUnnecessaryJoints(vrm.scene);
+        VRMUtils.combineSkeletons(vrm.scene);
         vrm.scene.name = 'CounselorVRM';
+        vrm.scene.rotation.y = Math.PI;
         vrm.scene.traverse((obj) => {
           obj.castShadow = true;
           obj.receiveShadow = true;
@@ -155,10 +158,37 @@ const VrmModel = ({ isSpeaking, conversationStarted, onReady }: ModelProps) => {
 type StageProps = {
   isSpeaking: boolean;
   conversationStarted: boolean;
+  assistantMessage: string;
+  assistantMessageKey: number;
 };
 
-const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
+const VrmStage = ({
+  isSpeaking,
+  conversationStarted,
+  assistantMessage,
+  assistantMessageKey,
+}: StageProps) => {
   const [isReady, setIsReady] = useState(false);
+  const [bubbleText, setBubbleText] = useState('');
+  const [bubbleVisible, setBubbleVisible] = useState(false);
+  const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!assistantMessage) return;
+    if (bubbleTimerRef.current) {
+      clearTimeout(bubbleTimerRef.current);
+    }
+    const trimmed = assistantMessage.length > 90 ? `${assistantMessage.slice(0, 90)}…` : assistantMessage;
+    setBubbleText(trimmed);
+    setBubbleVisible(true);
+    bubbleTimerRef.current = setTimeout(() => setBubbleVisible(false), 5000);
+    return () => {
+      if (bubbleTimerRef.current) {
+        clearTimeout(bubbleTimerRef.current);
+        bubbleTimerRef.current = null;
+      }
+    };
+  }, [assistantMessageKey, assistantMessage]);
 
   return (
     <Box
@@ -172,6 +202,28 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
       w="full"
       h={{ base: '360px', md: '420px' }}
     >
+      <Fade in={bubbleVisible && Boolean(bubbleText)}>
+        {bubbleVisible && bubbleText && (
+          <Box
+            position="absolute"
+            top={4}
+            left={4}
+            maxW="75%"
+            bg="whiteAlpha.900"
+            borderRadius="xl"
+            borderWidth="1px"
+            borderColor="blue.100"
+            boxShadow="md"
+            px={4}
+            py={3}
+            zIndex={2}
+          >
+            <Text fontSize="sm" color="gray.700">
+              {bubbleText}
+            </Text>
+          </Box>
+        )}
+      </Fade>
       {!isReady && (
         <Box
           position="absolute"

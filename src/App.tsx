@@ -8,9 +8,9 @@ import {
   HStack,
   Icon,
   IconButton,
-  Input,
   Stack,
   Text,
+  Textarea,
   useToast,
 } from '@chakra-ui/react';
 import { FaMicrophone, FaPaperPlane, FaUserDoctor, FaWandMagicSparkles } from 'react-icons/fa6';
@@ -131,6 +131,8 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [assistantBubbleText, setAssistantBubbleText] = useState('');
+  const [assistantBubbleKey, setAssistantBubbleKey] = useState(0);
   const toast = useToast();
 
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -300,6 +302,8 @@ function App() {
           messagesRef.current = updated;
           return updated;
         });
+        setAssistantBubbleText(parsed.reply);
+        setAssistantBubbleKey((prev) => prev + 1);
 
         setProcessingText('音声生成中...');
         await playTextToSpeech(parsed.reply);
@@ -526,7 +530,12 @@ function App() {
 
         <Flex direction={{ base: 'column', xl: 'row' }} gap={4}>
           <Stack flex="1" spacing={4}>
-            <VrmStage isSpeaking={isSpeaking} conversationStarted={conversationStarted} />
+            <VrmStage
+              isSpeaking={isSpeaking}
+              conversationStarted={conversationStarted}
+              assistantMessage={assistantBubbleText}
+              assistantMessageKey={assistantBubbleKey}
+            />
             <Box
               bg="white"
               borderRadius="2xl"
@@ -581,13 +590,15 @@ function App() {
                       minW="56px"
                       h="56px"
                     />
-                    <Input
+                    <Textarea
                       value={textValue}
                       onChange={(e) => setTextValue(e.target.value)}
                       placeholder="テキスト入力はこちら..."
-                      borderRadius="full"
+                      borderRadius="xl"
                       bg="white"
                       borderColor="gray.200"
+                      resize="none"
+                      rows={2}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
