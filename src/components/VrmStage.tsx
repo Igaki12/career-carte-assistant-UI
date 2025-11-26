@@ -301,6 +301,7 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
         resetIdleMotionState();
         setIdleExpression();
         setIsReady(true);
+        applyFrontPose();
       },
       undefined,
       (error) => {
