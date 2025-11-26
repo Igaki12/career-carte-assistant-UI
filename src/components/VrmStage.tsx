@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Fade, Text } from '@chakra-ui/react';
+import { Box, Text } from '@chakra-ui/react';
 import {
   AmbientLight,
   Clock,
@@ -29,8 +29,6 @@ const MODEL_PATH = `${import.meta.env.BASE_URL}models/sample.vrm`;
 type StageProps = {
   isSpeaking: boolean;
   conversationStarted: boolean;
-  assistantMessage: string;
-  assistantMessageKey: number;
 };
 
 type BlinkState = {
@@ -47,12 +45,7 @@ type NodState = {
   current: number;
 };
 
-const VrmStage = ({
-  isSpeaking,
-  conversationStarted,
-  assistantMessage,
-  assistantMessageKey,
-}: StageProps) => {
+const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -70,9 +63,6 @@ const VrmStage = ({
   });
   const baseNeckRotationRef = useRef<Euler | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [bubbleText, setBubbleText] = useState('');
-  const [bubbleVisible, setBubbleVisible] = useState(false);
-  const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // isSpeakingの変更でupdateIdleMotionが再生成され、メインのuseEffectが走ってモデルがリロードされるのを防ぐためRefで管理
   const isSpeakingRef = useRef(isSpeaking);
@@ -382,23 +372,6 @@ const VrmStage = ({
   }, [applyFrontPose, resetIdleMotionState, setIdleExpression, updateIdleMotion]);
 
   useEffect(() => {
-    if (!assistantMessage) return;
-    if (bubbleTimerRef.current) {
-      clearTimeout(bubbleTimerRef.current);
-    }
-    const trimmed = assistantMessage.length > 90 ? `${assistantMessage.slice(0, 90)}…` : assistantMessage;
-    setBubbleText(trimmed);
-    setBubbleVisible(true);
-    bubbleTimerRef.current = setTimeout(() => setBubbleVisible(false), 5000);
-    return () => {
-      if (bubbleTimerRef.current) {
-        clearTimeout(bubbleTimerRef.current);
-        bubbleTimerRef.current = null;
-      }
-    };
-  }, [assistantMessageKey, assistantMessage]);
-
-  useEffect(() => {
     if (!conversationStarted || !isReady) return;
     applyFrontPose();
     setIdleExpression();
@@ -443,28 +416,6 @@ const VrmStage = ({
       w="full"
       h={{ base: '360px', md: '420px' }}
     >
-      <Fade in={bubbleVisible && Boolean(bubbleText)}>
-        {bubbleVisible && bubbleText && (
-          <Box
-            position="absolute"
-            top={4}
-            left={4}
-            maxW="75%"
-            bg="whiteAlpha.900"
-            borderRadius="xl"
-            borderWidth="1px"
-            borderColor="blue.100"
-            boxShadow="md"
-            px={4}
-            py={3}
-            zIndex={2}
-          >
-            <Text fontSize="sm" color="gray.700">
-              {bubbleText}
-            </Text>
-          </Box>
-        )}
-      </Fade>
       {!isReady && (
         <Box
           position="absolute"

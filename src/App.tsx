@@ -131,8 +131,6 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [assistantBubbleText, setAssistantBubbleText] = useState('');
-  const [assistantBubbleKey, setAssistantBubbleKey] = useState(0);
   const toast = useToast();
 
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -302,9 +300,6 @@ function App() {
           messagesRef.current = updated;
           return updated;
         });
-        setAssistantBubbleText(parsed.reply);
-        setAssistantBubbleKey((prev) => prev + 1);
-
         setProcessingText('音声生成中...');
         await playTextToSpeech(parsed.reply);
       } catch (error) {
@@ -530,12 +525,7 @@ function App() {
 
         <Flex direction={{ base: 'column', xl: 'row' }} gap={4}>
           <Stack flex="1" spacing={4}>
-            <VrmStage
-              isSpeaking={isSpeaking}
-              conversationStarted={conversationStarted}
-              assistantMessage={assistantBubbleText}
-              assistantMessageKey={assistantBubbleKey}
-            />
+            <VrmStage isSpeaking={isSpeaking} conversationStarted={conversationStarted} />
             <Box
               bg="white"
               borderRadius="2xl"
