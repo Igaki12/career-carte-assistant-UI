@@ -264,7 +264,7 @@ function App() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-5.1',
+            model: 'gpt-4o',
             messages: [{ role: 'system', content: systemPrompt }, ...history],
             response_format: { type: 'json_object' },
           }),
