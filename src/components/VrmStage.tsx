@@ -74,6 +74,12 @@ const VrmStage = ({
   const [bubbleVisible, setBubbleVisible] = useState(false);
   const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // isSpeakingの変更でupdateIdleMotionが再生成され、メインのuseEffectが走ってモデルがリロードされるのを防ぐためRefで管理
+  const isSpeakingRef = useRef(isSpeaking);
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
+
   const setIdleExpression = useCallback(() => {
     const manager = vrmRef.current?.expressionManager;
     if (!manager) return;
@@ -236,13 +242,13 @@ const VrmStage = ({
           }
         }
         manager.setValue(VRMExpressionPresetName.Blink, blinkWeight);
-        if (!isSpeaking) {
+        if (!isSpeakingRef.current) {
           manager.setValue(VRMExpressionPresetName.Relaxed, 0.6);
         }
         manager.update();
       }
     },
-    [isSpeaking],
+    [],
   );
 
   useEffect(() => {
