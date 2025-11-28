@@ -34,7 +34,12 @@ const STAGE_BACKGROUNDS = [
   {
     id: 'gemini-gold',
     label: 'Radiant Horizon',
-    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_8biytl8biytl8biy.png`,
+    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_dt9xd6dt9xd6dt9x.png`,
+  },
+  {
+    id: 'gemini-purple',
+    label: 'Mystic Dusk',
+    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_1d96o21d96o21d96.png`,
   },
 ] as const;
 
