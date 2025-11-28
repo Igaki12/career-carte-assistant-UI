@@ -444,7 +444,7 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
       overflow="hidden"
       position="relative"
       w="full"
-      h={{ base: '360px', md: '420px' }}
+      h={{ base: '200px', md: '420px' }}
     >
       <IconButton
         aria-label="背景を切り替え"
