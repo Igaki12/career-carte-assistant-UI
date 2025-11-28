@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, IconButton, Text } from '@chakra-ui/react';
+import { RepeatIcon } from '@chakra-ui/icons';
 import {
   AmbientLight,
   Clock,
-  Color,
   DirectionalLight,
   Euler,
   MathUtils,
@@ -25,6 +25,18 @@ import {
 } from '@pixiv/three-vrm';
 
 const MODEL_PATH = `${import.meta.env.BASE_URL}models/sample.vrm`;
+const STAGE_BACKGROUNDS = [
+  {
+    id: 'gemini-blue',
+    label: 'Deep Aurora',
+    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_xqrrb5xqrrb5xqrr.png`,
+  },
+  {
+    id: 'gemini-gold',
+    label: 'Radiant Horizon',
+    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_8biytl8biytl8biy.png`,
+  },
+] as const;
 
 type StageProps = {
   isSpeaking: boolean;
@@ -63,12 +75,18 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
   });
   const baseNeckRotationRef = useRef<Euler | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [backgroundIndex, setBackgroundIndex] = useState(0);
 
   // isSpeakingの変更でupdateIdleMotionが再生成され、メインのuseEffectが走ってモデルがリロードされるのを防ぐためRefで管理
   const isSpeakingRef = useRef(isSpeaking);
   useEffect(() => {
     isSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
+
+  const currentBackground = STAGE_BACKGROUNDS[backgroundIndex];
+  const handleNextBackground = useCallback(() => {
+    setBackgroundIndex((prev) => (prev + 1) % STAGE_BACKGROUNDS.length);
+  }, []);
 
   const setIdleExpression = useCallback(() => {
     const manager = vrmRef.current?.expressionManager;
@@ -246,7 +264,7 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
     if (!container) return;
 
     const scene = new Scene();
-    scene.background = new Color('#0f172a');
+    scene.background = null;
 
     const camera = new PerspectiveCamera(25, container.clientWidth / container.clientHeight, 0.1, 50);
     camera.position.set(0, 1.45, 2.8);
@@ -255,6 +273,8 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
     const renderer = new WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.domElement.style.background = 'transparent';
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -407,7 +427,11 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
 
   return (
     <Box
-      bg="white"
+      bg="black"
+      bgImage={`url(${currentBackground.image})`}
+      bgSize="cover"
+      bgRepeat="no-repeat"
+      bgPosition="center"
       borderRadius="2xl"
       borderWidth="1px"
       borderColor="gray.200"
@@ -417,6 +441,22 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
       w="full"
       h={{ base: '360px', md: '420px' }}
     >
+      <IconButton
+        aria-label="背景を切り替え"
+        icon={<RepeatIcon />}
+        size="sm"
+        onClick={handleNextBackground}
+        position="absolute"
+        top={3}
+        right={3}
+        zIndex={2}
+        variant="solid"
+        colorScheme="whiteAlpha"
+        bg="rgba(15,23,42,0.7)"
+        _hover={{ bg: 'rgba(30,41,59,0.85)' }}
+        _active={{ bg: 'rgba(15,23,42,0.95)' }}
+        title={`背景: ${currentBackground.label}`}
+      />
       {!isReady && (
         <Box
           position="absolute"

@@ -212,7 +212,7 @@ function App() {
           body: JSON.stringify({
             model: 'tts-1',
             input: text,
-            voice: 'fable',
+            voice: 'sage', // sage or ash are good choices
           }),
         });
         if (!response.ok) {
@@ -222,7 +222,9 @@ function App() {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         setIsSpeaking(true);
+        audio.playbackRate = 1.2; // Play TTS audio 20% faster
         const playPromise = audio.play();
+
         audio.onended = () => {
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
