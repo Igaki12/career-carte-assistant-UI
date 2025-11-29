@@ -137,6 +137,7 @@ function App() {
   const audioChunksRef = useRef<Blob[]>([]);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -337,6 +338,29 @@ function App() {
     [ensureApiKey, runLLMProcess],
   );
 
+  const insertTextAtCursor = useCallback((incomingText: string) => {
+    if (!incomingText) return;
+    const textarea = textareaRef.current;
+    setTextValue((prev) => {
+      if (!textarea) {
+        return `${prev}${incomingText}`;
+      }
+      const selectionStart = textarea.selectionStart ?? prev.length;
+      const selectionEnd = textarea.selectionEnd ?? prev.length;
+      const nextValue =
+        prev.slice(0, selectionStart) + incomingText + prev.slice(selectionEnd);
+
+      requestAnimationFrame(() => {
+        const cursorPosition = selectionStart + incomingText.length;
+        textarea.selectionStart = cursorPosition;
+        textarea.selectionEnd = cursorPosition;
+        textarea.focus();
+      });
+
+      return nextValue;
+    });
+  }, []);
+
   const processAudio = useCallback(
     async (blob: Blob) => {
       if (!ensureApiKey()) return;
@@ -370,14 +394,7 @@ function App() {
           return;
         }
 
-        const updatedHistory: ConversationMessage[] = [
-          ...messagesRef.current,
-          { role: 'user', content: text },
-        ];
-        setMessages(updatedHistory);
-        messagesRef.current = updatedHistory;
-        setConversationStarted(true);
-        await runLLMProcess(updatedHistory);
+        insertTextAtCursor(text);
       } catch (error) {
         console.error(error);
         toast({
@@ -389,7 +406,7 @@ function App() {
         setProcessingText('');
       }
     },
-    [apiKey, ensureApiKey, runLLMProcess, toast],
+    [apiKey, ensureApiKey, insertTextAtCursor, toast],
   );
 
   const toggleRecording = async () => {
@@ -583,6 +600,7 @@ function App() {
                       h="56px"
                     />
                     <Textarea
+                      ref={textareaRef}
                       value={textValue}
                       onChange={(e) => setTextValue(e.target.value)}
                       placeholder="テキスト入力はこちら..."
@@ -592,7 +610,7 @@ function App() {
                       resize="none"
                       rows={2}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
+                        if (e.key === 'Enter' && e.shiftKey) {
                           e.preventDefault();
                           handleUserMessage(textValue);
                         }
