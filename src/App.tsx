@@ -13,7 +13,7 @@ import {
   Textarea,
   useToast,
 } from '@chakra-ui/react';
-import { FaMicrophone, FaPaperPlane, FaUserDoctor, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaMicrophone, FaPaperPlane, FaUpDown, FaUserDoctor, FaWandMagicSparkles } from 'react-icons/fa6';
 import ApiKeyModal from './components/ApiKeyModal';
 import KartePanel from './components/KartePanel';
 import ProcessingIndicator from './components/ProcessingIndicator';
@@ -131,6 +131,7 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTextareaExpanded, setTextareaExpanded] = useState(false);
   const toast = useToast();
 
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -187,6 +188,10 @@ function App() {
     },
     [],
   );
+
+  const toggleTextareaExpanded = useCallback(() => {
+    setTextareaExpanded((prev) => !prev);
+  }, []);
 
   const ensureApiKey = useCallback(() => {
     if (apiKey) return true;
@@ -599,24 +604,42 @@ function App() {
                       minW="56px"
                       h="56px"
                     />
-                    <Textarea
-                      ref={textareaRef}
-                      value={textValue}
-                      onChange={(e) => setTextValue(e.target.value)}
-                      placeholder="テキスト入力はこちら..."
-                      borderRadius="xl"
-                      bg="white"
-                      borderColor="gray.200"
-                      resize="none"
-                      rows={2}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.shiftKey) {
-                          e.preventDefault();
-                          handleUserMessage(textValue);
-                        }
-                      }}
-                      isDisabled={isBusy}
-                    />
+                    <Box position="relative" flex="1">
+                      <Textarea
+                        ref={textareaRef}
+                        value={textValue}
+                        onChange={(e) => setTextValue(e.target.value)}
+                        placeholder="テキスト入力はこちら..."
+                        borderRadius="xl"
+                        bg="white"
+                        borderColor="gray.200"
+                        resize="none"
+                        rows={isTextareaExpanded ? 6 : 2}
+                        flex="1"
+                        pr="12"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.shiftKey) {
+                            e.preventDefault();
+                            handleUserMessage(textValue);
+                          }
+                        }}
+                        isDisabled={isBusy}
+                      />
+                      <IconButton
+                        aria-label={isTextareaExpanded ? 'テキストエリアを縮小' : 'テキストエリアを拡張'}
+                        icon={<FaUpDown />}
+                        onClick={toggleTextareaExpanded}
+                        variant="solid"
+                        colorScheme="blackAlpha"
+                        opacity={0.6}
+                        _hover={{ opacity: 0.9 }}
+                        size="sm"
+                        position="absolute"
+                        top="2"
+                        right="2"
+                        borderRadius="full"
+                      />
+                    </Box>
                     <IconButton
                       aria-label="送信"
                       icon={<FaPaperPlane />}
@@ -624,6 +647,8 @@ function App() {
                       onClick={() => handleUserMessage(textValue)}
                       isDisabled={!textValue.trim() || isBusy}
                       borderRadius="full"
+                      minW="56px"
+                      h="56px"
                     />
                   </Flex>
                   {mode === 'free' && (
