@@ -11,6 +11,7 @@
 - 音声合成：OpenAI Text-to-Speechガイド[^2]準拠で `tts-1` / voice `sage` を利用。再生時は 1.2x に設定し、発話中は Surprised 0.05–0.3 で VRM 表情に揺らぎを与える。
 - 音声入力：ブラウザ録音（MediaRecorder）→ Whisper (`whisper-1`) で STT → テキストエリアへ挿入という流れ。Realtime API 置き換えに備えて `processAudio` など関数単位で分割済み。
 - Whisper → GPT-4o → TTS-1 のシーケンスは今後 Realtime API へ移行できるよう hook/utility を小さくまとめている。
+- API 使用制限：`handleUserMessage` と（自由対話モードの）`handleForceAnalysis` が共有で最大3回まで API を呼び出す。自由対話モードでは最後の1回をカルテ整理用に確保し、送信制限に達するとトーストで通知し追加送信をブロック。先に API を消費した場合はモード切替ボタンを無効化し、送信ボタンも制限状態に連動させる。
 
 [^1]: https://platform.openai.com/docs/guides/latest-model?lang=javascript  
 [^2]: https://platform.openai.com/docs/guides/text-to-speech
@@ -44,7 +45,7 @@
 | ApiKeyModal / LocalStorage | ✅ | ローカルストレージへの保存・再入力導線を維持 |
 | モード切替 (順次ヒアリング / 自由対話) | ✅ | `buildSystemPrompt` でモード別プロンプトを生成。自由対話モードはカルテ強制整理フローを備える |
 | Whisper STT / マイク録音 | ✅ | MediaRecorder → `whisper-1`。ブラウザ互換性を継続監視 |
-| GPT チャット制御 | ✅ | 現状 `gpt-4o` + `response_format: json_object`。JSON Schema 化を次フェーズで実施予定 |
+| GPT チャット制御 | ✅ | 現状 `gpt-4o` + `response_format: json_object`。JSON Schema 化を次フェーズで実施予定。API使用回数は `getMaxApiCalls()`（現在3回）で制御し、自由対話モードは2回送信 + 1回カルテ整理に割り当て |
 | カルテ UI (7スロット) | ✅ | 通常は非表示。ボタン押下でモーダル表示（70dvh スクロール）& VRM 右下の進捗オーバーレイで常時進捗を把握可能 |
 | VRM ステージ | ✅ | 背景切替・Blink/Nod/Surprised 制御・進捗バッジ重ね表示。低スペック端末の FPS に注意 |
 

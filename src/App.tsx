@@ -52,6 +52,8 @@ const MODE_DESCRIPTIONS: Record<ModeType, string> = {
   free: 'まずは自由に話してもらい、最後にAIがカルテを整理・要約するモードです。',
 };
 
+const getMaxApiCalls = () => 3;
+
 const greetingForMode = (mode: ModeType) =>
   mode === 'step'
     ? 'こんにちは。キャリアメンターです。現在一番気になっていることや、今日ご相談されたい「主訴」について教えてください。'
@@ -140,11 +142,17 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTextareaExpanded, setTextareaExpanded] = useState(false);
   const [isKarteModalOpen, setKarteModalOpen] = useState(false);
+  const [apiUsageCount, setApiUsageCount] = useState(0);
   const toast = useToast();
   const karteProgress = useMemo(() => {
     const filled = (Object.keys(karte) as KarteKey[]).reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
     return Math.round((filled / 7) * 100);
   }, [karte]);
+  const maxApiCalls = getMaxApiCalls();
+  const conversationQuotaLimit = Math.max(mode === 'free' ? maxApiCalls - 1 : maxApiCalls, 0);
+  const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
+  const hasApiBudget = apiUsageCount < maxApiCalls;
+  const hasUsedApi = apiUsageCount > 0;
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -205,6 +213,7 @@ function App() {
     setKarte(INITIAL_KARTE);
     setProcessingText('');
     setConversationStarted(false);
+    setApiUsageCount(0);
   }, [mode]);
 
   useEffect(() => {
@@ -224,6 +233,18 @@ function App() {
   const toggleTextareaExpanded = useCallback(() => {
     setTextareaExpanded((prev) => !prev);
   }, []);
+
+  const notifyApiLimit = useCallback(
+    (customMessage?: string) => {
+      toast({
+        title: 'API使用制限に達しました',
+        description: customMessage || 'これ以上メッセージを送信できません。',
+        status: 'warning',
+        duration: 4000,
+      });
+    },
+    [toast],
+  );
 
   useEffect(() => {
     const audio = activeAudioRef.current;
@@ -342,6 +363,7 @@ function App() {
       if (!ensureApiKey()) return;
       const systemPrompt = buildSystemPrompt(mode, karte, forceAnalysis);
       setProcessingText(forceAnalysis ? '情報を整理しています...' : 'AI思考中...');
+      setApiUsageCount((prev) => Math.min(prev + 1, maxApiCalls));
 
       try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -403,13 +425,21 @@ function App() {
         setProcessingText('');
       }
     },
-    [apiKey, ensureApiKey, karte, mode, playTextToSpeech, toast],
+    [apiKey, ensureApiKey, karte, maxApiCalls, mode, playTextToSpeech, toast],
   );
 
   const handleUserMessage = useCallback(
     async (content: string) => {
       if (!content.trim()) return;
+      if (!hasConversationQuota) {
+        notifyApiLimit(mode === 'free' ? '自由対話モードでは2回までメッセージを送信できます。' : undefined);
+        return;
+      }
       if (!ensureApiKey()) return;
+      const nextUsageCount = apiUsageCount + 1;
+      if (conversationQuotaLimit > 0 && nextUsageCount === conversationQuotaLimit) {
+        notifyApiLimit('今回の送信が最後のメッセージです。');
+      }
       const sanitized = content.trim();
       const updatedHistory: ConversationMessage[] = [
         ...messagesRef.current,
@@ -421,7 +451,7 @@ function App() {
       setTextValue('');
       await runLLMProcess(updatedHistory);
     },
-    [ensureApiKey, runLLMProcess],
+    [apiUsageCount, conversationQuotaLimit, ensureApiKey, hasConversationQuota, mode, notifyApiLimit, runLLMProcess],
   );
 
   const insertTextAtCursor = useCallback((incomingText: string) => {
@@ -546,16 +576,24 @@ function App() {
 
   const handleForceAnalysis = useCallback(async () => {
     if (mode !== 'free') return;
+    if (!hasApiBudget) {
+      notifyApiLimit();
+      return;
+    }
     if (!ensureApiKey()) return;
     await runLLMProcess(messagesRef.current, true);
-  }, [ensureApiKey, mode, runLLMProcess]);
+  }, [ensureApiKey, hasApiBudget, mode, notifyApiLimit, runLLMProcess]);
 
   const handleOpenKarteModal = useCallback(() => {
     if (mode === 'free') {
-      void handleForceAnalysis();
+      if (hasApiBudget) {
+        void handleForceAnalysis();
+      } else {
+        notifyApiLimit('API制限に達したためカルテ整理はスキップされます。');
+      }
     }
     setKarteModalOpen(true);
-  }, [handleForceAnalysis, mode]);
+  }, [handleForceAnalysis, hasApiBudget, mode, notifyApiLimit]);
 
   const handleCloseKarteModal = useCallback(() => {
     setKarteModalOpen(false);
@@ -566,6 +604,14 @@ function App() {
     // TODO: ここで待機画面への遷移などを実装予定
     setKarteModalOpen(false);
   }, [disposeActiveAudio]);
+
+  const handleModeChange = useCallback(
+    (nextMode: ModeType) => {
+      if (hasUsedApi || mode === nextMode) return;
+      setMode(nextMode);
+    },
+    [hasUsedApi, mode],
+  );
 
   const apiStatusLabel = apiKey ? 'API Key: 設定済' : 'API Key: 未設定';
   const apiStatusColor = apiKey ? 'green' : 'gray';
@@ -625,16 +671,18 @@ function App() {
           >
             <ButtonGroup size="sm" variant="outline" isAttached>
               <Button
-                onClick={() => setMode('step')}
+                onClick={() => handleModeChange('step')}
                 colorScheme={mode === 'step' ? 'blue' : undefined}
                 variant={mode === 'step' ? 'solid' : 'outline'}
+                isDisabled={hasUsedApi}
               >
                 ① 順次ヒアリング
               </Button>
               <Button
-                onClick={() => setMode('free')}
+                onClick={() => handleModeChange('free')}
                 colorScheme={mode === 'free' ? 'purple' : undefined}
                 variant={mode === 'free' ? 'solid' : 'outline'}
+                isDisabled={hasUsedApi}
               >
                 ② 自由対話＆分析
               </Button>
@@ -748,7 +796,7 @@ function App() {
                       icon={<FaPaperPlane />}
                       colorScheme="blue"
                       onClick={() => handleUserMessage(textValue)}
-                      isDisabled={!textValue.trim() || isBusy}
+                      isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
                       borderRadius="full"
                       minW="56px"
                       h="56px"
