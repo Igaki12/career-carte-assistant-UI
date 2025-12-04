@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Badge,
   Box,
@@ -133,6 +133,10 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTextareaExpanded, setTextareaExpanded] = useState(false);
   const toast = useToast();
+  const karteProgress = useMemo(() => {
+    const filled = (Object.keys(karte) as KarteKey[]).reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
+    return Math.round((filled / 7) * 100);
+  }, [karte]);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -549,7 +553,7 @@ function App() {
 
         <Flex direction={{ base: 'column', xl: 'row' }} gap={4}>
           <Stack flex="1" spacing={4}>
-            <VrmStage isSpeaking={isSpeaking} conversationStarted={conversationStarted} />
+            <VrmStage isSpeaking={isSpeaking} conversationStarted={conversationStarted} progress={karteProgress} />
             <Box
               bg="white"
               borderRadius="2xl"

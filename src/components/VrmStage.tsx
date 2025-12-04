@@ -46,6 +46,7 @@ const STAGE_BACKGROUNDS = [
 type StageProps = {
   isSpeaking: boolean;
   conversationStarted: boolean;
+  progress: number;
 };
 
 type BlinkState = {
@@ -62,7 +63,7 @@ type NodState = {
   current: number;
 };
 
-const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
+const VrmStage = ({ isSpeaking, conversationStarted, progress }: StageProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -459,9 +460,32 @@ const VrmStage = ({ isSpeaking, conversationStarted }: StageProps) => {
         colorScheme="whiteAlpha"
         bg="rgba(15,23,42,0.7)"
         _hover={{ bg: 'rgba(30,41,59,0.85)' }}
-        _active={{ bg: 'rgba(15,23,42,0.95)' }}
-        title={`背景: ${currentBackground.label}`}
-      />
+      _active={{ bg: 'rgba(15,23,42,0.95)' }}
+      title={`背景: ${currentBackground.label}`}
+    />
+      <Box
+        position="absolute"
+        bottom={3}
+        right={3}
+        zIndex={3}
+        bg="rgba(15,23,42,0.82)"
+        borderRadius="xl"
+        px={4}
+        py={2}
+        borderWidth="1px"
+        borderColor="whiteAlpha.300"
+        color="white"
+        pointerEvents="none"
+        backdropFilter="blur(4px)"
+        boxShadow="md"
+      >
+        <Text fontSize="xs" color="whiteAlpha.700" letterSpacing="0.08em" textTransform="uppercase">
+          カルテ進行度
+        </Text>
+        <Text fontSize="lg" fontWeight="bold" lineHeight="shorter">
+          {progress}% 完成
+        </Text>
+      </Box>
       {!isReady && (
         <Box
           position="absolute"
