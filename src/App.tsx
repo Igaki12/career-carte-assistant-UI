@@ -8,6 +8,13 @@ import {
   HStack,
   Icon,
   IconButton,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Stack,
   Text,
   Textarea,
@@ -132,6 +139,7 @@ function App() {
   const [conversationStarted, setConversationStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isTextareaExpanded, setTextareaExpanded] = useState(false);
+  const [isKarteModalOpen, setKarteModalOpen] = useState(false);
   const toast = useToast();
   const karteProgress = useMemo(() => {
     const filled = (Object.keys(karte) as KarteKey[]).reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
@@ -143,6 +151,25 @@ function App() {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioSourceUrlRef = useRef<string | null>(null);
+  const audioResumePositionRef = useRef<number>(0);
+  const shouldResumeAudioRef = useRef(false);
+
+  const disposeActiveAudio = useCallback(() => {
+    const current = activeAudioRef.current;
+    if (current) {
+      current.pause();
+    }
+    if (audioSourceUrlRef.current) {
+      URL.revokeObjectURL(audioSourceUrlRef.current);
+      audioSourceUrlRef.current = null;
+    }
+    activeAudioRef.current = null;
+    audioResumePositionRef.current = 0;
+    shouldResumeAudioRef.current = false;
+    setIsSpeaking(false);
+  }, []);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -189,13 +216,46 @@ function App() {
   useEffect(
     () => () => {
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+      disposeActiveAudio();
     },
-    [],
+    [disposeActiveAudio],
   );
 
   const toggleTextareaExpanded = useCallback(() => {
     setTextareaExpanded((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    const audio = activeAudioRef.current;
+    if (!audio) return;
+    if (isKarteModalOpen) {
+      if (!audio.paused) {
+        audioResumePositionRef.current = audio.currentTime;
+        shouldResumeAudioRef.current = true;
+        audio.pause();
+        setIsSpeaking(false);
+      }
+      return;
+    }
+    if (shouldResumeAudioRef.current) {
+      audio.currentTime = audioResumePositionRef.current;
+      const playPromise = audio.play();
+      shouldResumeAudioRef.current = false;
+      if (playPromise) {
+        playPromise
+          .then(() => {
+            setIsSpeaking(true);
+          })
+          .catch(() => {
+            if (activeAudioRef.current === audio) {
+              disposeActiveAudio();
+            }
+          });
+      } else {
+        setIsSpeaking(true);
+      }
+    }
+  }, [disposeActiveAudio, isKarteModalOpen]);
 
   const ensureApiKey = useCallback(() => {
     if (apiKey) return true;
@@ -230,24 +290,41 @@ function App() {
         }
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
+        disposeActiveAudio();
         const audio = new Audio(url);
-        setIsSpeaking(true);
         audio.playbackRate = 1.2; // Play TTS audio 20% faster
-        const playPromise = audio.play();
+        activeAudioRef.current = audio;
+        audioSourceUrlRef.current = url;
+        audioResumePositionRef.current = 0;
+        shouldResumeAudioRef.current = false;
 
-        audio.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(url);
+        const handleAudioComplete = () => {
+          if (activeAudioRef.current === audio) {
+            disposeActiveAudio();
+          } else {
+            URL.revokeObjectURL(url);
+          }
         };
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(url);
-        };
-        if (playPromise) {
-          await playPromise;
+
+        audio.onended = handleAudioComplete;
+        audio.onerror = handleAudioComplete;
+
+        if (isKarteModalOpen) {
+          shouldResumeAudioRef.current = true;
+        } else {
+          try {
+            await audio.play();
+            setIsSpeaking(true);
+          } catch (playError) {
+            if (activeAudioRef.current === audio) {
+              disposeActiveAudio();
+            } else {
+              URL.revokeObjectURL(url);
+            }
+            throw playError;
+          }
         }
       } catch (error) {
-        setIsSpeaking(false);
         console.error(error);
         toast({
           title: '音声再生に失敗しました',
@@ -257,7 +334,7 @@ function App() {
         });
       }
     },
-    [apiKey, toast],
+    [apiKey, disposeActiveAudio, isKarteModalOpen, toast],
   );
 
   const runLLMProcess = useCallback(
@@ -467,11 +544,28 @@ function App() {
     }
   };
 
-  const handleForceAnalysis = async () => {
+  const handleForceAnalysis = useCallback(async () => {
     if (mode !== 'free') return;
     if (!ensureApiKey()) return;
     await runLLMProcess(messagesRef.current, true);
-  };
+  }, [ensureApiKey, mode, runLLMProcess]);
+
+  const handleOpenKarteModal = useCallback(() => {
+    if (mode === 'free') {
+      void handleForceAnalysis();
+    }
+    setKarteModalOpen(true);
+  }, [handleForceAnalysis, mode]);
+
+  const handleCloseKarteModal = useCallback(() => {
+    setKarteModalOpen(false);
+  }, []);
+
+  const handleSubmitKarte = useCallback(() => {
+    disposeActiveAudio();
+    // TODO: ここで待機画面への遷移などを実装予定
+    setKarteModalOpen(false);
+  }, [disposeActiveAudio]);
 
   const apiStatusLabel = apiKey ? 'API Key: 設定済' : 'API Key: 未設定';
   const apiStatusColor = apiKey ? 'green' : 'gray';
@@ -553,7 +647,12 @@ function App() {
 
         <Flex direction={{ base: 'column', xl: 'row' }} gap={4}>
           <Stack flex="1" spacing={4}>
-            <VrmStage isSpeaking={isSpeaking} conversationStarted={conversationStarted} progress={karteProgress} />
+            <VrmStage
+              isSpeaking={isSpeaking}
+              conversationStarted={conversationStarted}
+              progress={karteProgress}
+              isFreeMode={mode === 'free'}
+            />
             <Box
               bg="white"
               borderRadius="2xl"
@@ -655,26 +754,48 @@ function App() {
                       h="56px"
                     />
                   </Flex>
-                  {mode === 'free' && (
-                    <Button
-                      leftIcon={<FaWandMagicSparkles />}
-                      variant="ghost"
-                      colorScheme="purple"
-                      onClick={handleForceAnalysis}
-                      isDisabled={messages.length <= 1 || isBusy}
-                    >
-                      今までの話を整理してカルテを作成
-                    </Button>
-                  )}
+                  <Button
+                    leftIcon={<FaWandMagicSparkles />}
+                    variant="ghost"
+                    colorScheme="purple"
+                    onClick={handleOpenKarteModal}
+                    isDisabled={messages.length <= 1 || isBusy}
+                  >
+                    今までの話を整理してカルテを確認
+                  </Button>
                 </Stack>
               </Box>
             </Box>
           </Stack>
-          <Box flex={{ base: 'none', xl: '0 0 320px' }} display="flex">
-            <KartePanel data={karte} />
-          </Box>
         </Flex>
       </Flex>
+      <Modal isOpen={isKarteModalOpen} onClose={handleCloseKarteModal} size="xl" scrollBehavior="inside" isCentered>
+        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="2xl" mx={{ base: 3, md: 0 }} maxH="90dvh" display="flex" flexDirection="column">
+          <ModalHeader>
+            <Text fontSize="lg" fontWeight="bold">
+              キャリアカルテを確認
+            </Text>
+            <Text fontSize="sm" color="gray.500" mt={1}>
+              7つの主訴項目をスクロールしながら確認してください
+            </Text>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pt={0}>
+            <Box maxH="70dvh" overflowY="auto">
+              <KartePanel data={karte} />
+            </Box>
+          </ModalBody>
+          <ModalFooter flexDir={{ base: 'column', sm: 'row' }} gap={3}>
+            <Button w="full" colorScheme="blue" onClick={handleCloseKarteModal}>
+              トークに戻る
+            </Button>
+            <Button w="full" variant="outline" colorScheme="purple" onClick={handleSubmitKarte}>
+              これで提出
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

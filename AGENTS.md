@@ -1,15 +1,16 @@
 # Career Carte Assistant – エージェント設計メモ
 
 ## 1. プロジェクトのゴールと開発方針
-- まずは **APIキー入力モーダル / チャットUI / カルテ更新ロジック / 音声入出力 / VRMステージ** の5要素が単体で安定動作する状態を作る。
-- その後、これらのコンポーネントを **スマートフォン（特に幅の狭い端末）でも読みやすく・操作しやすいよう最適化** していく段階的アプローチを取る。
-- 参考資料として調査済みの「次世代医療面接AIシステム」報告書を土台にし、日本型の事前問診モデルと海外アンビエントAIモデルの知見を融合したUI/UXを目指す。
+- **APIキー入力モーダル / チャットUI / カルテ更新ロジック / 音声入出力 / VRMステージ** の5要素は現状の実装で一通り動作確認済み。引き続き安定性と保守性を重視しつつ改善を行う。
+- UIはモバイル優先で整備する。最新ビルドでは **カルテ閲覧をモーダル化**（「今までの話を整理してカルテを確認」ボタン経由）し、VRMステージ右下にも進捗バッジを重ねることで狭い画面でも情報を把握しやすくした。
+- 調査済みの「次世代医療面接AIシステム」資料を土台に、日本型事前問診のスロット充填と海外アンビエントAIの書記体験を融合したUI/UX像を継続的に目指す。
 
 ## 2. 技術スタックとOpenAI APIの使い方
-- クライアント：Vite + React + TypeScript、UIはChakra UI、3DはThree.js + @pixiv/three-vrm。
-- 会話モデル：OpenAI公式の最新モデルガイド[^1]を参照し、ChatGPT 5.1（`gpt-5.1`）を既定値として `/v1/chat/completions` API から呼び出す。
-- 音声合成：OpenAI Text-to-Speechガイド[^2]に沿い `tts-1` を利用。UI側では発話中にVRM表情を Surprised 0.0–0.3 でランダム変化させる。
-- Whisper (STT) → GPT-5.1 → TTS-1 の一連処理は、将来的にRealtime APIへ置き換えられるよう関数分割しておく。
+- クライアント：Vite + React + TypeScript。UIはChakra UI、3D表現は Three.js + @pixiv/three-vrm（OrbitControls を固定視点化）。
+- 会話モデル：現状は `/v1/chat/completions` へ `gpt-4o` を指定して呼び出している（`buildSystemPrompt` 経由でモード別プロンプトを生成）。将来的に `gpt-5.1` + json_schema へ移行する計画を維持。
+- 音声合成：OpenAI Text-to-Speechガイド[^2]準拠で `tts-1` / voice `sage` を利用。再生時は 1.2x に設定し、発話中は Surprised 0.05–0.3 で VRM 表情に揺らぎを与える。
+- 音声入力：ブラウザ録音（MediaRecorder）→ Whisper (`whisper-1`) で STT → テキストエリアへ挿入という流れ。Realtime API 置き換えに備えて `processAudio` など関数単位で分割済み。
+- Whisper → GPT-4o → TTS-1 のシーケンスは今後 Realtime API へ移行できるよう hook/utility を小さくまとめている。
 
 [^1]: https://platform.openai.com/docs/guides/latest-model?lang=javascript  
 [^2]: https://platform.openai.com/docs/guides/text-to-speech
@@ -40,21 +41,21 @@
 ## 4. 現状のコンポーネント状況
 | コンポーネント | 状態 | 留意点 |
 | --- | --- | --- |
-| ApiKeyModal / LocalStorage | ✅ | いつでも再入力できる動線を維持 |
-| モード切替 (順次ヒアリング / 自由対話) | ✅ | 各モード専用プロンプトを定期的にチューニング |
-| Whisper STT / マイク録音 | ✅ | Realtime API 移行まではブラウザ録音の互換性を確認 |
-| GPT-5.1 チャット制御 | ✅ | `response_format: json_object` → 近いうち JSON Schema へ拡張 |
-| カルテ UI (7スロット) | ✅ | 狭い画面では折りたたみ or 水平スクロール検討 |
-| VRM ステージ | ✅ | 5秒バブル表示 + カメラ移動 + Blink/Nod/Surprised。低スペック端末でのFPS監視 |
+| ApiKeyModal / LocalStorage | ✅ | ローカルストレージへの保存・再入力導線を維持 |
+| モード切替 (順次ヒアリング / 自由対話) | ✅ | `buildSystemPrompt` でモード別プロンプトを生成。自由対話モードはカルテ強制整理フローを備える |
+| Whisper STT / マイク録音 | ✅ | MediaRecorder → `whisper-1`。ブラウザ互換性を継続監視 |
+| GPT チャット制御 | ✅ | 現状 `gpt-4o` + `response_format: json_object`。JSON Schema 化を次フェーズで実施予定 |
+| カルテ UI (7スロット) | ✅ | 通常は非表示。ボタン押下でモーダル表示（70dvh スクロール）& VRM 右下の進捗オーバーレイで常時進捗を把握可能 |
+| VRM ステージ | ✅ | 背景切替・Blink/Nod/Surprised 制御・進捗バッジ重ね表示。低スペック端末の FPS に注意 |
 
 ## 5. 次のマイルストーン
-1. **モバイル最適化**  
-   - チャットと VRM の縦並び / カルテ折りたたみ / マイクボタン位置の再考。  
+1. **モバイル最適化の継続**  
+   - チャット + VRM の縦並びは完了。次はモーダル内 CTA のタップ領域、マイクボタンの片手操作最適化を行う。  
 2. **Structured Output 対応**  
-   - `response_format` を JSON Schema に置き換え、KarteData を型安全に更新。  
-3. **Xserver VPS を前提としたフロント完成度向上**  
-   - GitHub Pages 環境でフロント側のデータ構造・UIを固め、後段の Node.js + MySQL + REST API 連携を想定したダミー実装を整備。  
-4. **バックエンド接続計画の具体化**  
-   - VPS (Xserver) での Node.js / MySQL 導入を見据え、エンドポイント設計や認証フローを文書化。これにより、完成したフロントをそのまま本番環境へ接続しやすくする。
+   - `response_format: json_schema` と KarteData の型連携、7スロットの厳格チェック、完了判定の明文化を実装。  
+3. **カルテ送信フローの実装**  
+   - 「これで提出」ボタンから待機画面（または送信完了ダイアログ）へ遷移させ、Xserver VPS 側 API との接続を見据えたダミー送信を用意。  
+4. **Xserver VPS / バックエンド計画**  
+   - Node.js + MySQL + REST API を想定したエンドポイント・認証フローの仕様書化。GitHub Pages 上のフロントをそのまま接続できるようデータ構造を固定する。
 
 以上をロードマップとして、まずは全ユニットの安定動作を確保し、その後モバイル表示と高度対話制御を段階的に実装していく。***
