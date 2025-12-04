@@ -637,7 +637,7 @@ function App() {
                         position="absolute"
                         top="2"
                         right="2"
-                        borderRadius="full"
+                        borderRadius="lg"
                       />
                     </Box>
                     <IconButton
