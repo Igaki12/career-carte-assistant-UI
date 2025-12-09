@@ -767,7 +767,7 @@ function App() {
                         resize="none"
                         rows={isTextareaExpanded ? 6 : 2}
                         flex="1"
-                        pr="12"
+                        pr="2"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && e.shiftKey) {
                             e.preventDefault();
