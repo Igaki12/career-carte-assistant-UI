@@ -148,11 +148,22 @@ function App() {
     const filled = (Object.keys(karte) as KarteKey[]).reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
     return Math.round((filled / 7) * 100);
   }, [karte]);
+  const isBusy = Boolean(processingText);
   const maxApiCalls = getMaxApiCalls();
   const conversationQuotaLimit = Math.max(mode === 'free' ? maxApiCalls - 1 : maxApiCalls, 0);
   const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
   const hasApiBudget = apiUsageCount < maxApiCalls;
   const hasUsedApi = apiUsageCount > 0;
+  const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
+  const textareaPlaceholder = useMemo(() => {
+    if (apiUsageCount === 0) {
+      return 'テキスト入力はこちら...';
+    }
+    if (remainingMessages === 0) {
+      return 'これ以上のテキストは送信することができません';
+    }
+    return `あと${remainingMessages}回メッセージを送信できます`;
+  }, [apiUsageCount, remainingMessages]);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -584,16 +595,27 @@ function App() {
     await runLLMProcess(messagesRef.current, true);
   }, [ensureApiKey, hasApiBudget, mode, notifyApiLimit, runLLMProcess]);
 
-  const handleOpenKarteModal = useCallback(() => {
+  const handleOpenKarteModal = useCallback(async () => {
+    if (isBusy) {
+      toast({
+        title: 'AIが処理中です',
+        description: '結果を待ってからもう一度お試しください。',
+        status: 'info',
+        duration: 3000,
+      });
+      return;
+    }
+
     if (mode === 'free') {
       if (hasApiBudget) {
-        void handleForceAnalysis();
+        await handleForceAnalysis();
       } else {
         notifyApiLimit('API制限に達したためカルテ整理はスキップされます。');
       }
     }
+
     setKarteModalOpen(true);
-  }, [handleForceAnalysis, hasApiBudget, mode, notifyApiLimit]);
+  }, [handleForceAnalysis, hasApiBudget, isBusy, mode, notifyApiLimit, toast]);
 
   const handleCloseKarteModal = useCallback(() => {
     setKarteModalOpen(false);
@@ -615,7 +637,7 @@ function App() {
 
   const apiStatusLabel = apiKey ? 'API Key: 設定済' : 'API Key: 未設定';
   const apiStatusColor = apiKey ? 'green' : 'gray';
-  const isBusy = Boolean(processingText);
+
 
   return (
     <Box bg="gray.100" minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 3, md: 6 }}>
@@ -750,6 +772,7 @@ function App() {
                       aria-label="音声入力"
                       icon={<FaMicrophone />}
                       colorScheme={isRecording ? 'red' : 'blue'}
+                      isDisabled={isBusy || !hasConversationQuota}
                       onClick={toggleRecording}
                       isRound
                       minW="56px"
@@ -760,7 +783,7 @@ function App() {
                         ref={textareaRef}
                         value={textValue}
                         onChange={(e) => setTextValue(e.target.value)}
-                        placeholder="テキスト入力はこちら..."
+                        placeholder={textareaPlaceholder}
                         borderRadius="xl"
                         bg="white"
                         borderColor="gray.200"
