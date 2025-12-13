@@ -6,6 +6,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body {
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
 *,
 *::before,
 *::after {
@@ -14,12 +20,15 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
   background-color: #f1f5f9;
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 100%;
 }
 
 ::-webkit-scrollbar {

@@ -143,6 +143,7 @@ function App() {
   const [isTextareaExpanded, setTextareaExpanded] = useState(false);
   const [isKarteModalOpen, setKarteModalOpen] = useState(false);
   const [apiUsageCount, setApiUsageCount] = useState(0);
+  const [hasSessionStarted, setSessionStarted] = useState(false);
   const toast = useToast();
   const karteProgress = useMemo(() => {
     const filled = (Object.keys(karte) as KarteKey[]).reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
@@ -153,7 +154,7 @@ function App() {
   const conversationQuotaLimit = Math.max(mode === 'free' ? maxApiCalls - 1 : maxApiCalls, 0);
   const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
   const hasApiBudget = apiUsageCount < maxApiCalls;
-  const hasUsedApi = apiUsageCount > 0;
+  const hasUsedApi = hasSessionStarted || apiUsageCount > 0;
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
   const textareaPlaceholder = useMemo(() => {
     if (apiUsageCount === 0) {
@@ -225,6 +226,7 @@ function App() {
     setProcessingText('');
     setConversationStarted(false);
     setApiUsageCount(0);
+    setSessionStarted(false);
   }, [mode]);
 
   useEffect(() => {
@@ -638,9 +640,15 @@ function App() {
   const apiStatusLabel = apiKey ? 'API Key: 設定済' : 'API Key: 未設定';
   const apiStatusColor = apiKey ? 'green' : 'gray';
 
-
   return (
-    <Box bg="gray.100" minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 3, md: 6 }}>
+    <Box
+      bg="gray.100"
+      minH="100dvh"
+      h="100dvh"
+      py={{ base: 4, md: 6 }}
+      px={{ base: 3, md: 6 }}
+      overflow="hidden"
+    >
       <ApiKeyModal
         isOpen={isApiModalOpen}
         currentKey={apiKey}
@@ -656,188 +664,223 @@ function App() {
         mx="auto"
         gap={4}
         bg="transparent"
+        h="100%"
+        minH={0}
+        overflow="hidden"
       >
-        <Box
-          bg="white"
-          borderRadius="2xl"
-          borderWidth="1px"
-          borderColor="gray.200"
-          boxShadow="sm"
-          p={{ base: 4, md: 6 }}
-        >
-          <Flex direction={{ base: 'column', md: 'row' }} align={{ base: 'flex-start', md: 'center' }} gap={4}>
-            <HStack spacing={3}>
-              <Icon as={FaUserDoctor} color="blue.500" boxSize={6} />
-              <Box>
-                <Text fontWeight="bold" fontSize="lg">
-                  AIキャリアメンター
-                </Text>
-                <Text fontSize="sm" color="gray.500">
-                  キャリアのモヤモヤを整理しながらVRMカウンセラーと対話しましょう
-                </Text>
-              </Box>
-            </HStack>
-            <Flex align="center" gap={3} ml={{ md: 'auto' }}>
-              <Badge colorScheme={apiStatusColor}>{apiStatusLabel}</Badge>
-              <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)}>
-                API設定
-              </Button>
-            </Flex>
-          </Flex>
-          <Flex
-            mt={4}
-            direction={{ base: 'column', md: 'row' }}
-            align={{ base: 'flex-start', md: 'center' }}
-            justify="space-between"
-            gap={3}
-          >
-            <ButtonGroup size="sm" variant="outline" isAttached>
-              <Button
-                onClick={() => handleModeChange('step')}
-                colorScheme={mode === 'step' ? 'blue' : undefined}
-                variant={mode === 'step' ? 'solid' : 'outline'}
-                isDisabled={hasUsedApi}
-              >
-                ① 順次ヒアリング
-              </Button>
-              <Button
-                onClick={() => handleModeChange('free')}
-                colorScheme={mode === 'free' ? 'purple' : undefined}
-                variant={mode === 'free' ? 'solid' : 'outline'}
-                isDisabled={hasUsedApi}
-              >
-                ② 自由対話＆分析
-              </Button>
-            </ButtonGroup>
-            <Text fontSize="sm" color="gray.600">
-              {MODE_DESCRIPTIONS[mode]}
-            </Text>
-          </Flex>
-        </Box>
 
-        <Flex direction={{ base: 'column', xl: 'row' }} gap={4}>
-          <Stack flex="1" spacing={4}>
+        <Flex
+          direction={{ base: 'column', lg: 'row' }}
+          gap={4}
+          flex="1"
+          minH={0}
+          overflow="hidden"
+        >
+          <Box
+            flexShrink={0}
+            w="full"
+            maxW={{ base: '100%', lg: '45%' }}
+            flex={{ base: 'none', lg: '0 0 45%' }}
+            minH={0}
+            display="flex"
+            flexDirection="column"
+          >
+            <Box
+              bg="white"
+              borderRadius="2xl"
+              borderWidth="1px"
+              borderColor="gray.200"
+              boxShadow="sm"
+              p={{ base: 4, md: 6 }}
+              display={!hasUsedApi ? 'block' : { base: 'none', md: 'block' }}
+              flexShrink={0}
+            >
+              <Flex direction="column" align={{ base: 'flex-start', md: 'center' }} gap={4}>
+                <HStack spacing={3}>
+                  <Icon as={FaUserDoctor} color="blue.500" boxSize={6} />
+                  <Box>
+                    <Text fontWeight="bold" fontSize="lg">
+                      AIキャリアメンター
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                      キャリアのモヤモヤを整理しながらVRMカウンセラーと対話しましょう
+                    </Text>
+                  </Box>
+                </HStack>
+                <Flex align={{ base: "flex-start" , md: "center" }} gap={3} >
+                  <Badge colorScheme={apiStatusColor}>{apiStatusLabel}</Badge>
+                  <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)}>
+                    API設定
+                  </Button>
+                </Flex>
+              </Flex>
+              <Flex
+                mt={4}
+                direction="column"
+                align={{ base: 'flex-start', md: 'center' }}
+                justify="space-between"
+                gap={3}
+              >
+                <ButtonGroup size="sm" variant="outline" isAttached>
+                  <Button
+                    onClick={() => handleModeChange('step')}
+                    colorScheme={mode === 'step' ? 'blue' : undefined}
+                    variant={mode === 'step' ? 'solid' : 'outline'}
+                    isDisabled={hasUsedApi}
+                  >
+                    ① 順次ヒアリング
+                  </Button>
+                  <Button
+                    onClick={() => handleModeChange('free')}
+                    colorScheme={mode === 'free' ? 'purple' : undefined}
+                    variant={mode === 'free' ? 'solid' : 'outline'}
+                    isDisabled={hasUsedApi}
+                  >
+                    ② 自由対話＆分析
+                  </Button>
+                </ButtonGroup>
+                <Text fontSize="sm" color="gray.600">
+                  {MODE_DESCRIPTIONS[mode]}
+                </Text>
+              </Flex>
+              <Button
+                mt={6}
+                colorScheme="blue"
+                size="md"
+                w="full"
+                onClick={() => setSessionStarted(true)}
+                isDisabled={hasUsedApi}
+              >
+                このモードでチャットを始める
+              </Button>
+            </Box>
+
             <VrmStage
               isSpeaking={isSpeaking}
               conversationStarted={conversationStarted}
               progress={karteProgress}
               isFreeMode={mode === 'free'}
             />
-            <Box
-              bg="white"
-              borderRadius="2xl"
-              borderWidth="1px"
-              borderColor="gray.200"
-              boxShadow="lg"
-              display="flex"
-              flexDirection="column"
-              minH="520px"
-            >
+          </Box>
+          <Flex direction="column" flex="1" gap={4} minH={0} display={hasUsedApi ? 'flex' : { base: 'none', md: 'flex' }}>
               <Box
-                ref={chatContainerRef}
+                bg="white"
+                borderRadius="2xl"
+                borderWidth="1px"
+                borderColor="gray.200"
+                boxShadow="lg"
+                display="flex"
+                flexDirection="column"
                 flex="1"
-                overflowY="auto"
-                px={{ base: 3, md: 4 }}
-                py={4}
-                bg="gray.50"
+                minH={0}
+                overflow="hidden"
               >
-                {messages.map((message, index) => {
-                  const isUser = message.role === 'user';
-                  return (
-                    <Flex key={`${message.role}-${index}-${message.content.slice(0, 8)}`} justify={isUser ? 'flex-end' : 'flex-start'} mb={3}>
-                      <Box
-                        bg={isUser ? 'blue.600' : 'white'}
-                        color={isUser ? 'white' : 'gray.800'}
-                        borderRadius="2xl"
-                        borderTopRightRadius={isUser ? '0' : '2xl'}
-                        borderTopLeftRadius={isUser ? '2xl' : '0'}
-                        px={4}
-                        py={3}
-                        boxShadow="sm"
-                        maxW="80%"
-                        fontSize="sm"
-                        whiteSpace="pre-wrap"
-                      >
-                        {message.content}
-                      </Box>
-                    </Flex>
-                  );
-                })}
-              </Box>
-              <ProcessingIndicator message={processingText} />
-              <Box borderTopWidth="1px" borderColor="gray.100" p={4}>
-                <Stack spacing={3}>
-                  <Flex gap={3} align="center">
-                    <IconButton
-                      aria-label="音声入力"
-                      icon={<FaMicrophone />}
-                      colorScheme={isRecording ? 'red' : 'blue'}
-                      isDisabled={isBusy || !hasConversationQuota}
-                      onClick={toggleRecording}
-                      isRound
-                      minW="56px"
-                      h="56px"
-                    />
-                    <Box position="relative" flex="1">
-                      <Textarea
-                        ref={textareaRef}
-                        value={textValue}
-                        onChange={(e) => setTextValue(e.target.value)}
-                        placeholder={textareaPlaceholder}
-                        borderRadius="xl"
-                        bg="white"
-                        borderColor="gray.200"
-                        resize="none"
-                        rows={isTextareaExpanded ? 6 : 2}
-                        flex="1"
-                        pr="2"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && e.shiftKey) {
-                            e.preventDefault();
-                            handleUserMessage(textValue);
-                          }
-                        }}
-                        isDisabled={isBusy}
-                      />
+                <Box
+                  ref={chatContainerRef}
+                  flex="1"
+                  minH={0}
+                  overflowY="auto"
+                  px={{ base: 3, md: 4 }}
+                  py={4}
+                  bg="gray.50"
+                >
+                  {messages.map((message, index) => {
+                    const isUser = message.role === 'user';
+                    return (
+                      <Flex key={`${message.role}-${index}-${message.content.slice(0, 8)}`} justify={isUser ? 'flex-end' : 'flex-start'} mb={3}>
+                        <Box
+                          bg={isUser ? 'blue.600' : 'white'}
+                          color={isUser ? 'white' : 'gray.800'}
+                          borderRadius="2xl"
+                          borderTopRightRadius={isUser ? '0' : '2xl'}
+                          borderTopLeftRadius={isUser ? '2xl' : '0'}
+                          px={4}
+                          py={3}
+                          boxShadow="sm"
+                          maxW="80%"
+                          fontSize="sm"
+                          whiteSpace="pre-wrap"
+                        >
+                          {message.content}
+                        </Box>
+                      </Flex>
+                    );
+                  })}
+                </Box>
+                <ProcessingIndicator message={processingText} />
+                <Box borderTopWidth="1px" borderColor="gray.100" p={4}>
+                  <Stack spacing={3}>
+                    <Flex gap={3} align="center">
                       <IconButton
-                        aria-label={isTextareaExpanded ? 'テキストエリアを縮小' : 'テキストエリアを拡張'}
-                        icon={<FaUpDown />}
-                        onClick={toggleTextareaExpanded}
-                        variant="solid"
-                        colorScheme="blackAlpha"
-                        opacity={0.6}
-                        _hover={{ opacity: 0.9 }}
-                        size="sm"
-                        position="absolute"
-                        top="2"
-                        right="2"
-                        borderRadius="lg"
+                        aria-label="音声入力"
+                        icon={<FaMicrophone />}
+                        colorScheme={isRecording ? 'red' : 'blue'}
+                        isDisabled={isBusy || !hasConversationQuota}
+                        onClick={toggleRecording}
+                        isRound
+                        minW="56px"
+                        h="56px"
                       />
-                    </Box>
-                    <IconButton
-                      aria-label="送信"
-                      icon={<FaPaperPlane />}
-                      colorScheme="blue"
-                      onClick={() => handleUserMessage(textValue)}
-                      isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
-                      borderRadius="full"
-                      minW="56px"
-                      h="56px"
-                    />
-                  </Flex>
-                  <Button
-                    leftIcon={<FaWandMagicSparkles />}
-                    variant="ghost"
-                    colorScheme="purple"
-                    onClick={handleOpenKarteModal}
-                    isDisabled={messages.length <= 1 || isBusy}
-                  >
-                    今までの話を整理してカルテを確認
-                  </Button>
-                </Stack>
+                      <Box position="relative" flex="1">
+                        <Textarea
+                          ref={textareaRef}
+                          value={textValue}
+                          onChange={(e) => setTextValue(e.target.value)}
+                          placeholder={textareaPlaceholder}
+                          borderRadius="xl"
+                          bg="white"
+                          borderColor="gray.200"
+                          resize="none"
+                          rows={isTextareaExpanded ? 6 : 2}
+                          flex="1"
+                          pr="2"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.shiftKey) {
+                              e.preventDefault();
+                              handleUserMessage(textValue);
+                            }
+                          }}
+                          isDisabled={isBusy}
+                        />
+                        <IconButton
+                          aria-label={isTextareaExpanded ? 'テキストエリアを縮小' : 'テキストエリアを拡張'}
+                          icon={<FaUpDown />}
+                          onClick={toggleTextareaExpanded}
+                          variant="solid"
+                          colorScheme="blackAlpha"
+                          opacity={0.6}
+                          _hover={{ opacity: 0.9 }}
+                          size="sm"
+                          position="absolute"
+                          top="2"
+                          right="2"
+                          borderRadius="lg"
+                        />
+                      </Box>
+                      <IconButton
+                        aria-label="送信"
+                        icon={<FaPaperPlane />}
+                        colorScheme="blue"
+                        onClick={() => handleUserMessage(textValue)}
+                        isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
+                        borderRadius="full"
+                        minW="56px"
+                        h="56px"
+                      />
+                    </Flex>
+                    <Button
+                      leftIcon={<FaWandMagicSparkles />}
+                      variant="ghost"
+                      colorScheme="purple"
+                      onClick={handleOpenKarteModal}
+                      isDisabled={messages.length <= 1 || isBusy}
+                    >
+                      今までの話を整理してカルテを確認
+                    </Button>
+                  </Stack>
+                </Box>
               </Box>
-            </Box>
-          </Stack>
+          </Flex>
         </Flex>
       </Flex>
       <Modal isOpen={isKarteModalOpen} onClose={handleCloseKarteModal} size="xl" scrollBehavior="inside" isCentered>
