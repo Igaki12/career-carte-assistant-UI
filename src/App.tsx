@@ -672,7 +672,7 @@ function App() {
       >
 
         <Flex
-          direction={{ base: 'column', lg: 'row' }}
+          direction={{ base: 'column', md: 'row' }}
           gap={4}
           flex="1"
           minH={0}
@@ -681,8 +681,8 @@ function App() {
           <Box
             flexShrink={0}
             w="full"
-            maxW={{ base: '100%', lg: '45%' }}
-            flex={{ base: 'none', lg: '0 0 45%' }}
+            maxW={{ base: '100%', md: '45%' }}
+            flex={{ base: 'none', md: '0 0 45%' }}
             minH={0}
             display="flex"
             flexDirection="column"
