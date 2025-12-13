@@ -25,6 +25,7 @@ import ApiKeyModal from './components/ApiKeyModal';
 import KartePanel from './components/KartePanel';
 import ProcessingIndicator from './components/ProcessingIndicator';
 import VrmStage from './components/VrmStage';
+import { KARTE_KEYS } from './types';
 import type { ConversationMessage, KarteData, KarteKey, LlmResponse, ModeType } from './types';
 
 const INITIAL_KARTE: KarteData = {
@@ -146,8 +147,8 @@ function App() {
   const [hasSessionStarted, setSessionStarted] = useState(false);
   const toast = useToast();
   const karteProgress = useMemo(() => {
-    const filled = (Object.keys(karte) as KarteKey[]).reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
-    return Math.round((filled / 7) * 100);
+    const filled = KARTE_KEYS.reduce((acc, key) => (karte[key] ? acc + 1 : acc), 0);
+    return Math.round((filled / KARTE_KEYS.length) * 100);
   }, [karte]);
   const isBusy = Boolean(processingText);
   const maxApiCalls = getMaxApiCalls();
@@ -406,7 +407,8 @@ function App() {
           const updates = parsed.updated_karte as Partial<Record<KarteKey, string>>;
           setKarte((prev) => {
             const next: KarteData = { ...prev };
-            (Object.entries(updates) as [KarteKey, string | null][]).forEach(([key, value]) => {
+            KARTE_KEYS.forEach((key) => {
+              const value = updates[key];
               if (value) {
                 next[key] = value;
               }
@@ -887,18 +889,21 @@ function App() {
         <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
         <ModalContent borderRadius="2xl" mx={{ base: 3, md: 0 }} maxH="90dvh" display="flex" flexDirection="column">
           <ModalHeader>
-            <Text fontSize="lg" fontWeight="bold">
-              キャリアカルテを確認
-            </Text>
+            <Flex align="center" justify="left" gap={3} wrap="wrap">
+              <Text fontSize="lg" fontWeight="bold">
+                キャリアカルテを確認
+              </Text>
+              <Badge colorScheme={karteProgress >= 100 ? 'green' : 'purple'} borderRadius="md" size="lg">
+                {karteProgress}%
+              </Badge>
+            </Flex>
             <Text fontSize="sm" color="gray.500" mt={1}>
-              7つの主訴項目をスクロールしながら確認してください
+              作成されたカルテをスクロールしながら確認してください
             </Text>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody pt={0}>
-            <Box maxH="70dvh" overflowY="auto">
               <KartePanel data={karte} />
-            </Box>
           </ModalBody>
           <ModalFooter flexDir={{ base: 'column', sm: 'row' }} gap={3}>
             <Button w="full" colorScheme="blue" onClick={handleCloseKarteModal}>

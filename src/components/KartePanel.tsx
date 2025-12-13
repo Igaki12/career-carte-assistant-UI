@@ -1,4 +1,5 @@
-import { Badge, Box, Flex, Stack, Text } from '@chakra-ui/react';
+import { Box, Stack, Text } from '@chakra-ui/react';
+import { KARTE_KEYS } from '../types';
 import type { KarteData, KarteKey } from '../types';
 
 const LABELS: Record<KarteKey, string> = {
@@ -16,34 +17,16 @@ type Props = {
 };
 
 const KartePanel = ({ data }: Props) => {
-  const filledCount = (Object.keys(data) as KarteKey[]).reduce((acc, key) => (data[key] ? acc + 1 : acc), 0);
-  const progress = Math.round((filledCount / 7) * 100);
-
   return (
     <Box
       bg="white"
       borderRadius="2xl"
-      borderWidth="1px"
-      borderColor="gray.200"
-      boxShadow="lg"
-      p={4}
+      pt={6}
+      pb={6}
       w="full"
-      maxH={{ base: 'none', xl: 'calc(100vh - 160px)' }}
-      overflowY="auto"
     >
-      <Flex justify="space-between" align="center" mb={3}>
-        <Text fontWeight="bold" fontSize="sm">
-          <Text as="span" mr={2} color="blue.500">
-            📋
-          </Text>
-          キャリアカルテ
-        </Text>
-        <Badge colorScheme={progress === 100 ? 'green' : 'purple'} borderRadius="md">
-          {progress}%
-        </Badge>
-      </Flex>
       <Stack spacing={3}>
-        {(Object.keys(LABELS) as KarteKey[]).map((key) => {
+        {KARTE_KEYS.map((key) => {
           const value = data[key];
           return (
             <Box key={key}>

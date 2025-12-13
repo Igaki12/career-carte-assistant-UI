@@ -16,3 +16,5 @@ export type LlmResponse = {
   updated_karte?: Partial<Record<KarteKey, string>>;
   is_complete?: boolean;
 };
+
+export const KARTE_KEYS: readonly KarteKey[] = Object.freeze(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
