@@ -5,13 +5,13 @@ function Home() {
   return (
     <Box minH="100vh" bgGradient="linear(to-b, gray.900, gray.800)" color="white">
       <Container maxW="3xl" py={{ base: 16, md: 24 }}>
-        <Stack spacing={6}>
+        <Stack spacing={8}>
           <Heading size="2xl" lineHeight="short">
             Career Karte Assistant
           </Heading>
           <Text fontSize="lg" color="gray.200">
-            キャリアのモヤモヤを整理できるAIアシスタントです。カルテ形式で思考を整え、
-            あなたに合った伴走体験を提供します。
+            キャリアの棚卸しや目標整理をサポートするAIコンシェルジュです。面談カルテを使って、
+            思考の抜け漏れを減らしながら次のアクションを一緒に考えていきます。
           </Text>
           <Button
             as={RouterLink}
@@ -21,8 +21,19 @@ function Home() {
             alignSelf="flex-start"
             px={10}
           >
-            カルテを開く
+            AI面談を始める
           </Button>
+          <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
+            <Button as={RouterLink} to="/user" variant="outline" colorScheme="teal">
+              ユーザーダッシュボード画面
+            </Button>
+            <Button as={RouterLink} to="/consultant" variant="outline" colorScheme="purple">
+              コンサルタント画面
+            </Button>
+            <Button as={RouterLink} to="/admin" variant="outline" colorScheme="orange">
+              管理者画面
+            </Button>
+          </Stack>
         </Stack>
       </Container>
     </Box>
