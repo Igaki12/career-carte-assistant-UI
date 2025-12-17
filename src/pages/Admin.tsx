@@ -522,7 +522,7 @@ function Admin() {
   );
 
   return (
-    <Box bg="gray.50" maxH="100vh" py={12} overflowY="scroll">
+    <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
       <Container maxW="7xl">
         <Stack spacing={10}>
           <Box bg="white" borderRadius="xl" boxShadow="sm" px={{ base: 6, lg: 10 }} py={8}>
