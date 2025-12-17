@@ -226,7 +226,7 @@ function ConsultantHome() {
             <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiUsers /> 1. 対象ユーザカルテ閲覧・修正
+                  <FiUsers /> 対象ユーザカルテ閲覧・修正
                 </Heading>
                 <Text color="gray.600">担当ユーザーのカルテを確認し、コメントを追記できます。</Text>
                 <Button variant="outline" onClick={userListDisclosure.onToggle}>
@@ -270,7 +270,7 @@ function ConsultantHome() {
             <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiRefreshCw /> 2. コンサルアカウント確認
+                  <FiRefreshCw /> コンサルアカウント確認
                 </Heading>
                 <Text color="gray.600">登録情報の確認とパスワード管理を行います。</Text>
                 <Button variant="outline" onClick={accountDisclosure.onToggle}>
@@ -316,7 +316,7 @@ function ConsultantHome() {
             <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiMail /> 3. メール問い合わせ
+                  <FiMail /> メール問い合わせ
                 </Heading>
                 <Text color="gray.600">管理者またはユーザーへの連絡内容を作成します。</Text>
                 <Button colorScheme="teal" onClick={inquiryModalDisclosure.onOpen}>
@@ -328,7 +328,7 @@ function ConsultantHome() {
             <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiCpu /> 4. クライアントAI練習面談
+                  <FiCpu /> クライアントAI練習面談
                 </Heading>
                 <Text color="gray.600">公開準備中の練習用モードです。更新情報をお待ちください。</Text>
                 <Button variant="outline" onClick={handleTrainingClick}>
@@ -340,7 +340,7 @@ function ConsultantHome() {
             <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiBell /> 5. ニュース通知
+                  <FiBell /> ニュース通知
                 </Heading>
                 <Text color="gray.600">管理者からのお知らせをまとめて確認できます。</Text>
                 <Button variant="outline" onClick={newsDisclosure.onToggle}>
