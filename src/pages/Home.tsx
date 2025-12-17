@@ -7,7 +7,7 @@ function Home() {
       <Container maxW="3xl" py={{ base: 16, md: 24 }}>
         <Stack spacing={6}>
           <Heading size="2xl" lineHeight="short">
-            Career Carte Assistant
+            Career Karte Assistant
           </Heading>
           <Text fontSize="lg" color="gray.200">
             キャリアのモヤモヤを整理できるAIアシスタントです。カルテ形式で思考を整え、

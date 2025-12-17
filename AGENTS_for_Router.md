@@ -21,10 +21,10 @@
 src/
 ├── components/       # 共通UIコンポーネント
 ├── pages/            # ルーティング単位のページコンポーネント
-│   ├── Home.jsx      # [NEW] 親ページ（マイページ/ランディングページ）
-│   └── AppMain.jsx   # [MOVED] 既存のアプリ機能をここに移植
-├── App.jsx           # ルーティング定義 (Routes)
-├── main.jsx          # エントリーポイント (Router, Provider設定)
+│   ├── Home.tsx      # [NEW] 親ページ（マイページ/ランディングページ）
+│   └── AppMain.tsx   # [MOVED] 既存のアプリ機能をここに移植
+├── App.tsx           # ルーティング定義 (Routes)
+├── main.tsx          # エントリーポイント (Router, Provider設定)
 └── ...
 ````
 
@@ -40,16 +40,16 @@ npm install react-router-dom
 
 #### Phase 2: コンポーネントの分離
 
-1.  **`src/pages/AppMain.jsx` の作成**
-      * 現在の `App.jsx` の中身（ビジネスロジックとUI）をまるごと移動する。
+1.  **`src/pages/AppMain.tsx` の作成**
+      * 現在の `App.tsx` の中身（ビジネスロジックとUI）をまるごと移動する。
       * 必要な `import` 文も移動させること。
-2.  **`src/pages/Home.jsx` の作成**
+2.  **`src/pages/Home.tsx` の作成**
       * ポートフォリオのトップページとして新規作成。
       * Chakra UI を使用し、`/app` への遷移ボタン (`Link` コンポーネント) を配置。
 
 #### Phase 3: ルーティングの実装
 
-**`src/main.jsx` (Entry Point)**
+**`src/main.tsx` (Entry Point)**
 GitHub Pages対策として `HashRouter` を採用する。
 
 ```jsx
@@ -70,7 +70,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 ```
 
-**`src/App.jsx` (Routing Definition)**
+**`src/App.tsx` (Routing Definition)**
 
 ```jsx
 import { Routes, Route } from 'react-router-dom'
@@ -102,7 +102,7 @@ export default App
 #### A. フロントエンドの変更 (React)
 
 1.  **Routerの変更:**
-      * `src/main.jsx` の `HashRouter` を `BrowserRouter` に変更する。これにより URL から `#` が消え、SEOや一般的なWebアプリの挙動になる。
+      * `src/main.tsx` の `HashRouter` を `BrowserRouter` に変更する。これにより URL から `#` が消え、SEOや一般的なWebアプリの挙動になる。
 2.  **API通信:**
       * Node.js APIへのリクエストには環境変数 (`VITE_API_URL`) を使用し、開発環境(localhost)と本番環境(VPS)で接続先を切り替えられるようにコードを記述しておく。
 
@@ -165,9 +165,9 @@ export default defineConfig({
 
 上記の設計図では、**「将来のVPS化」** を考慮して以下の点を盛り込んでいます。
 
-1.  **Routerの置換容易性:** `HashRouter` (GitHub Pages用) と `BrowserRouter` (VPS用) は互換性が高いため、`import` を書き換えるだけで移行できるよう `main.jsx` に集約しています。
+1.  **Routerの置換容易性:** `HashRouter` (GitHub Pages用) と `BrowserRouter` (VPS用) は互換性が高いため、`import` を書き換えるだけで移行できるよう `main.tsx` に集約しています。
 2.  **Apacheの設定例:** SPAをApacheで動かす場合、**「実ファイルがないURL（例: `/app`）にアクセスしたときに 404 エラーを出さず、`index.html` に転送してReactに処理させる」** 設定（RewriteRule）が必須になります。この設定例を設計図に含めておくことで、将来「VPSに置いたらページ遷移で404になる」という典型的なトラブルを防げます。
 3.  **ProxyPassの想定:** Node.jsをバックエンドにする場合、フロントエンドと同じドメインでAPIを提供するためにApacheの「リバースプロキシ」機能を使うのが一般的です。その構成案も記述しています。
 
 **次のステップ:**
-このファイルを保存して、リファクタリングを開始する準備はよろしいでしょうか？必要であれば、最初のステップである「`Home.jsx` の具体的なコード案」などを作成することも可能です。
+このファイルを保存して、リファクタリングを開始する準備はよろしいでしょうか？必要であれば、最初のステップである「`Home.tsx` の具体的なコード案」などを作成することも可能です。
