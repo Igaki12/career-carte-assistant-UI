@@ -1,36 +1,112 @@
+
 # AGENTS_for_Router.md
-## Project Migration Design: SPA Refactoring & Future VPS Roadmap
+
+## Project Migration Design: Multi-Role SPA Refactoring & Future VPS Roadmap
 
 ### 1. 概要 (Overview)
-現在の単一機能Reactアプリを、将来的な拡張性とVPS運用を見据えた **SPA (Single Page Application)** 構成へリファクタリングする。
-当面は GitHub Pages (`/docs` ディレクトリビルド) での運用を継続するため、ルーティングには `HashRouter` を採用するが、将来的に `BrowserRouter` (VPS/Node.js環境) へスムーズに移行できる設計とする。
+
+現在の単一機能Reactアプリを、将来的な拡張性とVPS運用を見据えた **役割別 SPA (Single Page Application)** 構成へリファクタリングする。
+
+今回の改修では、**ランディングページ (Home)** を入り口とし、ユーザー・コンサルタント・管理者それぞれの専用ダッシュボードへ遷移する構成とする。
+当面は GitHub Pages (`/docs` ディレクトリビルド) での運用を継続するため `HashRouter` を採用するが、将来的に `BrowserRouter` (VPS/Node.js環境) へスムーズに移行できる設計とする。
 
 ### 2. 技術スタック (Tech Stack)
-* **Frontend:** React (Vite), Chakra UI
-* **Routing:** React Router DOM (v6)
-* **Hosting (Current):** GitHub Pages (Static /docs)
-* **Hosting (Future):** VPS (Ubuntu/CentOS) + Node.js (Express) + Apache2 (Reverse Proxy) + DB
 
----
-
-### 3. ディレクトリ構成の変更 (Directory Structure)
-
-既存のロジックを `features` または `pages` に分離し、関心事を分離する。
-
-```text
-src/
-├── components/       # 共通UIコンポーネント
-├── pages/            # ルーティング単位のページコンポーネント
-│   ├── Home.tsx      # [NEW] 親ページ（マイページ/ランディングページ）
-│   └── AppMain.tsx   # [MOVED] 既存のアプリ機能をここに移植
-├── App.tsx           # ルーティング定義 (Routes)
-├── main.tsx          # エントリーポイント (Router, Provider設定)
-└── ...
-````
+  * **Frontend:** React (Vite), Chakra UI
+  * **Routing:** React Router DOM (v6)
+  * **Hosting (Current):** GitHub Pages (Static /docs)
+  * **Hosting (Future):** VPS (Ubuntu/CentOS) + Node.js (Express) + Apache2 (Reverse Proxy) + DB
 
 -----
 
-### 4. 実装ステップ (Implementation Steps)
+### 3. ディレクトリ構成の変更 (Directory Structure)
+
+役割ごとにページコンポーネントを分割し、将来的な権限管理（AuthGuard）を見据えた構成にする。
+
+```text
+src/
+├── components/           # 共通UIコンポーネント (Header, Button, Cardなど)
+├── features/             # (Optional) 機能ごとのロジック
+├── pages/                # ルーティング単位のページコンポーネント
+│   ├── Home.tsx          # ランディングページ & ログイン入り口
+│   ├── UserHome.tsx      # 【一般ユーザー用】ダッシュボード
+│   ├── ConsultantHome.tsx # 【コンサルタント用】ダッシュボード
+│   ├── Admin.tsx         # 【管理者用】管理画面
+│   └── AppMain.tsx       # AI面談機能（既存アプリの移植先）
+├── App.tsx               # ルーティング定義 (Routes)
+├── main.tsx              # エントリーポイント (Router設定)
+└── ...
+```
+
+-----
+
+### 4. ページ詳細と機能要件 (Page Requirements)
+
+#### A. Home.tsx (Landing Page)
+
+全てのユーザーの入り口となるトップページ。
+
+  * **主な役割:** サービス紹介、各ロールへの遷移。
+  * **実装内容:**
+      * ヒーローエリア（キャッチコピー等）。
+      * **仮設リンクボタン:** UserHome, ConsultantHome, Admin への直接リンク（開発用）。
+      * **将来のTODO:** ログインフォーム（ID/Pass）の実装。認証成功後に各Homeへリダイレクトするロジックの配置場所となる。
+
+#### B. UserHome.tsx (User Dashboard)
+
+一般ユーザー（求職者・社員など）のマイページ。
+
+  * **表示データ:**
+      * ID, 名前, 会社名, 職種, Role
+  * **実装機能:**
+    1.  **AI面談スタート:** `AppMain.tsx` への遷移ボタン。
+    2.  **アカウント情報確認:** 自身の登録情報の閲覧。
+    3.  **カルテ確認・出力:** 過去の面談結果（カルテ）の閲覧とCSVダウンロード。
+    4.  **ユーザアンケート:** フィードバック用フォーム。
+
+#### C. ConsultantHome.tsx (Consultant Dashboard)
+
+キャリアコンサルタント用の管理画面。
+
+  * **表示データ:**
+      * ID, 名前, 会社名, 職種, Role, **担当ユーザー一覧**
+  * **実装機能:**
+    1.  **クライアントAI練習面談:** （未実装・リンクのみ設置予定）コンサルタント自身の練習用モード。
+    2.  **コンサルアカウント確認:** 自身の情報閲覧。
+    3.  **対象ユーザカルテ閲覧・修正:** 担当するユーザーのカルテを確認し、コメント追記や修正を行う機能。
+    4.  **メール問い合わせ:** 管理者またはユーザーへの問い合わせフォーム/メーラー起動。
+
+#### D. Admin.tsx (Administrator Dashboard)
+
+システム全体の管理画面。
+
+  * **実装機能:**
+    1.  **ユーザー追加 (CSV一括):** 多数のユーザーを一括登録する機能。
+    2.  **アカウント管理:** ユーザー・コンサルタント情報の閲覧・修正・削除。
+    3.  **LLM使用回数設定:** ロールや契約プランごとのAI利用上限設定。
+
+#### E. AppMain.tsx (Core Feature)
+
+  * **内容:** 既存の `App.tsx` にある「AI面談チャット機能」一式。
+
+-----
+
+### 5. 追加提案：一般的なB2B/HRアプリ機能 (Feature Suggestions)
+
+上記要件に加え、今後検討すべき機能を提案します。
+
+| カテゴリ | 機能名 | 解説 |
+| :--- | :--- | :--- |
+| **セキュリティ** | パスワードリセット機能 | 管理者の手を煩わせないための必須機能。 |
+| **セキュリティ** | 操作ログ (Audit Log) | 「誰がいつ誰のカルテを見たか」の記録。プライバシー情報の扱いにおいて重要。 |
+| **UX/通知** | ステータス管理 | ユーザーの状況（未面談・面談中・完了・要確認）を可視化するバッジ表示。 |
+| **通知** | メール/Slack通知 | ユーザーが面談を完了した際、担当コンサルタントへ自動通知する機能。 |
+| **規約** | 利用規約・プライバシーポリシー | 企業導入時に必須となる法的文書ページへのリンク。 |
+| **管理** | お知らせ配信 (News) | Adminから全ユーザーまたは特定ロールへメッセージを表示する機能。 |
+
+-----
+
+### 6. 実装ステップ (Implementation Steps)
 
 #### Phase 1: 依存関係の追加
 
@@ -38,52 +114,39 @@ src/
 npm install react-router-dom
 ```
 
-#### Phase 2: コンポーネントの分離
+#### Phase 2: コンポーネントの分離・作成
 
-1.  **`src/pages/AppMain.tsx` の作成**
-      * 現在の `App.tsx` の中身（ビジネスロジックとUI）をまるごと移動する。
-      * 必要な `import` 文も移動させること。
-2.  **`src/pages/Home.tsx` の作成**
-      * ポートフォリオのトップページとして新規作成。
-      * Chakra UI を使用し、`/app` への遷移ボタン (`Link` コンポーネント) を配置。
+1.  **`AppMain.tsx`**: 既存ロジックを移動。
+2.  **`Home.tsx`**: ランディングページUI作成（Chakra UI使用）。ログイン機能は「Coming Soon」またはモックで配置。
+3.  **`UserHome.tsx`, `ConsultantHome.tsx`, `Admin.tsx`**: それぞれの要件に基づいた仮のUI（ボタン配置など）を作成。
 
 #### Phase 3: ルーティングの実装
-
-**`src/main.tsx` (Entry Point)**
-GitHub Pages対策として `HashRouter` を採用する。
-
-```jsx
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { ChakraProvider } from '@chakra-ui/react'
-import { HashRouter } from 'react-router-dom' // 将来的に BrowserRouter に変更可能
-import App from './App'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ChakraProvider>
-      <HashRouter>
-        <App />
-      </HashRouter>
-    </ChakraProvider>
-  </React.StrictMode>,
-)
-```
 
 **`src/App.tsx` (Routing Definition)**
 
 ```jsx
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import Home from './pages/Home'
+import UserHome from './pages/UserHome'
+import ConsultantHome from './pages/ConsultantHome'
+import Admin from './pages/Admin'
 import AppMain from './pages/AppMain'
 import { Box } from '@chakra-ui/react'
 
 function App() {
   return (
-    <Box>
-      {/* 必要に応じて共通ヘッダーなどをここに配置可能 */}
+    <Box minH="100vh">
       <Routes>
+        {/* Public Landing & Login */}
         <Route path="/" element={<Home />} />
+        
+        {/* Role Based Dashboards */}
+        <Route path="/user" element={<UserHome />} />
+        <Route path="/consultant" element={<ConsultantHome />} />
+        <Route path="/admin" element={<Admin />} />
+        
+        {/* Core Feature (AI Interview) */}
+        {/* 将来的に /app/:sessionId のようにIDを渡す想定 */}
         <Route path="/app" element={<AppMain />} />
       </Routes>
     </Box>
@@ -95,79 +158,50 @@ export default App
 
 -----
 
-### 5. 将来的なVPS移行へのロードマップ (Future Roadmap: VPS Migration)
+### 7. 将来的なVPS移行へのロードマップ (Future Roadmap: VPS Migration)
 
-将来、Node.jsバックエンドやDBを導入し、VPS (Apache2) で公開する際の変更点メモ。
+将来、Node.jsバックエンドやDBを導入し、VPS (Apache2) で公開する際の変更点メモ。（変更なし）
 
 #### A. フロントエンドの変更 (React)
 
-1.  **Routerの変更:**
-      * `src/main.tsx` の `HashRouter` を `BrowserRouter` に変更する。これにより URL から `#` が消え、SEOや一般的なWebアプリの挙動になる。
-2.  **API通信:**
-      * Node.js APIへのリクエストには環境変数 (`VITE_API_URL`) を使用し、開発環境(localhost)と本番環境(VPS)で接続先を切り替えられるようにコードを記述しておく。
+1.  **Routerの変更:** `HashRouter` → `BrowserRouter` (SEO, URL美化)。
+2.  **API通信:** 環境変数 (`VITE_API_URL`) で接続先を管理。
 
 #### B. サーバー構成 (VPS / Apache2 / Node.js)
 
-静的ファイル配信とAPIサーバーを同居させる構成案。
+  * **Apache Reverse Proxy:** フロントエンド(80)へのアクセスと、API(3000)へのアクセスを振り分ける。
+  * **Fallback設定:** SPA特有の404エラーを防ぐため、実ファイルが存在しないパスは全て `index.html` へRewriteする設定を入れる。
 
-  * **Apache設定 (Reverse Proxy & SPA Fallback):**
-    Apacheをフロントに置き、Reactのビルドファイルへのアクセスと、Node.jsへのAPIリクエストを振り分ける。
-
-    *Apache VirtualHost Config Example:*
-
-    ```apache
-    <VirtualHost *:80>
-        ServerName your-domain.com
-        DocumentRoot /var/www/your-app/dist
-
-        # 1. API Requests -> Node.js (Port 3000)
-        ProxyPass /api http://localhost:3000/api
-        ProxyPassReverse /api http://localhost:3000/api
-
-        # 2. React SPA Routing Fallback (重要)
-        # 実ファイルが存在しないパスへのアクセスはすべて index.html を返す
-        <Directory /var/www/your-app/dist>
-            RewriteEngine On
-            RewriteBase /
-            RewriteRule ^index\.html$ - [L]
-            RewriteCond %{REQUEST_FILENAME} !-f
-            RewriteCond %{REQUEST_FILENAME} !-d
-            RewriteRule . /index.html [L]
-        </Directory>
-    </VirtualHost>
-    ```
+*(詳細なApache設定例は前バージョンを参照)*
 
 #### C. デプロイフロー
 
-1.  **Local:** `npm run build` でビルド。
-2.  **VPS:** 生成された `dist` (または `docs`) フォルダの中身を `/var/www/your-app/dist` に配置。
-3.  **Node.js:** バックエンドコードを配置し、PM2などで常時起動。
+1.  **Local:** `npm run build`
+2.  **VPS:** `/var/www/your-app/dist` に配置。
 
 -----
 
-### 6. Vite設定 (Current Status)
+### 8\. Vite設定 (Current Status)
 
-現状の `vite.config.js` は GitHub Pages 用に以下を維持する。
+GitHub Pages用の設定を維持。
 
 ```javascript
 export default defineConfig({
   plugins: [react()],
-  base: '/YOUR_REPOSITORY_NAME/', // リポジトリ名
+  base: '/YOUR_REPOSITORY_NAME/', 
   build: {
     outDir: 'docs',
   }
 })
 ```
 
----
+-----
 
-### 解説：将来性についてのポイント
+### 解説：設計のポイント
 
-上記の設計図では、**「将来のVPS化」** を考慮して以下の点を盛り込んでいます。
-
-1.  **Routerの置換容易性:** `HashRouter` (GitHub Pages用) と `BrowserRouter` (VPS用) は互換性が高いため、`import` を書き換えるだけで移行できるよう `main.tsx` に集約しています。
-2.  **Apacheの設定例:** SPAをApacheで動かす場合、**「実ファイルがないURL（例: `/app`）にアクセスしたときに 404 エラーを出さず、`index.html` に転送してReactに処理させる」** 設定（RewriteRule）が必須になります。この設定例を設計図に含めておくことで、将来「VPSに置いたらページ遷移で404になる」という典型的なトラブルを防げます。
-3.  **ProxyPassの想定:** Node.jsをバックエンドにする場合、フロントエンドと同じドメインでAPIを提供するためにApacheの「リバースプロキシ」機能を使うのが一般的です。その構成案も記述しています。
+  * **拡張性:** 最初からページを `User`, `Consultant`, `Admin` に分けておくことで、将来「コンサルタントだけに見せたいデータ」などが発生した際、コードの混在を防げます。
+  * **Homeの役割:** 将来的に `Home.tsx` に認証ロジック（Firebase Authや自社認証）を組み込みます。「ログインしていれば各Homeへ、していなければログイン画面へ」という分岐はこのコンポーネントまたは `App.tsx` のGuardコンポーネントで行います。
+  * **VPS準備:** VPS移行時の最大の障壁である「ルーティング設定（404問題）」に対する解決策を設計段階で保持しています。
 
 **次のステップ:**
-このファイルを保存して、リファクタリングを開始する準備はよろしいでしょうか？必要であれば、最初のステップである「`Home.tsx` の具体的なコード案」などを作成することも可能です。
+リファクタリングを開始するにあたり、まずは **「空のページコンポーネント（Home, UserHome等）を5つ作成し、ルーティングを通す」** ことから始めるのがスムーズです。
