@@ -191,7 +191,7 @@ function ConsultantHome() {
   };
 
   return (
-    <Box bg="gray.50" maxH="100vh" py={12} overflowY="auto">
+    <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
           <Box
