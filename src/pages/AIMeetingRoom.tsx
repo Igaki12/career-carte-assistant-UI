@@ -128,7 +128,7 @@ ${karteJson}
 `.trim();
 };
 
-function AppMain() {
+function AIMeetingRoom() {
   const [mode, setMode] = useState<ModeType>('step');
   const [apiKey, setApiKey] = useState('');
   const [isApiModalOpen, setApiModalOpen] = useState(false);
@@ -919,4 +919,4 @@ function AppMain() {
   );
 }
 
-export default AppMain;
+export default AIMeetingRoom;

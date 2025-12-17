@@ -32,7 +32,7 @@ src/
 │   ├── UserHome.tsx      # 【一般ユーザー用】ダッシュボード
 │   ├── ConsultantHome.tsx # 【コンサルタント用】ダッシュボード
 │   ├── Admin.tsx         # 【管理者用】管理画面
-│   └── AppMain.tsx       # AI面談機能（既存アプリの移植先）
+│   └── AIMeetingRoom.tsx # AI面談機能（既存アプリの移植先）
 ├── App.tsx               # ルーティング定義 (Routes)
 ├── main.tsx              # エントリーポイント (Router設定)
 └── ...
@@ -59,7 +59,7 @@ src/
   * **表示データ:**
       * ID, 名前, 会社名, 職種, Role, ステータス, タグ
   * **実装機能:**
-    1.  **AI面談スタート:** `AppMain.tsx` への遷移ボタン。
+1.  **AI面談スタート:** `AIMeetingRoom.tsx` への遷移ボタン。
     2.  **アカウント情報確認:** 自身の登録情報の閲覧。パスワードのリセット機能。
     3.  **カルテ確認・出力:** 過去の面談結果（カルテ）の閲覧とCSV/PDFダウンロード。
     4.  **ユーザアンケート:** フィードバック用フォーム。
@@ -87,7 +87,7 @@ src/
     2.  **アカウント管理:** ユーザー・コンサルタント情報・操作ログの閲覧・修正・削除。絞り込み検索機能。
     3.  **LLM使用回数設定:** ロールや契約プランごとのAI利用上限設定。
 
-#### E. AppMain.tsx (Core Feature)
+#### E. AIMeetingRoom.tsx (Core Feature)
 
   * **内容:** 既存の `App.tsx` にある「AI面談チャット機能」一式。
 
@@ -118,7 +118,7 @@ npm install react-router-dom
 
 #### Phase 2: コンポーネントの分離・作成
 
-1.  **`AppMain.tsx`**: 既存ロジックを移動。
+1.  **`AIMeetingRoom.tsx`**: 既存ロジックを移動。
 2.  **`Home.tsx`**: ランディングページUI作成（Chakra UI使用）。ログイン機能は「Coming Soon」またはモックで配置。
 3.  **`UserHome.tsx`, `ConsultantHome.tsx`, `Admin.tsx`**: それぞれの要件に基づいた仮のUI（ボタン配置など）を作成。
 
@@ -132,7 +132,7 @@ import Home from './pages/Home'
 import UserHome from './pages/UserHome'
 import ConsultantHome from './pages/ConsultantHome'
 import Admin from './pages/Admin'
-import AppMain from './pages/AppMain'
+import AIMeetingRoom from './pages/AIMeetingRoom'
 import { Box } from '@chakra-ui/react'
 
 function App() {
@@ -149,7 +149,7 @@ function App() {
         
         {/* Core Feature (AI Interview) */}
         {/* 将来的に /app/:sessionId のようにIDを渡す想定 */}
-        <Route path="/app" element={<AppMain />} />
+        <Route path="/app" element={<AIMeetingRoom />} />
       </Routes>
     </Box>
   )
