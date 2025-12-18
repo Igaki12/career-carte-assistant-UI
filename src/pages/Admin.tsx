@@ -249,6 +249,7 @@ function Admin() {
     limit: initialLlmTiers[0].limit.toString(),
     notes: initialLlmTiers[0].notes,
   });
+  const [activeSection, setActiveSection] = useState<'user' | 'consultant' | 'llm'>('user');
 
   useEffect(() => {
     const tier = llmTiers.find((item) => item.id === selectedTierId);
@@ -535,9 +536,38 @@ function Admin() {
                 最終更新: {new Date().toLocaleString('ja-JP')}
               </Text>
             </Stack>
+            <Flex mt={6} gap={3} wrap="wrap">
+              <Button
+                variant={activeSection === 'user' ? 'solid' : 'outline'}
+                colorScheme="blue"
+                onClick={() => setActiveSection('user')}
+              >
+                ユーザーアカウント管理
+              </Button>
+              <Button
+                variant={activeSection === 'consultant' ? 'solid' : 'outline'}
+                colorScheme="green"
+                onClick={() => setActiveSection('consultant')}
+              >
+                コンサルアカウント管理
+              </Button>
+              <Button
+                variant={activeSection === 'llm' ? 'solid' : 'outline'}
+                colorScheme="purple"
+                onClick={() => setActiveSection('llm')}
+              >
+                LLM使用回数設定
+              </Button>
+            </Flex>
           </Box>
 
-          <Box bg="white" borderRadius="xl" boxShadow="sm" p={{ base: 6, lg: 8 }}>
+          <Box
+            bg="white"
+            borderRadius="xl"
+            boxShadow="sm"
+            p={{ base: 6, lg: 8 }}
+            display={activeSection === 'user' ? 'block' : 'none'}
+          >
             <Stack spacing={8}>
               <Stack spacing={3}>
                 <Heading size="md">アカウント管理（ユーザー）</Heading>
@@ -734,8 +764,17 @@ function Admin() {
                 </Collapse>
               </Box>
 
-              <Divider />
+            </Stack>
+          </Box>
 
+          <Box
+            bg="white"
+            borderRadius="xl"
+            boxShadow="sm"
+            p={{ base: 6, lg: 8 }}
+            display={activeSection === 'consultant' ? 'block' : 'none'}
+          >
+            <Stack spacing={8}>
               <Stack spacing={3}>
                 <Heading size="md">アカウント管理（コンサルタント）</Heading>
                 <Text color="gray.600">
@@ -840,7 +879,10 @@ function Admin() {
                     border="1px solid"
                     borderColor="gray.100"
                     borderRadius="lg"
-                    p={6}>
+                    p={6}
+                  >
+                    <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+                      <Box>
                         <form onSubmit={handleAddConsultant}>
                           <Stack spacing={4}>
                             <Heading size="sm" display="flex" alignItems="center" gap={2}>
@@ -921,51 +963,53 @@ function Admin() {
                           </Text>
                         </Stack>
                       </Box>
+                    </SimpleGrid>
+                  </Box>
                 </Collapse>
               </Box>
             </Stack>
           </Box>
 
-          <Box bg="white" borderRadius="xl" boxShadow="sm" p={{ base: 6, lg: 8 }}>
+          <Box
+            bg="white"
+            borderRadius="xl"
+            boxShadow="sm"
+            p={{ base: 6, lg: 8 }}
+            display={activeSection === 'llm' ? 'block' : 'none'}
+          >
             <Stack spacing={6}>
-              <Heading size="md">3. LLM使用回数設定</Heading>
+              <Heading size="md">LLM使用回数設定</Heading>
               <Text color="gray.600">
                 Tierごとの利用状況を左カラムで選択し、右カラムで回数やモデルを更新します。
               </Text>
-                <SimpleGrid
+              <SimpleGrid
                 columns={{ base: 1, lg: 2 }}
                 spacing={6}
                 templateColumns={{ base: '1fr', lg: '320px 1fr' }}
-                >
-                <Stack
-                  spacing={3}
-                  border="1px solid"
-                  borderColor="gray.100"
-                  borderRadius="lg"
-                  p={4}
-                >
+              >
+                <Stack spacing={3} border="1px solid" borderColor="gray.100" borderRadius="lg" p={4}>
                   {llmTiers.map((tier) => (
-                  <Button
-                    key={tier.id}
-                    variant={tier.id === selectedTierId ? 'solid' : 'ghost'}
-                    colorScheme="teal"
-                    justifyContent="flex-start"
-                    textAlign="left"
-                    onClick={() => handleTierSelect(tier.id)}
-                    p={4}
-                    borderRadius="md"
-                    transition="all 0.2s"
-                  >
-                    <Stack spacing={0}>
-                    <Text fontWeight="bold">{tier.label}</Text>
-                    <Text
-                      fontSize="sm"
-                      color={tier.id === selectedTierId ? 'whiteAlpha.800' : 'gray.500'}
+                    <Button
+                      key={tier.id}
+                      variant={tier.id === selectedTierId ? 'solid' : 'ghost'}
+                      colorScheme="teal"
+                      justifyContent="flex-start"
+                      textAlign="left"
+                      onClick={() => handleTierSelect(tier.id)}
+                      p={4}
+                      borderRadius="md"
+                      transition="all 0.2s"
                     >
-                      {tier.description}
-                    </Text>
-                    </Stack>
-                  </Button>
+                      <Stack spacing={0}>
+                        <Text fontWeight="bold">{tier.label}</Text>
+                        <Text
+                          fontSize="sm"
+                          color={tier.id === selectedTierId ? 'whiteAlpha.800' : 'gray.500'}
+                        >
+                          {tier.description}
+                        </Text>
+                      </Stack>
+                    </Button>
                   ))}
                 </Stack>
                 <Box border="1px solid" borderColor="gray.100" borderRadius="lg" p={6}>
