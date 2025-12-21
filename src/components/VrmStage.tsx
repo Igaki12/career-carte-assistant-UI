@@ -27,19 +27,19 @@ import {
 const MODEL_PATH = `${import.meta.env.BASE_URL}models/sample.vrm`;
 const STAGE_BACKGROUNDS = [
   {
-    id: 'gemini-blue',
-    label: 'Deep Aurora',
+    id: 'relax-room',
+    label: 'Relax Room',
     image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_xqrrb5xqrrb5xqrr.png`,
   },
   {
-    id: 'gemini-gold',
-    label: 'Radiant Horizon',
-    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_dt9xd6dt9xd6dt9x.png`,
+    id: 'cafe-room',
+    label: 'Cafe Room',
+    image: `${import.meta.env.BASE_URL}vrm-bg/cafe-room.png`,
   },
   {
-    id: 'gemini-purple',
-    label: 'Mystic Dusk',
-    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_1d96o21d96o21d96.png`,
+    id: 'plantation-room',
+    label: 'Plantation Room',
+    image: `${import.meta.env.BASE_URL}vrm-bg/plantation-room.png`,
   },
 ] as const;
 
