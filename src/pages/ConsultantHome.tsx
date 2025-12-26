@@ -25,8 +25,10 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
+import { KARTE_KEYS } from '../types';
+import type { KarteData, KarteKey } from '../types';
 
 type ConsultantProfile = {
   id: string;
@@ -47,6 +49,23 @@ type AssignedUser = {
   lastSession: string;
   focus: string;
   status: '面談予定' | '確認中' | '完了';
+};
+
+type KarteRecord = {
+  id: string;
+  atCreated: string;
+  atUpdated: string;
+  statusLabel: string;
+} & Record<KarteKey, string>;
+
+const LABELS: Record<KarteKey, string> = {
+  A: 'A. 主訴 (いま困っていること)',
+  B: 'B. キャリア歴 (経験・転機)',
+  C: 'C. 現在の業務状況',
+  D: 'D. キャリア観・価値観',
+  E: 'E. 将来イメージ (3~5年後)',
+  F: 'F. 学び・成長ニーズ',
+  G: 'G. 面談で話したいテーマ',
 };
 
 function ConsultantHome() {
@@ -99,6 +118,93 @@ function ConsultantHome() {
     [],
   );
 
+  const [userKarteRecords, setUserKarteRecords] = useState<Record<string, KarteRecord[]>>(() => ({
+    'USR-2024-021': [
+      {
+        id: 'karte-003',
+        atCreated: '2024/11/02',
+        atUpdated: '2024/11/12',
+        statusLabel: '作成済み',
+        A: '新規事業の意思決定で迷いが続いている',
+        B: '0→1フェーズのPM経験、海外プロジェクト参画歴',
+        C: '複数案件の兼務で優先順位が揺らぎやすい',
+        D: '挑戦機会と裁量の大きさを重視',
+        E: '3年以内に新規事業責任者を担いたい',
+        F: '事業計画・ファイナンスの知識を強化したい',
+        G: '意思決定の軸づくりを面談で整理したい',
+      },
+      {
+        id: 'karte-002',
+        atCreated: '2024/10/18',
+        atUpdated: '2024/10/18',
+        statusLabel: '作成途中',
+        A: 'キャリアの方向性が定まらない',
+        B: 'PM/CS/新規事業を経験',
+        C: '現職は裁量があるが成長機会が減少',
+        D: '学習機会と組織カルチャーを重視',
+        E: '事業立ち上げに関わり続けたい',
+        F: 'マネジメントスキルを身につけたい',
+        G: '次の転機の判断材料を整理したい',
+      },
+    ],
+    'USR-2024-019': [
+      {
+        id: 'karte-014',
+        atCreated: '2024/10/28',
+        atUpdated: '2024/11/01',
+        statusLabel: '作成済み',
+        A: '次期リーダー育成計画を具体化したい',
+        B: 'SaaS開発PMからマネージャーへ昇格',
+        C: 'チーム拡大に伴い育成負荷が増加',
+        D: '組織成長と個人の挑戦の両立を重視',
+        E: '3年後に事業部長クラスを目指す',
+        F: '人材育成・評価設計の知見を深めたい',
+        G: '育成ロードマップの作り方を相談したい',
+      },
+      {
+        id: 'karte-013',
+        atCreated: '2024/09/30',
+        atUpdated: '2024/09/30',
+        statusLabel: '作成済み',
+        A: 'マネジメントに不安がある',
+        B: 'EMとしての立ち上げ経験あり',
+        C: '採用が追いつかず現場負荷が高い',
+        D: 'チームの心理的安全性を大切にしたい',
+        E: '組織をスケールできる人材になりたい',
+        F: '組織設計のフレームを学びたい',
+        G: '評価制度の改善ポイントを知りたい',
+      },
+    ],
+    'USR-2024-016': [
+      {
+        id: 'karte-021',
+        atCreated: '2024/10/12',
+        atUpdated: '2024/10/20',
+        statusLabel: '作成済み',
+        A: '海外転職に向けた準備項目を整理したい',
+        B: 'AI研究職5年、国際学会発表経験あり',
+        C: '研究と実装のバランスに課題',
+        D: '挑戦的な研究環境と生活基盤の両立',
+        E: '3〜5年後に海外のR&Dチームへ参画',
+        F: '英語面接・ポートフォリオ強化',
+        G: '移住とキャリアの優先順位を整理したい',
+      },
+      {
+        id: 'karte-020',
+        atCreated: '2024/09/15',
+        atUpdated: '2024/09/15',
+        statusLabel: '作成途中',
+        A: '将来像の具体化に迷いがある',
+        B: '研究職とプロダクト開発の両方を経験',
+        C: '研究成果の事業化が進みにくい',
+        D: '社会実装へのインパクトを重視',
+        E: '研究と事業の架け橋になる役割を目指す',
+        F: 'ビジネス視点での成果発信を学びたい',
+        G: '転職先の選定基準を整理したい',
+      },
+    ],
+  }));
+
   const accountDisclosure = useDisclosure();
   const userListDisclosure = useDisclosure();
   const resetModalDisclosure = useDisclosure();
@@ -106,7 +212,16 @@ function ConsultantHome() {
   const inquiryModalDisclosure = useDisclosure();
 
   const [selectedUser, setSelectedUser] = useState<AssignedUser | null>(null);
-  const [commentDraft, setCommentDraft] = useState('');
+  const [isEditingLatest, setIsEditingLatest] = useState(false);
+  const [latestDraft, setLatestDraft] = useState<KarteData>({
+    A: '',
+    B: '',
+    C: '',
+    D: '',
+    E: '',
+    F: '',
+    G: '',
+  });
   const [inquiryForm, setInquiryForm] = useState({
     target: '',
     subject: '',
@@ -115,19 +230,76 @@ function ConsultantHome() {
 
   const handleOpenKarte = (user: AssignedUser) => {
     setSelectedUser(user);
-    setCommentDraft('');
     karteModalDisclosure.onOpen();
   };
 
-  const handleSaveKarte = () => {
+  const selectedKarteRecords = selectedUser ? userKarteRecords[selectedUser.id] ?? [] : [];
+
+  useEffect(() => {
+    if (!karteModalDisclosure.isOpen || !selectedUser) {
+      return;
+    }
+    const latestRecord = userKarteRecords[selectedUser.id]?.[0];
+    if (!latestRecord) {
+      return;
+    }
+    setIsEditingLatest(false);
+    const nextDraft = KARTE_KEYS.reduce<KarteData>((acc, key) => {
+      acc[key] = latestRecord[key];
+      return acc;
+    }, {} as KarteData);
+    setLatestDraft(nextDraft);
+  }, [karteModalDisclosure.isOpen, selectedUser, userKarteRecords]);
+
+  const handleStartEdit = () => {
+    const latestRecord = selectedKarteRecords[0];
+    if (!latestRecord) {
+      return;
+    }
+    const nextDraft = KARTE_KEYS.reduce<KarteData>((acc, key) => {
+      acc[key] = latestRecord[key];
+      return acc;
+    }, {} as KarteData);
+    setLatestDraft(nextDraft);
+    setIsEditingLatest(true);
+  };
+
+  const handleSaveLatest = () => {
+    const latestRecord = selectedKarteRecords[0];
+    if (!latestRecord || !selectedUser) {
+      return;
+    }
+    const updatedAt = new Date();
+    const formattedDate = updatedAt.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const nextRecord: KarteRecord = {
+      ...latestRecord,
+      statusLabel: '編集済み',
+      atUpdated: formattedDate,
+      ...KARTE_KEYS.reduce<Record<KarteKey, string>>((acc, key) => {
+        acc[key] = latestDraft[key] ?? '';
+        return acc;
+      }, {} as Record<KarteKey, string>),
+    };
+    setUserKarteRecords((prev) => ({
+      ...prev,
+      [selectedUser.id]: [nextRecord, ...selectedKarteRecords.slice(1)],
+    }));
+    setIsEditingLatest(false);
     toast({
       title: 'カルテを更新しました',
-      description: selectedUser ? `${selectedUser.name} さんの記録を保存（ダミー）` : '',
+      description: `${selectedUser.name} さんの記録を保存（ダミー）`,
       status: 'success',
       duration: 2600,
       isClosable: true,
     });
-    karteModalDisclosure.onClose();
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingLatest(false);
   };
 
   const handleResetPassword = () => {
@@ -202,7 +374,7 @@ function ConsultantHome() {
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiUsers /> 対象ユーザカルテ閲覧・修正
                 </Heading>
-                <Text color="gray.600">担当ユーザーのカルテを確認し、コメントを追記できます。</Text>
+                <Text color="gray.600">担当ユーザーのカルテを確認し、最新カルテを編集できます。</Text>
                 <Button variant="outline" onClick={userListDisclosure.onToggle}>
                   {userListDisclosure.isOpen ? '担当ユーザーを閉じる' : '担当ユーザーを表示'}
                 </Button>
@@ -323,28 +495,87 @@ function ConsultantHome() {
           <ModalBody overflowY="auto" maxH="60dvh">
             {selectedUser ? (
               <Stack spacing={4}>
-                <Box>
-                  <Text fontSize="sm" color="gray.500">
-                    ユーザーID
-                  </Text>
-                  <Text fontWeight="semibold">{selectedUser.id}</Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" color="gray.500">
-                    最新フォーカス
-                  </Text>
-                  <Text color="gray.700">{selectedUser.focus}</Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" color="gray.500">
-                    コメント追記
-                  </Text>
-                  <Textarea
-                    placeholder="ヒアリング内容やメモを追記してください。"
-                    value={commentDraft}
-                    onChange={(event) => setCommentDraft(event.target.value)}
-                  />
-                </Box>
+                {selectedKarteRecords.length > 0 ? (
+                  <Box border="1px solid" borderColor="gray.100" borderRadius="md" p={4}>
+                    <Stack spacing={3}>
+                      <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+                        <Stack spacing={1}>
+                          <Text fontSize="sm" color="gray.500">
+                            作成日: {selectedKarteRecords[0].atCreated}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500">
+                            更新日: {selectedKarteRecords[0].atUpdated}
+                          </Text>
+                        </Stack>
+                        <Badge colorScheme="green">{selectedKarteRecords[0].statusLabel}</Badge>
+                      </Flex>
+                      <Stack spacing={3}>
+                        {KARTE_KEYS.map((key) => (
+                          <Box key={key}>
+                            <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                              {LABELS[key]}
+                            </Text>
+                            {isEditingLatest ? (
+                              <Textarea
+                                value={latestDraft[key] ?? ''}
+                                onChange={(event) =>
+                                  setLatestDraft((prev) => ({
+                                    ...prev,
+                                    [key]: event.target.value,
+                                  }))
+                                }
+                              />
+                            ) : (
+                              <Text color="gray.700" fontSize="sm">
+                                {selectedKarteRecords[0][key]}
+                              </Text>
+                            )}
+                          </Box>
+                        ))}
+                      </Stack>
+                      <Flex justify="flex-end" gap={2}>
+                        {isEditingLatest ? (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                              キャンセル
+                            </Button>
+                            <Button size="sm" colorScheme="blue" onClick={handleSaveLatest}>
+                              変更を保存
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="sm" colorScheme="blue" onClick={handleStartEdit}>
+                            カルテを編集する
+                          </Button>
+                        )}
+                      </Flex>
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Text color="gray.500">カルテがありません。</Text>
+                )}
+                {selectedKarteRecords.slice(1).map((record) => (
+                  <Box
+                    key={record.id}
+                    border="1px solid"
+                    borderColor="gray.100"
+                    borderRadius="md"
+                    p={4}
+                    bg="gray.50"
+                  >
+                    <Stack spacing={1}>
+                      <Text fontSize="sm" color="gray.500">
+                        作成日: {record.atCreated}
+                      </Text>
+                      <Text fontSize="sm" color="gray.500">
+                        ステータス: {record.statusLabel}
+                      </Text>
+                      <Text fontSize="sm" color="gray.700">
+                        A. {record.A}
+                      </Text>
+                    </Stack>
+                  </Box>
+                ))}
               </Stack>
             ) : (
               <Text color="gray.500">ユーザーが選択されていません。</Text>
@@ -353,9 +584,6 @@ function ConsultantHome() {
           <ModalFooter gap={3}>
             <Button variant="ghost" onClick={karteModalDisclosure.onClose}>
               閉じる
-            </Button>
-            <Button colorScheme="blue" onClick={handleSaveKarte} isDisabled={!selectedUser}>
-              更新を保存
             </Button>
           </ModalFooter>
         </ModalContent>

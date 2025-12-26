@@ -4,7 +4,6 @@ import {
   Button,
   Collapse,
   Container,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
@@ -26,9 +25,11 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { KARTE_KEYS } from '../types';
+import type { KarteData, KarteKey } from '../types';
 
 type Profile = {
   id: string;
@@ -43,10 +44,19 @@ type Profile = {
 
 type KarteRecord = {
   id: string;
-  date: string;
-  topic: string;
-  summary: string;
+  atCreated: string;
+  atUpdated: string;
   statusLabel: string;
+} & Record<KarteKey, string>;
+
+const LABELS: Record<KarteKey, string> = {
+  A: 'A. 主訴 (いま困っていること)',
+  B: 'B. キャリア歴 (経験・転機)',
+  C: 'C. 現在の業務状況',
+  D: 'D. キャリア観・価値観',
+  E: 'E. 将来イメージ (3~5年後)',
+  F: 'F. 学び・成長ニーズ',
+  G: 'G. 面談で話したいテーマ',
 };
 
 function UserHome() {
@@ -67,37 +77,62 @@ function UserHome() {
     [],
   );
 
-  const karteRecords = useMemo<KarteRecord[]>(
-    () => [
-      {
-        id: 'karte-003',
-        date: '2024/11/02',
-        topic: '新規事業リード経験の棚卸し',
-        summary: '強みの再確認と意思決定の壁の深掘りを実施。',
-        statusLabel: '整理済み',
-      },
-      {
-        id: 'karte-002',
-        date: '2024/10/18',
-        topic: 'キャリア観の再整理',
-        summary: '価値観カードを用いて重要指標を優先順位付け。',
-        statusLabel: 'フォローアップ推奨',
-      },
-      {
-        id: 'karte-001',
-        date: '2024/09/05',
-        topic: '初回面談記録',
-        summary: '現職課題と求める働き方をヒアリング。',
-        statusLabel: '完了',
-      },
-    ],
-    [],
-  );
+  const [karteRecords, setKarteRecords] = useState<KarteRecord[]>(() => [
+    {
+      id: 'karte-003',
+      atCreated: '2024/11/02',
+      atUpdated: '2024/11/12',
+      statusLabel: '作成済み',
+      A: '新規事業の意思決定で迷いが続いている',
+      B: '0→1フェーズのPM経験、海外プロジェクト参画歴',
+      C: '複数案件の兼務で優先順位が揺らぎやすい',
+      D: '挑戦機会と裁量の大きさを重視',
+      E: '3年以内に新規事業責任者を担いたい',
+      F: '事業計画・ファイナンスの知識を強化したい',
+      G: '意思決定の軸づくりを面談で整理したい',
+    },
+    {
+      id: 'karte-002',
+      atCreated: '2024/10/18',
+      atUpdated: '2024/10/18',
+      statusLabel: '作成途中',
+      A: 'キャリアの方向性が定まらない',
+      B: 'PM/CS/新規事業を経験',
+      C: '現職は裁量があるが成長機会が減少',
+      D: '学習機会と組織カルチャーを重視',
+      E: '事業立ち上げに関わり続けたい',
+      F: 'マネジメントスキルを身につけたい',
+      G: '次の転機の判断材料を整理したい',
+    },
+    {
+      id: 'karte-001',
+      atCreated: '2024/09/05',
+      atUpdated: '2024/09/05',
+      statusLabel: '作成済み',
+      A: '現職の業務量と成長曲線に不満',
+      B: '営業→PMへの転向経験あり',
+      C: '裁量はあるが短期タスク中心',
+      D: '長期視点で価値を作る仕事がしたい',
+      E: '3〜5年後に事業責任者を目指す',
+      F: 'プロダクト戦略の体系化を学びたい',
+      G: '転職の是非を含めた相談をしたい',
+    },
+  ]);
 
   const accountDisclosure = useDisclosure();
   const karteModalDisclosure = useDisclosure();
   const resetModalDisclosure = useDisclosure();
   const surveyModalDisclosure = useDisclosure();
+  const [isEditingLatest, setIsEditingLatest] = useState(false);
+  const [latestDraft, setLatestDraft] = useState<KarteData>({
+    A: '',
+    B: '',
+    C: '',
+    D: '',
+    E: '',
+    F: '',
+    G: '',
+  });
 
   const [surveyForm, setSurveyForm] = useState({
     satisfaction: '',
@@ -141,6 +176,63 @@ function UserHome() {
       isClosable: true,
     });
     resetModalDisclosure.onClose();
+  };
+
+  useEffect(() => {
+    if (!karteModalDisclosure.isOpen) {
+      return;
+    }
+    const latestRecord = karteRecords[0];
+    if (!latestRecord) {
+      return;
+    }
+    setIsEditingLatest(false);
+    const nextDraft = KARTE_KEYS.reduce<KarteData>((acc, key) => {
+      acc[key] = latestRecord[key];
+      return acc;
+    }, {} as KarteData);
+    setLatestDraft(nextDraft);
+  }, [karteModalDisclosure.isOpen, karteRecords]);
+
+  const handleStartEdit = () => {
+    const latestRecord = karteRecords[0];
+    if (!latestRecord) {
+      return;
+    }
+    const nextDraft = KARTE_KEYS.reduce<KarteData>((acc, key) => {
+      acc[key] = latestRecord[key];
+      return acc;
+    }, {} as KarteData);
+    setLatestDraft(nextDraft);
+    setIsEditingLatest(true);
+  };
+
+  const handleSaveLatest = () => {
+    const latestRecord = karteRecords[0];
+    if (!latestRecord) {
+      return;
+    }
+    const updatedAt = new Date();
+    const formattedDate = updatedAt.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const nextRecord: KarteRecord = {
+      ...latestRecord,
+      statusLabel: '編集済み',
+      atUpdated: formattedDate,
+      ...KARTE_KEYS.reduce<Record<KarteKey, string>>((acc, key) => {
+        acc[key] = latestDraft[key] ?? '';
+        return acc;
+      }, {} as Record<KarteKey, string>),
+    };
+    setKarteRecords((prev) => [nextRecord, ...prev.slice(1)]);
+    setIsEditingLatest(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingLatest(false);
   };
 
   return (
@@ -253,10 +345,6 @@ function UserHome() {
                         <Text fontWeight="semibold">{profile.email}</Text>
                       </Stack>
                     </SimpleGrid>
-                    <Divider my={4} />
-                    <Button colorScheme="purple" variant="solid" onClick={resetModalDisclosure.onOpen}>
-                      パスワードをリセット
-                    </Button>
                   </Box>
                 </Collapse>
               </Stack>
@@ -272,26 +360,86 @@ function UserHome() {
           <ModalCloseButton />
           <ModalBody overflowY="auto" maxH="60dvh">
             <Stack spacing={4}>
-              {karteRecords.map((record) => (
+              {karteRecords.length > 0 ? (
+                <Box border="1px solid" borderColor="gray.100" borderRadius="md" p={4}>
+                  <Stack spacing={3}>
+                    <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+                      <Stack spacing={1}>
+                        <Text fontSize="sm" color="gray.500">
+                          作成日: {karteRecords[0].atCreated}
+                        </Text>
+                        <Text fontSize="sm" color="gray.500">
+                          最終更新日: {karteRecords[0].atUpdated}
+                        </Text>
+                      </Stack>
+                      <Badge colorScheme="green">{karteRecords[0].statusLabel}</Badge>
+                    </Flex>
+                    <Stack spacing={3}>
+                      {KARTE_KEYS.map((key) => (
+                        <Box key={key}>
+                          <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                            {LABELS[key]}
+                          </Text>
+                          {isEditingLatest ? (
+                            <Textarea
+                              value={latestDraft[key] ?? ''}
+                              onChange={(event) =>
+                                setLatestDraft((prev) => ({
+                                  ...prev,
+                                  [key]: event.target.value,
+                                }))
+                              }
+                            />
+                          ) : (
+                            <Text color="gray.700" fontSize="sm">
+                              {karteRecords[0][key]}
+                            </Text>
+                          )}
+                        </Box>
+                      ))}
+                    </Stack>
+                    <Flex justify="flex-end" gap={2}>
+                      {isEditingLatest ? (
+                        <>
+                          <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                            キャンセル
+                          </Button>
+                          <Button size="sm" colorScheme="blue" onClick={handleSaveLatest}>
+                            変更を保存
+                          </Button>
+                        </>
+                      ) : (
+                        <Button size="sm" colorScheme="blue" onClick={handleStartEdit}>
+                          カルテを編集する
+                        </Button>
+                      )}
+                    </Flex>
+                  </Stack>
+                </Box>
+              ) : (
+                <Text color="gray.500">カルテがありません。</Text>
+              )}
+              {karteRecords.slice(1).map((record) => (
                 <Box
                   key={record.id}
                   border="1px solid"
                   borderColor="gray.100"
                   borderRadius="md"
                   p={4}
+                  bg="gray.50"
                 >
-                  <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
-                    <Stack spacing={1}>
+                  <Stack spacing={1}>
+                    <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
                       <Text fontSize="sm" color="gray.500">
-                        {record.date}
+                        作成日: {record.atCreated}
                       </Text>
-                      <Text fontWeight="semibold">{record.topic}</Text>
-                    </Stack>
-                    <Badge colorScheme="green">{record.statusLabel}</Badge>
-                  </Flex>
-                  <Text mt={2} color="gray.600">
-                    {record.summary}
-                  </Text>
+                      <Badge colorScheme="green">{record.statusLabel}</Badge>
+                    </Flex>
+                    <Text fontSize="sm" color="gray.700">
+                      A. {record.A}
+                    </Text>
+                  </Stack>
+
                 </Box>
               ))}
             </Stack>
