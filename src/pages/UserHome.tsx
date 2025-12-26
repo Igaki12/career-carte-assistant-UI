@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
-import { FiBookOpen, FiClipboard, FiMail, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 type Profile = {
@@ -47,13 +47,6 @@ type KarteRecord = {
   topic: string;
   summary: string;
   statusLabel: string;
-};
-
-type Announcement = {
-  id: string;
-  title: string;
-  message: string;
-  date: string;
 };
 
 function UserHome() {
@@ -101,32 +94,7 @@ function UserHome() {
     [],
   );
 
-  const announcements = useMemo<Announcement[]>(
-    () => [
-      {
-        id: 'news-003',
-        date: '2024/12/01',
-        title: 'AI面談アルゴリズムをアップデートしました',
-        message: 'カルテ整理速度が向上しました。次回面談から自動で反映されます。',
-      },
-      {
-        id: 'news-002',
-        date: '2024/11/25',
-        title: '年末年始のサポート体制について',
-        message: '12/29〜1/3はチャットサポートのみ稼働します。事前の予約をおすすめします。',
-      },
-      {
-        id: 'news-001',
-        date: '2024/11/10',
-        title: 'アンケート回答のお願い',
-        message: 'サービス改善のため、面談後のフィードバックにご協力ください。',
-      },
-    ],
-    [],
-  );
-
   const accountDisclosure = useDisclosure();
-  const newsDisclosure = useDisclosure();
   const karteModalDisclosure = useDisclosure();
   const resetModalDisclosure = useDisclosure();
   const surveyModalDisclosure = useDisclosure();
@@ -176,7 +144,7 @@ function UserHome() {
   };
 
   return (
-    <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
+    <Box bg="gray.50" height="100dvh" py={12} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
           <Box
@@ -225,10 +193,22 @@ function UserHome() {
             <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
+                  <FiClipboard /> ユーザアンケート
+                </Heading>
+                <Text color="gray.600">面談体験に関するフィードバックをお聞かせください。</Text>
+                <Button variant="solid" size="lg" colorScheme="pink" onClick={surveyModalDisclosure.onOpen}>
+                  アンケートを開く
+                </Button>
+              </Stack>
+            </Box>
+
+            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+              <Stack spacing={3}>
+                <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiBookOpen /> カルテ確認・出力
                 </Heading>
                 <Text color="gray.600">過去の面談記録を確認し、必要に応じてダウンロードします。</Text>
-                <Button onClick={karteModalDisclosure.onOpen} colorScheme="teal" size="lg">
+                <Button onClick={karteModalDisclosure.onOpen} colorScheme="teal" size="md">
                   カルテを開く
                 </Button>
               </Stack>
@@ -279,54 +259,6 @@ function UserHome() {
                     </Button>
                   </Box>
                 </Collapse>
-              </Stack>
-            </Box>
-
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
-              <Stack spacing={3}>
-                <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiMail /> ニュース通知
-                </Heading>
-                <Text color="gray.600">管理者からのお知らせをまとめて確認できます。</Text>
-                <Button variant="outline" onClick={newsDisclosure.onToggle}>
-                  {newsDisclosure.isOpen ? 'お知らせを閉じる' : 'お知らせを表示'}
-                </Button>
-                <Collapse in={newsDisclosure.isOpen} animateOpacity>
-                  <Stack pt={4} spacing={4}>
-                    {announcements.map((news) => (
-                      <Box
-                        key={news.id}
-                        border="1px solid"
-                        borderColor="gray.100"
-                        borderRadius="md"
-                        p={4}
-                        bg="gray.50"
-                      >
-                        <Text fontSize="sm" color="gray.500">
-                          {news.date}
-                        </Text>
-                        <Text fontWeight="semibold" mt={1}>
-                          {news.title}
-                        </Text>
-                        <Text color="gray.600" mt={2}>
-                          {news.message}
-                        </Text>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Collapse>
-              </Stack>
-            </Box>
-
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
-              <Stack spacing={3}>
-                <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiClipboard /> ユーザアンケート
-                </Heading>
-                <Text color="gray.600">面談体験に関するフィードバックをお聞かせください。</Text>
-                <Button variant="solid" colorScheme="pink" onClick={surveyModalDisclosure.onOpen}>
-                  アンケートを開く
-                </Button>
               </Stack>
             </Box>
           </SimpleGrid>

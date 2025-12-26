@@ -26,7 +26,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { type FormEvent, useMemo, useState } from 'react';
-import { FiBell, FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
+import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
 
 type ConsultantProfile = {
   id: string;
@@ -47,13 +47,6 @@ type AssignedUser = {
   lastSession: string;
   focus: string;
   status: '面談予定' | '確認中' | '完了';
-};
-
-type Announcement = {
-  id: string;
-  title: string;
-  message: string;
-  date: string;
 };
 
 function ConsultantHome() {
@@ -106,26 +99,7 @@ function ConsultantHome() {
     [],
   );
 
-  const announcements = useMemo<Announcement[]>(
-    () => [
-      {
-        id: 'news-202',
-        date: '2024/11/30',
-        title: 'カルテテンプレートを最新版へ更新しました',
-        message: '7スロットの記載例を整理した資料をSlackに共有しています。',
-      },
-      {
-        id: 'news-201',
-        date: '2024/11/18',
-        title: 'システムメンテナンス予定',
-        message: '12/05 0:00〜4:00の間、面談ルームへの接続が不安定になります。',
-      },
-    ],
-    [],
-  );
-
   const accountDisclosure = useDisclosure();
-  const newsDisclosure = useDisclosure();
   const userListDisclosure = useDisclosure();
   const resetModalDisclosure = useDisclosure();
   const karteModalDisclosure = useDisclosure();
@@ -191,7 +165,7 @@ function ConsultantHome() {
   };
 
   return (
-    <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
+    <Box bg="gray.50" height="100dvh" py={12} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
           <Box
@@ -337,41 +311,6 @@ function ConsultantHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
-              <Stack spacing={3}>
-                <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiBell /> ニュース通知
-                </Heading>
-                <Text color="gray.600">管理者からのお知らせをまとめて確認できます。</Text>
-                <Button variant="outline" onClick={newsDisclosure.onToggle}>
-                  {newsDisclosure.isOpen ? 'お知らせを閉じる' : 'お知らせを表示'}
-                </Button>
-                <Collapse in={newsDisclosure.isOpen} animateOpacity>
-                  <Stack pt={4} spacing={4}>
-                    {announcements.map((news) => (
-                      <Box
-                        key={news.id}
-                        border="1px solid"
-                        borderColor="gray.100"
-                        borderRadius="md"
-                        p={4}
-                        bg="gray.50"
-                      >
-                        <Text fontSize="sm" color="gray.500">
-                          {news.date}
-                        </Text>
-                        <Text fontWeight="semibold" mt={1}>
-                          {news.title}
-                        </Text>
-                        <Text color="gray.600" mt={2}>
-                          {news.message}
-                        </Text>
-                      </Box>
-                    ))}
-                  </Stack>
-                </Collapse>
-              </Stack>
-            </Box>
           </SimpleGrid>
         </Stack>
       </Container>
