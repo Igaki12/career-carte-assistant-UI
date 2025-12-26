@@ -124,7 +124,7 @@ function ConsultantHome() {
         id: 'karte-003',
         atCreated: '2024/11/02',
         atUpdated: '2024/11/12',
-        statusLabel: '作成済み',
+        statusLabel: 'コンサル編集済み',
         A: '新規事業の意思決定で迷いが続いている',
         B: '0→1フェーズのPM経験、海外プロジェクト参画歴',
         C: '複数案件の兼務で優先順位が揺らぎやすい',
@@ -152,7 +152,7 @@ function ConsultantHome() {
         id: 'karte-014',
         atCreated: '2024/10/28',
         atUpdated: '2024/11/01',
-        statusLabel: '作成済み',
+        statusLabel: 'コンサル編集済み',
         A: '次期リーダー育成計画を具体化したい',
         B: 'SaaS開発PMからマネージャーへ昇格',
         C: 'チーム拡大に伴い育成負荷が増加',
@@ -165,7 +165,7 @@ function ConsultantHome() {
         id: 'karte-013',
         atCreated: '2024/09/30',
         atUpdated: '2024/09/30',
-        statusLabel: '作成済み',
+        statusLabel: 'コンサル編集済み',
         A: 'マネジメントに不安がある',
         B: 'EMとしての立ち上げ経験あり',
         C: '採用が追いつかず現場負荷が高い',
@@ -277,7 +277,7 @@ function ConsultantHome() {
     });
     const nextRecord: KarteRecord = {
       ...latestRecord,
-      statusLabel: '編集済み',
+      statusLabel: 'コンサル編集済み',
       atUpdated: formattedDate,
       ...KARTE_KEYS.reduce<Record<KarteKey, string>>((acc, key) => {
         acc[key] = latestDraft[key] ?? '';

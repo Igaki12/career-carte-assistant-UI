@@ -16,6 +16,8 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Radio,
+  RadioGroup,
   Select,
   SimpleGrid,
   Stack,
@@ -49,6 +51,13 @@ type KarteRecord = {
   statusLabel: string;
 } & Record<KarteKey, string>;
 
+type SurveyQuestion = {
+  id: string;
+  label: string;
+  type: 'menu' | 'likert';
+  options: string[];
+};
+
 const LABELS: Record<KarteKey, string> = {
   A: 'A. 主訴 (いま困っていること)',
   B: 'B. キャリア歴 (経験・転機)',
@@ -58,6 +67,162 @@ const LABELS: Record<KarteKey, string> = {
   F: 'F. 学び・成長ニーズ',
   G: 'G. 面談で話したいテーマ',
 };
+
+const MENU_OPTIONS = ['非常に良い', '良い', '普通', 'やや不満', '不満'];
+const LIKERT_OPTIONS = ['強く同意', '同意', 'どちらでもない', '反対', '強く反対'];
+
+const SURVEY_QUESTIONS: SurveyQuestion[] = [
+  {
+    id: 'menu-01',
+    label: '面談の全体的な満足度を教えてください。',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-02',
+    label: 'AI面談の進行スピードは適切でしたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-03',
+    label: '質問内容はあなたの状況に合っていましたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-04',
+    label: 'カルテ要約の内容に納得感はありましたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-05',
+    label: '進捗バッジやモーダルの見やすさはいかがでしたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-06',
+    label: '音声入力の使いやすさについて評価してください。',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-07',
+    label: 'AIの返答は理解しやすかったですか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-08',
+    label: '自己理解の深まりに役立つ内容でしたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-09',
+    label: 'キャリアの方向性が整理できたと感じましたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-10',
+    label: '次回も同じ形式で面談したいですか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-11',
+    label: 'アプリ全体のデザインに満足していますか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-12',
+    label: '操作の迷いは少なくスムーズでしたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-13',
+    label: '面談準備の導線は分かりやすかったですか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-14',
+    label: '質問数のボリュームは適切だと感じましたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'menu-15',
+    label: 'プライバシー面の安心感はいかがでしたか？',
+    type: 'menu',
+    options: MENU_OPTIONS,
+  },
+  {
+    id: 'likert-01',
+    label: 'AIの提案は自分の価値観に沿っていると感じた。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-02',
+    label: '面談を通じて新しい気づきが得られた。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-03',
+    label: '質問の順序や流れは自然だった。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-04',
+    label: 'チャットUIは使いやすいと感じた。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-05',
+    label: 'カルテの内容は具体的で分かりやすい。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-06',
+    label: 'VRMの表情や動きが面談の体験を高めた。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-07',
+    label: '面談で話した内容が十分に整理されている。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-08',
+    label: '面談の結果を行動に移せそうだ。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-09',
+    label: 'サポート情報や案内は十分だった。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'likert-10',
+    label: '全体として期待に応える面談体験だった。',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+];
 
 function UserHome() {
   const navigate = useNavigate();
@@ -82,7 +247,7 @@ function UserHome() {
       id: 'karte-003',
       atCreated: '2024/11/02',
       atUpdated: '2024/11/12',
-      statusLabel: '作成済み',
+      statusLabel: 'ユーザー編集済み',
       A: '新規事業の意思決定で迷いが続いている',
       B: '0→1フェーズのPM経験、海外プロジェクト参画歴',
       C: '複数案件の兼務で優先順位が揺らぎやすい',
@@ -134,11 +299,21 @@ function UserHome() {
     G: '',
   });
 
-  const [surveyForm, setSurveyForm] = useState({
-    satisfaction: '',
-    goalClarity: '',
-    feedback: '',
-  });
+  const defaultSurveyAnswers = useMemo(() => {
+    return SURVEY_QUESTIONS.reduce<Record<string, string>>((acc, question) => {
+      acc[question.id] = question.options[2] ?? '';
+      return acc;
+    }, {});
+  }, []);
+
+  const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>(
+    () => defaultSurveyAnswers,
+  );
+  const [lastSurveyResult, setLastSurveyResult] = useState(() => ({
+    score: 82,
+    submittedAt: '2024/11/20',
+    answers: defaultSurveyAnswers,
+  }));
 
   const handleStartInterview = () => {
     navigate('/app');
@@ -156,6 +331,24 @@ function UserHome() {
 
   const handleSurveySubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const totalScore = SURVEY_QUESTIONS.reduce((sum, question) => {
+      const selected = surveyAnswers[question.id];
+      const index = question.options.indexOf(selected);
+      return sum + (index >= 0 ? index : 0);
+    }, 0);
+    const maxScore = SURVEY_QUESTIONS.length * 4;
+    const computedScore = Math.round((totalScore / maxScore) * 100);
+
+    setLastSurveyResult({
+      score: computedScore,
+      submittedAt: new Date().toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }),
+      answers: surveyAnswers,
+    });
+
     toast({
       title: 'アンケートを送信しました',
       description: '貴重なご意見をありがとうございます。',
@@ -163,8 +356,11 @@ function UserHome() {
       duration: 2600,
       isClosable: true,
     });
-    setSurveyForm({ satisfaction: '', goalClarity: '', feedback: '' });
     surveyModalDisclosure.onClose();
+  };
+
+  const handleEditLastSurvey = () => {
+    setSurveyAnswers(lastSurveyResult.answers);
   };
 
   const handleResetPassword = () => {
@@ -220,7 +416,7 @@ function UserHome() {
     });
     const nextRecord: KarteRecord = {
       ...latestRecord,
-      statusLabel: '編集済み',
+      statusLabel: 'ユーザー編集済み',
       atUpdated: formattedDate,
       ...KARTE_KEYS.reduce<Record<KarteKey, string>>((acc, key) => {
         acc[key] = latestDraft[key] ?? '';
@@ -455,12 +651,30 @@ function UserHome() {
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={surveyModalDisclosure.isOpen} onClose={surveyModalDisclosure.onClose}>
+      <Modal isOpen={surveyModalDisclosure.isOpen} onClose={surveyModalDisclosure.onClose} size="2xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>ユーザアンケート</ModalHeader>
           <ModalCloseButton />
-          <ModalBody overflowY="auto" maxH="60dvh">
+          <ModalBody overflowY="auto" height="70dvh">
+            <Stack spacing={4} mb={6}>
+              <Box border="1px solid" borderColor="gray.100" borderRadius="md" p={4}>
+                <Stack spacing={2}>
+                  <Text fontSize="sm" color="gray.500">
+                    前回アンケートスコア
+                  </Text>
+                  <Text fontSize="2xl" fontWeight="bold">
+                    {lastSurveyResult.score}点 / 100点
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    回答日: {lastSurveyResult.submittedAt}
+                  </Text>
+                  <Button size="sm" variant="outline" alignSelf="flex-start" onClick={handleEditLastSurvey}>
+                    前回回答を編集する
+                  </Button>
+                </Stack>
+              </Box>
+            </Stack>
             <Box
               as="form"
               id="survey-form"
@@ -468,45 +682,48 @@ function UserHome() {
               gap={4}
               onSubmit={handleSurveySubmit}
             >
-              <FormControl>
-                <FormLabel>面談満足度</FormLabel>
-                <Select
-                  placeholder="選択してください"
-                  value={surveyForm.satisfaction}
-                  onChange={(event) =>
-                    setSurveyForm((prev) => ({ ...prev, satisfaction: event.target.value }))
-                  }
-                >
-                  <option value="verySatisfied">とても満足</option>
-                  <option value="satisfied">満足</option>
-                  <option value="neutral">どちらとも言えない</option>
-                  <option value="unsatisfied">やや不満</option>
-                </Select>
-              </FormControl>
-              <FormControl>
-                <FormLabel>キャリアの方向性は明確になりましたか？</FormLabel>
-                <Select
-                  placeholder="選択してください"
-                  value={surveyForm.goalClarity}
-                  onChange={(event) =>
-                    setSurveyForm((prev) => ({ ...prev, goalClarity: event.target.value }))
-                  }
-                >
-                  <option value="yes">はい</option>
-                  <option value="partial">概ねはい</option>
-                  <option value="no">いいえ</option>
-                </Select>
-              </FormControl>
-              <FormControl>
-                <FormLabel>自由記述</FormLabel>
-                <Textarea
-                  placeholder="改善してほしい点や良かった点などがあればお書きください。"
-                  value={surveyForm.feedback}
-                  onChange={(event) =>
-                    setSurveyForm((prev) => ({ ...prev, feedback: event.target.value }))
-                  }
-                />
-              </FormControl>
+              {SURVEY_QUESTIONS.map((question, index) => (
+                <FormControl key={question.id}>
+                  <FormLabel>
+                    {index + 1}. {question.label}
+                  </FormLabel>
+                  {question.type === 'menu' ? (
+                    <Select
+                      value={surveyAnswers[question.id] ?? ''}
+                      onChange={(event) =>
+                        setSurveyAnswers((prev) => ({
+                          ...prev,
+                          [question.id]: event.target.value,
+                        }))
+                      }
+                    >
+                      {question.options.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <RadioGroup
+                      value={surveyAnswers[question.id] ?? ''}
+                      onChange={(value) =>
+                        setSurveyAnswers((prev) => ({
+                          ...prev,
+                          [question.id]: value,
+                        }))
+                      }
+                    >
+                      <SimpleGrid columns={{ base: 2, md: 5 }} spacing={2}>
+                        {question.options.map((option) => (
+                          <Radio key={option} value={option}>
+                            {option}
+                          </Radio>
+                        ))}
+                      </SimpleGrid>
+                    </RadioGroup>
+                  )}
+                </FormControl>
+              ))}
             </Box>
           </ModalBody>
           <ModalFooter gap={3}>
