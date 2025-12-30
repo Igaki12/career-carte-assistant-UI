@@ -18,7 +18,6 @@ import {
   ModalOverlay,
   Radio,
   RadioGroup,
-  Select,
   SimpleGrid,
   Stack,
   Text,
@@ -53,8 +52,9 @@ type KarteRecord = {
 
 type SurveyQuestion = {
   id: string;
+  index: number;
   label: string;
-  type: 'menu' | 'likert';
+  type: 'likert';
   options: string[];
 };
 
@@ -68,157 +68,181 @@ const LABELS: Record<KarteKey, string> = {
   G: 'G. 面談で話したいテーマ',
 };
 
-const MENU_OPTIONS = ['非常に良い', '良い', '普通', 'やや不満', '不満'];
-const LIKERT_OPTIONS = ['強く同意', '同意', 'どちらでもない', '反対', '強く反対'];
+const LIKERT_OPTIONS = ['全くそう思わない', 'そう思わない', 'どちらでもない', 'そう思う', 'とてもそう思う'];
 
 const SURVEY_QUESTIONS: SurveyQuestion[] = [
   {
-    id: 'menu-01',
-    label: '面談の全体的な満足度を教えてください。',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-02',
-    label: 'AI面談の進行スピードは適切でしたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-03',
-    label: '質問内容はあなたの状況に合っていましたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-04',
-    label: 'カルテ要約の内容に納得感はありましたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-05',
-    label: '進捗バッジやモーダルの見やすさはいかがでしたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-06',
-    label: '音声入力の使いやすさについて評価してください。',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-07',
-    label: 'AIの返答は理解しやすかったですか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-08',
-    label: '自己理解の深まりに役立つ内容でしたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-09',
-    label: 'キャリアの方向性が整理できたと感じましたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-10',
-    label: '次回も同じ形式で面談したいですか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-11',
-    label: 'アプリ全体のデザインに満足していますか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-12',
-    label: '操作の迷いは少なくスムーズでしたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-13',
-    label: '面談準備の導線は分かりやすかったですか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-14',
-    label: '質問数のボリュームは適切だと感じましたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'menu-15',
-    label: 'プライバシー面の安心感はいかがでしたか？',
-    type: 'menu',
-    options: MENU_OPTIONS,
-  },
-  {
-    id: 'likert-01',
-    label: 'AIの提案は自分の価値観に沿っていると感じた。',
+    id: 'q6_59',
+    index: 1,
+    label: '自分のこれからのキャリアにとって環境変化に能動的に対応している',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-02',
-    label: '面談を通じて新しい気づきが得られた。',
+    id: 'q6_42',
+    index: 2,
+    label: '仕事のために新しいことを色々と勉強している',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-03',
-    label: '質問の順序や流れは自然だった。',
+    id: 'q6_56',
+    index: 3,
+    label: 'キャリア設計は自分にとって重要な課題である',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-04',
-    label: 'チャットUIは使いやすいと感じた。',
+    id: 'q6_58',
+    index: 4,
+    label: '自分が望むキャリアを歩むためなら努力を惜しまない',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-05',
-    label: 'カルテの内容は具体的で分かりやすい。',
+    id: 'q6_55',
+    index: 5,
+    label: 'これからのキャリアをより充実したものにしたいと強く思う',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-06',
-    label: 'VRMの表情や動きが面談の体験を高めた。',
+    id: 'q6_94',
+    index: 6,
+    label: '新しい仕事があったら積極的にそれをやりたいと願い出る',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-07',
-    label: '面談で話した内容が十分に整理されている。',
+    id: 'q6_109',
+    index: 7,
+    label: '新しいことを学ぶ機会は私にとって重要である',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-08',
-    label: '面談の結果を行動に移せそうだ。',
+    id: 'q6_39',
+    index: 8,
+    label: '常に仕事上の行動には責任をとっている',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-09',
-    label: 'サポート情報や案内は十分だった。',
+    id: 'q6_82',
+    index: 9,
+    label: '嫌な出来事があった時、その問題を解決するための情報を集める',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
   {
-    id: 'likert-10',
-    label: '全体として期待に応える面談体験だった。',
+    id: 'q6_8',
+    index: 10,
+    label: '問題やミスをすぐに上司に報告している',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_166',
+    index: 11,
+    label: '自分が何が得意で何が不得手かをわかっている',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_105',
+    index: 12,
+    label: '私は困難なことを達成できなかった場合、もう一度行う時には前よりも一層熱心に取り組むようにしている',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_207',
+    index: 13,
+    label: '私の職位にふさわしい言動をするように心がけている',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_9',
+    index: 14,
+    label: '自身に与えられた役割を受け入れている',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_137',
+    index: 15,
+    label: '自分のスキルや貢献が今の職場では十分に報酬に反映されていると思う',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_142',
+    index: 16,
+    label: '今の会社に勤めていることは自分の誇りである',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_140',
+    index: 17,
+    label: '今の会社には単なる会社以上の思い入れがある',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_23',
+    index: 18,
+    label: '今の職場で仕事をする中で、私のスキルや個性が評価されている',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_121',
+    index: 19,
+    label: '今の組織の上司や部下を信頼している',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_24',
+    index: 20,
+    label: 'この職場では問題点や困難な課題について持ち出すことができる',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_145',
+    index: 21,
+    label: 'この会社を辞めることは自身に不利益をもたらすと思う',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_189',
+    index: 22,
+    label: 'でしゃばる人がいても嗜めることができない',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_86',
+    index: 23,
+    label: '自分の考えや気持ちがよくわからないことが多い',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_6',
+    index: 24,
+    label: '上司が一から十まで指示しなくても動くことができる',
+    type: 'likert',
+    options: LIKERT_OPTIONS,
+  },
+  {
+    id: 'q6_18',
+    index: 25,
+    label: '上司の指示を待って行動している',
     type: 'likert',
     options: LIKERT_OPTIONS,
   },
@@ -682,46 +706,28 @@ function UserHome() {
               gap={4}
               onSubmit={handleSurveySubmit}
             >
-              {SURVEY_QUESTIONS.map((question, index) => (
+              {SURVEY_QUESTIONS.map((question) => (
                 <FormControl key={question.id}>
                   <FormLabel>
-                    {index + 1}. {question.label}
+                    {question.index}. {question.label}
                   </FormLabel>
-                  {question.type === 'menu' ? (
-                    <Select
-                      value={surveyAnswers[question.id] ?? ''}
-                      onChange={(event) =>
-                        setSurveyAnswers((prev) => ({
-                          ...prev,
-                          [question.id]: event.target.value,
-                        }))
-                      }
-                    >
+                  <RadioGroup
+                    value={surveyAnswers[question.id] ?? ''}
+                    onChange={(value) =>
+                      setSurveyAnswers((prev) => ({
+                        ...prev,
+                        [question.id]: value,
+                      }))
+                    }
+                  >
+                    <SimpleGrid columns={{ base: 2, md: 5 }} spacing={2}>
                       {question.options.map((option) => (
-                        <option key={option} value={option}>
+                        <Radio key={option} value={option}>
                           {option}
-                        </option>
+                        </Radio>
                       ))}
-                    </Select>
-                  ) : (
-                    <RadioGroup
-                      value={surveyAnswers[question.id] ?? ''}
-                      onChange={(value) =>
-                        setSurveyAnswers((prev) => ({
-                          ...prev,
-                          [question.id]: value,
-                        }))
-                      }
-                    >
-                      <SimpleGrid columns={{ base: 2, md: 5 }} spacing={2}>
-                        {question.options.map((option) => (
-                          <Radio key={option} value={option}>
-                            {option}
-                          </Radio>
-                        ))}
-                      </SimpleGrid>
-                    </RadioGroup>
-                  )}
+                    </SimpleGrid>
+                  </RadioGroup>
                 </FormControl>
               ))}
             </Box>
