@@ -3,6 +3,7 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Collapse,
   Container,
   Divider,
@@ -18,7 +19,6 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Progress,
   Select,
   SimpleGrid,
   Stack,
@@ -26,15 +26,14 @@ import {
   Tbody,
   Td,
   Text,
-  Textarea,
   Th,
   Thead,
   Tr,
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
-import { FiFileText, FiPlus, FiUpload, FiZap } from 'react-icons/fi';
+import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
+import { FiFileText, FiPlus, FiUpload } from 'react-icons/fi';
 
 type AccountRecord = {
   id: string;
@@ -46,6 +45,9 @@ type AccountRecord = {
   createdAt: string;
   updatedAt: string;
   logs: number;
+  monthlyInterviewLimit: number;
+  monthlyInterviewRemaining: number;
+  llmCallsPerInterview: number;
 };
 
 type SortState = {
@@ -65,67 +67,33 @@ type CsvState = {
   preview: CsvPreviewRecord[];
 };
 
-type TierId = 'tier1' | 'tier2' | 'tier3' | 'free';
-
-type LlmTier = {
-  id: TierId;
-  label: string;
-  description: string;
-  plan: string;
-  model: string;
-  usage: number;
-  limit: number;
-  notes: string;
+type AccountEditForm = {
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  status: string;
+  monthlyInterviewLimit: string;
+  monthlyInterviewRemaining: string;
+  llmCallsPerInterview: string;
 };
 
-const initialLlmTiers: LlmTier[] = [
-  {
-    id: 'tier1',
-    label: 'Tier 1',
-    description: '役員・経営層向けハイタッチ支援',
-    plan: 'Enterprise Tier 1',
-    model: 'gpt-4o',
-    usage: 188,
-    limit: 400,
-    notes: '戦略レビューとカルテ生成を優先配分。',
-  },
-  {
-    id: 'tier2',
-    label: 'Tier 2',
-    description: 'ミドルマネジメント向けコーチング',
-    plan: 'Enterprise Tier 2',
-    model: 'gpt-4o-mini',
-    usage: 120,
-    limit: 300,
-    notes: '自由対話モード＋カルテ整理で共通利用。',
-  },
-  {
-    id: 'tier3',
-    label: 'Tier 3',
-    description: '若手社員向け定期面談プラン',
-    plan: 'Business Tier',
-    model: 'gpt-4o-mini',
-    usage: 86,
-    limit: 200,
-    notes: '必要に応じてTier2への昇格を推奨。',
-  },
-  {
-    id: 'free',
-    label: 'Free',
-    description: '評価版アカウント',
-    plan: 'Free Trial',
-    model: 'gpt-4o-mini',
-    usage: 24,
-    limit: 60,
-    notes: '体験版のため1ユーザーあたり月2回を上限。',
-  },
-];
+type BulkEditForm = {
+  company: string;
+  role: string;
+  status: string;
+  monthlyInterviewLimit: string;
+  monthlyInterviewRemaining: string;
+  llmCallsPerInterview: string;
+};
 
 function Admin() {
   const toast = useToast();
   const csvModalDisclosure = useDisclosure();
   const userAddDisclosure = useDisclosure();
   const consultantAddDisclosure = useDisclosure();
+  const editModalDisclosure = useDisclosure();
+  const bulkEditDisclosure = useDisclosure();
 
   const [userAccounts, setUserAccounts] = useState<AccountRecord[]>([
     {
@@ -138,6 +106,9 @@ function Admin() {
       createdAt: '2024-09-05 10:20',
       updatedAt: '2024-11-30 14:02',
       logs: 23,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 4,
+      llmCallsPerInterview: 3,
     },
     {
       id: 'USR-2024-019',
@@ -149,6 +120,9 @@ function Admin() {
       createdAt: '2024-08-12 09:50',
       updatedAt: '2024-11-18 16:35',
       logs: 17,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 7,
+      llmCallsPerInterview: 3,
     },
     {
       id: 'USR-2024-016',
@@ -160,6 +134,9 @@ function Admin() {
       createdAt: '2024-07-25 11:05',
       updatedAt: '2024-10-28 13:12',
       logs: 29,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 1,
+      llmCallsPerInterview: 3,
     },
   ]);
 
@@ -174,6 +151,9 @@ function Admin() {
       createdAt: '2024-05-10 08:45',
       updatedAt: '2024-11-28 17:25',
       logs: 61,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 2,
+      llmCallsPerInterview: 3,
     },
     {
       id: 'CNS-398',
@@ -185,6 +165,9 @@ function Admin() {
       createdAt: '2024-06-02 11:30',
       updatedAt: '2024-11-15 12:05',
       logs: 48,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 6,
+      llmCallsPerInterview: 3,
     },
     {
       id: 'CNS-395',
@@ -196,8 +179,34 @@ function Admin() {
       createdAt: '2024-04-22 14:20',
       updatedAt: '2024-09-01 09:15',
       logs: 12,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 9,
+      llmCallsPerInterview: 3,
     },
   ]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedConsultantIds, setSelectedConsultantIds] = useState<string[]>([]);
+  const [editTarget, setEditTarget] = useState<'user' | 'consultant' | null>(null);
+  const [editingAccount, setEditingAccount] = useState<AccountRecord | null>(null);
+  const [editForm, setEditForm] = useState<AccountEditForm>({
+    name: '',
+    email: '',
+    company: '',
+    role: '',
+    status: '',
+    monthlyInterviewLimit: '',
+    monthlyInterviewRemaining: '',
+    llmCallsPerInterview: '',
+  });
+  const [bulkTarget, setBulkTarget] = useState<'user' | 'consultant' | null>(null);
+  const [bulkForm, setBulkForm] = useState<BulkEditForm>({
+    company: '',
+    role: '',
+    status: '',
+    monthlyInterviewLimit: '',
+    monthlyInterviewRemaining: '',
+    llmCallsPerInterview: '',
+  });
 
   const [userQuery, setUserQuery] = useState('');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
@@ -242,25 +251,28 @@ function Admin() {
   });
   const [csvModalType, setCsvModalType] = useState<'user' | 'consultant'>('user');
 
-  const [llmTiers, setLlmTiers] = useState<LlmTier[]>(initialLlmTiers);
-  const [selectedTierId, setSelectedTierId] = useState<TierId>(initialLlmTiers[0].id);
-  const [llmForm, setLlmForm] = useState({
-    model: initialLlmTiers[0].model,
-    limit: initialLlmTiers[0].limit.toString(),
-    notes: initialLlmTiers[0].notes,
-  });
-  const [activeSection, setActiveSection] = useState<'user' | 'consultant' | 'llm'>('user');
+  const [activeSection, setActiveSection] = useState<'user' | 'consultant'>('user');
 
-  useEffect(() => {
-    const tier = llmTiers.find((item) => item.id === selectedTierId);
-    if (tier) {
-      setLlmForm({
-        model: tier.model,
-        limit: tier.limit.toString(),
-        notes: tier.notes,
-      });
-    }
-  }, [selectedTierId, llmTiers]);
+  const buildTimestamp = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${(now.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now
+      .getHours()
+      .toString()
+      .padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const buildEditForm = (account: AccountRecord): AccountEditForm => ({
+    name: account.name,
+    email: account.email,
+    company: account.company,
+    role: account.role,
+    status: account.status,
+    monthlyInterviewLimit: account.monthlyInterviewLimit.toString(),
+    monthlyInterviewRemaining: account.monthlyInterviewRemaining.toString(),
+    llmCallsPerInterview: account.llmCallsPerInterview.toString(),
+  });
 
   const handleSort = (target: 'user' | 'consultant', column: keyof AccountRecord) => {
     if (target === 'user') {
@@ -325,6 +337,17 @@ function Admin() {
       .sort(getComparator(consultantSort));
   }, [consultantAccounts, consultantQuery, consultantStatusFilter, consultantSort]);
 
+  const userStatusOptions = ['面談準備中', '進行中', '完了'];
+  const consultantStatusOptions = ['アクティブ', '休止中'];
+
+  const filteredUserIds = filteredUserAccounts.map((account) => account.id);
+  const filteredConsultantIds = filteredConsultantAccounts.map((account) => account.id);
+  const allFilteredUsersSelected =
+    filteredUserIds.length > 0 && filteredUserIds.every((id) => selectedUserIds.includes(id));
+  const allFilteredConsultantsSelected =
+    filteredConsultantIds.length > 0 &&
+    filteredConsultantIds.every((id) => selectedConsultantIds.includes(id));
+
   const handleAddUser = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!newUserForm.name || !newUserForm.email) {
@@ -339,12 +362,7 @@ function Admin() {
     }
 
     const now = new Date();
-    const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now
-      .getHours()
-      .toString()
-      .padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const timestamp = buildTimestamp();
 
     setUserAccounts((prev) => [
       {
@@ -359,6 +377,9 @@ function Admin() {
         createdAt: timestamp,
         updatedAt: timestamp,
         logs: 0,
+        monthlyInterviewLimit: 10,
+        monthlyInterviewRemaining: 10,
+        llmCallsPerInterview: 3,
       },
       ...prev,
     ]);
@@ -386,12 +407,7 @@ function Admin() {
     }
 
     const now = new Date();
-    const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now
-      .getHours()
-      .toString()
-      .padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const timestamp = buildTimestamp();
 
     setConsultantAccounts((prev) => [
       {
@@ -406,6 +422,9 @@ function Admin() {
         createdAt: timestamp,
         updatedAt: timestamp,
         logs: 0,
+        monthlyInterviewLimit: 10,
+        monthlyInterviewRemaining: 10,
+        llmCallsPerInterview: 3,
       },
       ...prev,
     ]);
@@ -460,47 +479,6 @@ function Admin() {
     csvModalDisclosure.onClose();
   };
 
-  const handleLlmSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const limitValue = Number(llmForm.limit);
-    if (Number.isNaN(limitValue) || limitValue <= 0) {
-      toast({
-        title: '上限値が正しくありません',
-        status: 'warning',
-        duration: 2400,
-        isClosable: true,
-      });
-      return;
-    }
-
-    setLlmTiers((prev) =>
-      prev.map((tier) =>
-        tier.id === selectedTierId
-          ? { ...tier, model: llmForm.model, limit: limitValue, notes: llmForm.notes }
-          : tier,
-      ),
-    );
-
-    toast({
-      title: 'LLM設定を更新しました',
-      description: `対象: ${selectedTierId.toUpperCase()}`,
-      status: 'success',
-      duration: 2600,
-      isClosable: true,
-    });
-  };
-
-  const selectedTier = llmTiers.find((tier) => tier.id === selectedTierId) ?? llmTiers[0];
-
-  const usagePercent = Math.min(
-    100,
-    Number(((selectedTier.usage / selectedTier.limit) * 100).toFixed(1)),
-  );
-
-  const handleTierSelect = (tierId: TierId) => {
-    setSelectedTierId(tierId);
-  };
-
   const activeCsvState = csvModalType === 'user' ? userCsvState : consultantCsvState;
 
   const SortButton = ({
@@ -522,6 +500,217 @@ function Admin() {
     </Button>
   );
 
+  const toggleSelection = (
+    target: 'user' | 'consultant',
+    accountId: string,
+    isChecked: boolean,
+  ) => {
+    if (target === 'user') {
+      setSelectedUserIds((prev) =>
+        isChecked ? [...prev, accountId] : prev.filter((id) => id !== accountId),
+      );
+      return;
+    }
+    setSelectedConsultantIds((prev) =>
+      isChecked ? [...prev, accountId] : prev.filter((id) => id !== accountId),
+    );
+  };
+
+  const handleSelectAll = (target: 'user' | 'consultant') => {
+    if (target === 'user') {
+      const nextSelected = new Set(selectedUserIds);
+      if (allFilteredUsersSelected) {
+        filteredUserIds.forEach((id) => nextSelected.delete(id));
+      } else {
+        filteredUserIds.forEach((id) => nextSelected.add(id));
+      }
+      setSelectedUserIds(Array.from(nextSelected));
+      return;
+    }
+
+    const nextSelected = new Set(selectedConsultantIds);
+    if (allFilteredConsultantsSelected) {
+      filteredConsultantIds.forEach((id) => nextSelected.delete(id));
+    } else {
+      filteredConsultantIds.forEach((id) => nextSelected.add(id));
+    }
+    setSelectedConsultantIds(Array.from(nextSelected));
+  };
+
+  const openEditModal = (target: 'user' | 'consultant', account: AccountRecord) => {
+    setEditTarget(target);
+    setEditingAccount(account);
+    setEditForm(buildEditForm(account));
+    editModalDisclosure.onOpen();
+  };
+
+  const openBulkEditModal = (target: 'user' | 'consultant') => {
+    setBulkTarget(target);
+    setBulkForm({
+      company: '',
+      role: '',
+      status: '',
+      monthlyInterviewLimit: '',
+      monthlyInterviewRemaining: '',
+      llmCallsPerInterview: '',
+    });
+    bulkEditDisclosure.onOpen();
+  };
+
+  const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingAccount || !editTarget) return;
+
+    const limitValue = Number(editForm.monthlyInterviewLimit);
+    const remainingValue = Number(editForm.monthlyInterviewRemaining);
+    const llmValue = Number(editForm.llmCallsPerInterview);
+
+    if (
+      Number.isNaN(limitValue) ||
+      Number.isNaN(remainingValue) ||
+      Number.isNaN(llmValue) ||
+      limitValue <= 0 ||
+      remainingValue < 0 ||
+      llmValue <= 0
+    ) {
+      toast({
+        title: '入力値が正しくありません',
+        status: 'warning',
+        duration: 2400,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const nextTimestamp = buildTimestamp();
+    const applyUpdate = (accounts: AccountRecord[]) =>
+      accounts.map((account) =>
+        account.id === editingAccount.id
+          ? {
+              ...account,
+              name: editForm.name,
+              email: editForm.email,
+              company: editForm.company,
+              role: editForm.role,
+              status: editForm.status,
+              monthlyInterviewLimit: limitValue,
+              monthlyInterviewRemaining: Math.min(remainingValue, limitValue),
+              llmCallsPerInterview: llmValue,
+              updatedAt: nextTimestamp,
+            }
+          : account,
+      );
+
+    if (editTarget === 'user') {
+      setUserAccounts((prev) => applyUpdate(prev));
+    } else {
+      setConsultantAccounts((prev) => applyUpdate(prev));
+    }
+
+    toast({
+      title: 'アカウントを更新しました',
+      status: 'success',
+      duration: 2400,
+      isClosable: true,
+    });
+    editModalDisclosure.onClose();
+  };
+
+  const handleBulkEditSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!bulkTarget) return;
+    const selectedIds = bulkTarget === 'user' ? selectedUserIds : selectedConsultantIds;
+
+    if (selectedIds.length === 0) return;
+
+    const limitValue =
+      bulkForm.monthlyInterviewLimit.trim() === ''
+        ? null
+        : Number(bulkForm.monthlyInterviewLimit);
+    const remainingValue =
+      bulkForm.monthlyInterviewRemaining.trim() === ''
+        ? null
+        : Number(bulkForm.monthlyInterviewRemaining);
+    const llmValue =
+      bulkForm.llmCallsPerInterview.trim() === '' ? null : Number(bulkForm.llmCallsPerInterview);
+
+    if (
+      (limitValue !== null && (Number.isNaN(limitValue) || limitValue <= 0)) ||
+      (remainingValue !== null && (Number.isNaN(remainingValue) || remainingValue < 0)) ||
+      (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0))
+    ) {
+      toast({
+        title: '入力値が正しくありません',
+        status: 'warning',
+        duration: 2400,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const nextTimestamp = buildTimestamp();
+    const applyUpdate = (accounts: AccountRecord[]) =>
+      accounts.map((account) => {
+        if (!selectedIds.includes(account.id)) return account;
+        const nextLimit = limitValue ?? account.monthlyInterviewLimit;
+        const nextRemaining =
+          remainingValue ?? Math.min(account.monthlyInterviewRemaining, nextLimit);
+        return {
+          ...account,
+          company: bulkForm.company.trim() === '' ? account.company : bulkForm.company,
+          role: bulkForm.role.trim() === '' ? account.role : bulkForm.role,
+          status: bulkForm.status.trim() === '' ? account.status : bulkForm.status,
+          monthlyInterviewLimit: nextLimit,
+          monthlyInterviewRemaining: Math.min(nextRemaining, nextLimit),
+          llmCallsPerInterview: llmValue ?? account.llmCallsPerInterview,
+          updatedAt: nextTimestamp,
+        };
+      });
+
+    if (bulkTarget === 'user') {
+      setUserAccounts((prev) => applyUpdate(prev));
+    } else {
+      setConsultantAccounts((prev) => applyUpdate(prev));
+    }
+
+    toast({
+      title: '一括更新を適用しました',
+      status: 'success',
+      duration: 2400,
+      isClosable: true,
+    });
+    bulkEditDisclosure.onClose();
+  };
+
+  const handleBulkDelete = (target: 'user' | 'consultant') => {
+    if (target === 'user') {
+      setUserAccounts((prev) => prev.filter((account) => !selectedUserIds.includes(account.id)));
+      setSelectedUserIds([]);
+    } else {
+      setConsultantAccounts((prev) =>
+        prev.filter((account) => !selectedConsultantIds.includes(account.id)),
+      );
+      setSelectedConsultantIds([]);
+    }
+
+    toast({
+      title: '選択中のアカウントを削除しました',
+      status: 'info',
+      duration: 2400,
+      isClosable: true,
+    });
+  };
+
+  const handlePasswordReset = (account: AccountRecord) => {
+    toast({
+      title: 'パスワード再発行を送信しました',
+      description: `${account.email} に案内を送付（ダミー）。`,
+      status: 'info',
+      duration: 2600,
+      isClosable: true,
+    });
+  };
+
   return (
     <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
       <Container maxW="7xl">
@@ -530,7 +719,7 @@ function Admin() {
             <Stack spacing={3}>
               <Heading size="lg">システム管理コンソール</Heading>
               <Text color="gray.600">
-                PC向けレイアウトでアカウント・CSV一括登録・LLM設定を集中管理します。絞り込み検索や並び替えは表の上部から操作できます。
+                PC向けレイアウトでアカウントとCSV一括登録を集中管理します。絞り込み検索や並び替えは表の上部から操作できます。
               </Text>
               <Text color="gray.500" fontSize="sm">
                 最終更新: {new Date().toLocaleString('ja-JP')}
@@ -550,13 +739,6 @@ function Admin() {
                 onClick={() => setActiveSection('consultant')}
               >
                 コンサルアカウント管理
-              </Button>
-              <Button
-                variant={activeSection === 'llm' ? 'solid' : 'outline'}
-                colorScheme="purple"
-                onClick={() => setActiveSection('llm')}
-              >
-                LLM使用回数設定
               </Button>
             </Flex>
           </Box>
@@ -588,13 +770,56 @@ function Admin() {
                     <option value="進行中">進行中</option>
                     <option value="完了">完了</option>
                   </Select>
+                  <Button
+                    width={{ md: '240px' }}
+                    size="md"
+                    variant="outline"
+                    colorScheme="blue"
+                    onClick={() => handleSelectAll('user')}
+                  >
+                    {allFilteredUsersSelected ? '選択解除' : '全ての行を選択'}
+                  </Button>
                 </Flex>
               </Stack>
+
+              {selectedUserIds.length > 0 && (
+                <Box border="1px solid" borderColor="blue.100" borderRadius="lg" bg="blue.50" p={4}>
+                  <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
+                    <Text fontWeight="semibold">選択中: {selectedUserIds.length}件</Text>
+                    <Flex gap={2} wrap="wrap">
+                      <Button
+                        size="sm"
+                        colorScheme="blue"
+                        onClick={() => openBulkEditModal('user')}
+                      >
+                        全て編集
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="red"
+                        onClick={() => handleBulkDelete('user')}
+                      >
+                        全て削除
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="blue"
+                        onClick={() => setSelectedUserIds([])}
+                      >
+                        選択解除
+                      </Button>
+                    </Flex>
+                  </Flex>
+                </Box>
+              )}
 
               <Box border="1px solid" borderColor="gray.100" borderRadius="lg" overflowX="auto">
                 <Table size="sm" variant="simple">
                   <Thead bg="gray.50">
                     <Tr>
+                      <Th>選択</Th>
                       <Th>
                         <SortButton label="ID" target="user" column="id" />
                       </Th>
@@ -614,13 +839,28 @@ function Admin() {
                       <Th>
                         <SortButton label="更新日時" target="user" column="updatedAt" />
                       </Th>
+                      <Th>面談回数</Th>
+                      <Th>LLM使用回数</Th>
                       <Th>操作ログ</Th>
                       <Th>アクション</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {filteredUserAccounts.map((account) => (
-                      <Tr key={account.id} _hover={{ bg: 'gray.50' }}>
+                      <Tr
+                        key={account.id}
+                        bg={selectedUserIds.includes(account.id) ? 'blue.50' : 'transparent'}
+                        _hover={{ bg: 'gray.50' }}
+                      >
+                        <Td>
+                          <Checkbox
+                            isChecked={selectedUserIds.includes(account.id)}
+                            onChange={(event) =>
+                              toggleSelection('user', account.id, event.target.checked)
+                            }
+                            aria-label={`${account.name}を選択`}
+                          />
+                        </Td>
                         <Td fontWeight="medium">{account.id}</Td>
                         <Td>
                           <Stack spacing={0}>
@@ -643,11 +883,28 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
+                        <Td fontSize="sm">
+                          あと{account.monthlyInterviewRemaining}/{account.monthlyInterviewLimit}回
+                        </Td>
+                        <Td fontSize="sm">{account.llmCallsPerInterview}回/面談</Td>
                         <Td>{account.logs}件</Td>
                         <Td>
-                          <Button size="xs" variant="outline">
-                            編集
-                          </Button>
+                          <Stack direction="row" spacing={2}>
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              onClick={() => openEditModal('user', account)}
+                            >
+                              編集
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              onClick={() => handlePasswordReset(account)}
+                            >
+                              再発行
+                            </Button>
+                          </Stack>
                         </Td>
                       </Tr>
                     ))}
@@ -795,13 +1052,62 @@ function Admin() {
                     <option value="アクティブ">アクティブ</option>
                     <option value="休止中">休止中</option>
                   </Select>
+                  <Button
+                    width={{ md: '240px' }}
+                    size="md"
+                    variant="outline"
+                    colorScheme="green"
+                    onClick={() => handleSelectAll('consultant')}
+                  >
+                    {allFilteredConsultantsSelected ? '選択解除' : '全ての行を選択'}
+                  </Button>
                 </Flex>
               </Stack>
+
+              {selectedConsultantIds.length > 0 && (
+                <Box
+                  border="1px solid"
+                  borderColor="green.100"
+                  borderRadius="lg"
+                  bg="green.50"
+                  p={4}
+                >
+                  <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
+                    <Text fontWeight="semibold">選択中: {selectedConsultantIds.length}件</Text>
+                    <Flex gap={2} wrap="wrap">
+                      <Button
+                        size="sm"
+                        colorScheme="green"
+                        onClick={() => openBulkEditModal('consultant')}
+                      >
+                        全て編集
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="red"
+                        onClick={() => handleBulkDelete('consultant')}
+                      >
+                        全て削除
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="green"
+                        onClick={() => setSelectedConsultantIds([])}
+                      >
+                        選択解除
+                      </Button>
+                    </Flex>
+                  </Flex>
+                </Box>
+              )}
 
               <Box border="1px solid" borderColor="gray.100" borderRadius="lg" overflowX="auto">
                 <Table size="sm" variant="simple">
                   <Thead bg="gray.50">
                     <Tr>
+                      <Th>選択</Th>
                       <Th>
                         <SortButton label="ID" target="consultant" column="id" />
                       </Th>
@@ -821,13 +1127,28 @@ function Admin() {
                       <Th>
                         <SortButton label="更新日時" target="consultant" column="updatedAt" />
                       </Th>
+                      <Th>面談回数</Th>
+                      <Th>LLM使用回数</Th>
                       <Th>操作ログ</Th>
                       <Th>アクション</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {filteredConsultantAccounts.map((account) => (
-                      <Tr key={account.id} _hover={{ bg: 'gray.50' }}>
+                      <Tr
+                        key={account.id}
+                        bg={selectedConsultantIds.includes(account.id) ? 'green.50' : 'transparent'}
+                        _hover={{ bg: 'gray.50' }}
+                      >
+                        <Td>
+                          <Checkbox
+                            isChecked={selectedConsultantIds.includes(account.id)}
+                            onChange={(event) =>
+                              toggleSelection('consultant', account.id, event.target.checked)
+                            }
+                            aria-label={`${account.name}を選択`}
+                          />
+                        </Td>
                         <Td fontWeight="medium">{account.id}</Td>
                         <Td>
                           <Stack spacing={0}>
@@ -850,11 +1171,28 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
+                        <Td fontSize="sm">
+                          あと{account.monthlyInterviewRemaining}/{account.monthlyInterviewLimit}回
+                        </Td>
+                        <Td fontSize="sm">{account.llmCallsPerInterview}回/面談</Td>
                         <Td>{account.logs}件</Td>
                         <Td>
-                          <Button size="xs" variant="outline">
-                            編集
-                          </Button>
+                          <Stack direction="row" spacing={2}>
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              onClick={() => openEditModal('consultant', account)}
+                            >
+                              編集
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              onClick={() => handlePasswordReset(account)}
+                            >
+                              再発行
+                            </Button>
+                          </Stack>
                         </Td>
                       </Tr>
                     ))}
@@ -970,137 +1308,10 @@ function Admin() {
             </Stack>
           </Box>
 
-          <Box
-            bg="white"
-            borderRadius="xl"
-            boxShadow="sm"
-            p={{ base: 6, lg: 8 }}
-            display={activeSection === 'llm' ? 'block' : 'none'}
-          >
-            <Stack spacing={6}>
-              <Heading size="md">LLM使用回数設定</Heading>
-              <Text color="gray.600">
-                Tierごとの利用状況を左カラムで選択し、右カラムで回数やモデルを更新します。
-              </Text>
-              <SimpleGrid
-                columns={{ base: 1, lg: 2 }}
-                spacing={6}
-                templateColumns={{ base: '1fr', lg: '320px 1fr' }}
-              >
-                <Stack spacing={3} border="1px solid" borderColor="gray.100" borderRadius="lg" p={4}>
-                  {llmTiers.map((tier) => (
-                    <Button
-                      key={tier.id}
-                      variant={tier.id === selectedTierId ? 'solid' : 'ghost'}
-                      colorScheme="teal"
-                      justifyContent="flex-start"
-                      textAlign="left"
-                      onClick={() => handleTierSelect(tier.id)}
-                      p={4}
-                      borderRadius="md"
-                      transition="all 0.2s"
-                    >
-                      <Stack spacing={0}>
-                        <Text fontWeight="bold">{tier.label}</Text>
-                        <Text
-                          fontSize="sm"
-                          color={tier.id === selectedTierId ? 'whiteAlpha.800' : 'gray.500'}
-                        >
-                          {tier.description}
-                        </Text>
-                      </Stack>
-                    </Button>
-                  ))}
-                </Stack>
-                <Box border="1px solid" borderColor="gray.100" borderRadius="lg" p={6}>
-                  <Stack spacing={4}>
-                    <Heading size="sm">{selectedTier.label} の利用状況</Heading>
-                    <Flex align="center" gap={6} wrap="wrap">
-                      <Box>
-                        <Text fontSize="sm" color="gray.500">
-                          プラン
-                        </Text>
-                        <Text fontWeight="semibold">{selectedTier.plan}</Text>
-                      </Box>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500">
-                          使用モデル
-                        </Text>
-                        <Badge colorScheme="purple">{selectedTier.model}</Badge>
-                      </Box>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500">
-                          利用実績
-                        </Text>
-                        <Text fontWeight="semibold">
-                          {selectedTier.usage} / {selectedTier.limit} コール
-                        </Text>
-                      </Box>
-                    </Flex>
-                    <Progress
-                      value={usagePercent}
-                      colorScheme={usagePercent > 80 ? 'orange' : 'teal'}
-                      borderRadius="md"
-                    />
-                    <Text fontSize="sm" color="gray.500">
-                      {selectedTier.notes}
-                    </Text>
-                    <Divider />
-                    <form onSubmit={handleLlmSubmit}>
-                      <Stack spacing={4}>
-                        <FormControl>
-                          <FormLabel>モデル選択</FormLabel>
-                          <Select
-                            value={llmForm.model}
-                            onChange={(event) =>
-                              setLlmForm((prev) => ({ ...prev, model: event.target.value }))
-                            }
-                          >
-                            <option value="gpt-4o">gpt-4o</option>
-                            <option value="gpt-4o-mini">gpt-4o-mini</option>
-                            <option value="gpt-5.1">gpt-5.1（計画中）</option>
-                          </Select>
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel>月次利用上限（回）</FormLabel>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={llmForm.limit}
-                            onChange={(event) =>
-                              setLlmForm((prev) => ({ ...prev, limit: event.target.value }))
-                            }
-                          />
-                        </FormControl>
-                        <FormControl>
-                          <FormLabel>メモ / 運用ルール</FormLabel>
-                          <Textarea
-                            rows={3}
-                            value={llmForm.notes}
-                            onChange={(event) =>
-                              setLlmForm((prev) => ({ ...prev, notes: event.target.value }))
-                            }
-                          />
-                        </FormControl>
-                        <Button
-                          type="submit"
-                          colorScheme="teal"
-                          alignSelf="flex-start"
-                          leftIcon={<FiZap />}
-                        >
-                          設定を更新
-                        </Button>
-                      </Stack>
-                    </form>
-                  </Stack>
-                </Box>
-              </SimpleGrid>
-            </Stack>
-          </Box>
         </Stack>
       </Container>
 
-      <Modal isOpen={csvModalDisclosure.isOpen} onClose={csvModalDisclosure.onClose} size="xl">
+      <Modal isOpen={csvModalDisclosure.isOpen} onClose={csvModalDisclosure.onClose} size="3xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>
@@ -1151,6 +1362,258 @@ function Admin() {
             </Button>
             <Button colorScheme="blue" leftIcon={<FiFileText />} onClick={handleCsvConfirm}>
               登録を実行
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={editModalDisclosure.isOpen} onClose={editModalDisclosure.onClose} size="3xl">
+        <ModalOverlay />
+        <ModalContent as="form" onSubmit={handleEditSubmit}>
+          <ModalHeader>
+            アカウント編集（{editTarget === 'consultant' ? 'コンサルタント' : 'ユーザー'}）
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={4}>
+              {editingAccount ? (
+                <>
+                  <Text fontSize="sm" color="gray.600">
+                    ID: {editingAccount.id}
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <FormControl isRequired>
+                      <FormLabel>氏名</FormLabel>
+                      <Input
+                        value={editForm.name}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, name: event.target.value }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>メール</FormLabel>
+                      <Input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, email: event.target.value }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>会社名</FormLabel>
+                      <Input
+                        value={editForm.company}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, company: event.target.value }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>職種 / ロール</FormLabel>
+                      <Input
+                        value={editForm.role}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, role: event.target.value }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>ステータス</FormLabel>
+                      <Select
+                        value={editForm.status}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, status: event.target.value }))
+                        }
+                      >
+                        {(editTarget === 'consultant'
+                          ? consultantStatusOptions
+                          : userStatusOptions
+                        ).map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </SimpleGrid>
+                  <Divider />
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                    <FormControl isRequired>
+                      <FormLabel>月間面談上限</FormLabel>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editForm.monthlyInterviewLimit}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            monthlyInterviewLimit: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>残り面談回数</FormLabel>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={editForm.monthlyInterviewRemaining}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            monthlyInterviewRemaining: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>LLM使用回数/面談</FormLabel>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editForm.llmCallsPerInterview}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            llmCallsPerInterview: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                  </SimpleGrid>
+                </>
+              ) : (
+                <Text fontSize="sm" color="gray.600">
+                  編集対象を選択してください。
+                </Text>
+              )}
+            </Stack>
+          </ModalBody>
+          <ModalFooter gap={3}>
+            <Button variant="ghost" onClick={editModalDisclosure.onClose}>
+              キャンセル
+            </Button>
+            <Button colorScheme="blue" type="submit">
+              変更を保存
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={bulkEditDisclosure.isOpen} onClose={bulkEditDisclosure.onClose} size="3xl">
+        <ModalOverlay />
+        <ModalContent as="form" onSubmit={handleBulkEditSubmit}>
+          <ModalHeader>
+            一括編集（{bulkTarget === 'consultant' ? 'コンサルタント' : 'ユーザー'}）
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={4}>
+              <Text fontSize="sm" color="gray.600">
+                空欄の項目は変更しません。対象: {bulkTarget === 'consultant'
+                  ? selectedConsultantIds.length
+                  : selectedUserIds.length}
+                件
+              </Text>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <FormControl>
+                  <FormLabel>会社名</FormLabel>
+                  <Input
+                    placeholder="変更しない"
+                    value={bulkForm.company}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({ ...prev, company: event.target.value }))
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>職種 / ロール</FormLabel>
+                  <Input
+                    placeholder="変更しない"
+                    value={bulkForm.role}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({ ...prev, role: event.target.value }))
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>ステータス</FormLabel>
+                  <Select
+                    value={bulkForm.status}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({ ...prev, status: event.target.value }))
+                    }
+                  >
+                    <option value="">変更しない</option>
+                    {(bulkTarget === 'consultant'
+                      ? consultantStatusOptions
+                      : userStatusOptions
+                    ).map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </SimpleGrid>
+              <Divider />
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <FormControl>
+                  <FormLabel>月間面談上限</FormLabel>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="変更しない"
+                    value={bulkForm.monthlyInterviewLimit}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({
+                        ...prev,
+                        monthlyInterviewLimit: event.target.value,
+                      }))
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>残り面談回数</FormLabel>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="変更しない"
+                    value={bulkForm.monthlyInterviewRemaining}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({
+                        ...prev,
+                        monthlyInterviewRemaining: event.target.value,
+                      }))
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>LLM使用回数/面談</FormLabel>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="変更しない"
+                    value={bulkForm.llmCallsPerInterview}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({
+                        ...prev,
+                        llmCallsPerInterview: event.target.value,
+                      }))
+                    }
+                  />
+                </FormControl>
+              </SimpleGrid>
+            </Stack>
+          </ModalBody>
+          <ModalFooter gap={3}>
+            <Button variant="ghost" onClick={bulkEditDisclosure.onClose}>
+              キャンセル
+            </Button>
+            <Button colorScheme="blue" type="submit">
+              一括更新を適用
             </Button>
           </ModalFooter>
         </ModalContent>
