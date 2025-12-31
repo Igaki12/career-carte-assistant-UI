@@ -839,9 +839,26 @@ function Admin() {
                       <Th>
                         <SortButton label="更新日時" target="user" column="updatedAt" />
                       </Th>
-                      <Th>面談回数</Th>
-                      <Th>LLM使用回数</Th>
-                      <Th>操作ログ</Th>
+                      <Th>
+                        <SortButton label="月間上限" target="user" column="monthlyInterviewLimit" />
+                      </Th>
+                      <Th>
+                        <SortButton
+                          label="残り"
+                          target="user"
+                          column="monthlyInterviewRemaining"
+                        />
+                      </Th>
+                      <Th>
+                        <SortButton
+                          label="AI回数/面談"
+                          target="user"
+                          column="llmCallsPerInterview"
+                        />
+                      </Th>
+                      <Th>
+                        <SortButton label="操作ログ" target="user" column="logs" />
+                      </Th>
                       <Th>アクション</Th>
                     </Tr>
                   </Thead>
@@ -849,8 +866,13 @@ function Admin() {
                     {filteredUserAccounts.map((account) => (
                       <Tr
                         key={account.id}
-                        bg={selectedUserIds.includes(account.id) ? 'blue.50' : 'transparent'}
-                        _hover={{ bg: 'gray.50' }}
+                        bg={selectedUserIds.includes(account.id) ? 'blue.100' : 'transparent'}
+                        _hover={{
+                          bg: selectedUserIds.includes(account.id) ? 'blue.100' : 'gray.50',
+                        }}
+                        _focusWithin={{
+                          bg: selectedUserIds.includes(account.id) ? 'blue.100' : 'transparent',
+                        }}
                       >
                         <Td>
                           <Checkbox
@@ -883,11 +905,10 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">
-                          あと{account.monthlyInterviewRemaining}/{account.monthlyInterviewLimit}回
-                        </Td>
-                        <Td fontSize="sm">{account.llmCallsPerInterview}回/面談</Td>
-                        <Td>{account.logs}件</Td>
+                        <Td fontSize="sm">{account.monthlyInterviewLimit}回</Td>
+                        <Td fontSize="sm">{account.monthlyInterviewRemaining}回</Td>
+                        <Td fontSize="sm">{account.llmCallsPerInterview}回</Td>
+                        <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
                             <Button
@@ -1127,9 +1148,30 @@ function Admin() {
                       <Th>
                         <SortButton label="更新日時" target="consultant" column="updatedAt" />
                       </Th>
-                      <Th>面談回数</Th>
-                      <Th>LLM使用回数</Th>
-                      <Th>操作ログ</Th>
+                      <Th>
+                        <SortButton
+                          label="月間上限"
+                          target="consultant"
+                          column="monthlyInterviewLimit"
+                        />
+                      </Th>
+                      <Th>
+                        <SortButton
+                          label="残り"
+                          target="consultant"
+                          column="monthlyInterviewRemaining"
+                        />
+                      </Th>
+                      <Th>
+                        <SortButton
+                          label="AI回数/面談"
+                          target="consultant"
+                          column="llmCallsPerInterview"
+                        />
+                      </Th>
+                      <Th>
+                        <SortButton label="操作ログ" target="consultant" column="logs" />
+                      </Th>
                       <Th>アクション</Th>
                     </Tr>
                   </Thead>
@@ -1137,8 +1179,13 @@ function Admin() {
                     {filteredConsultantAccounts.map((account) => (
                       <Tr
                         key={account.id}
-                        bg={selectedConsultantIds.includes(account.id) ? 'green.50' : 'transparent'}
-                        _hover={{ bg: 'gray.50' }}
+                        bg={selectedConsultantIds.includes(account.id) ? 'green.100' : 'transparent'}
+                        _hover={{
+                          bg: selectedConsultantIds.includes(account.id) ? 'green.100' : 'gray.50',
+                        }}
+                        _focusWithin={{
+                          bg: selectedConsultantIds.includes(account.id) ? 'green.100' : 'transparent',
+                        }}
                       >
                         <Td>
                           <Checkbox
@@ -1171,11 +1218,10 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">
-                          あと{account.monthlyInterviewRemaining}/{account.monthlyInterviewLimit}回
-                        </Td>
-                        <Td fontSize="sm">{account.llmCallsPerInterview}回/面談</Td>
-                        <Td>{account.logs}件</Td>
+                        <Td fontSize="sm">{account.monthlyInterviewLimit}回</Td>
+                        <Td fontSize="sm">{account.monthlyInterviewRemaining}回</Td>
+                        <Td fontSize="sm">{account.llmCallsPerInterview}回</Td>
+                        <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
                             <Button
