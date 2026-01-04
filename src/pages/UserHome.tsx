@@ -35,12 +35,17 @@ import type { KarteData, KarteKey } from '../types';
 type Profile = {
   id: string;
   name: string;
+  email: string;
   company: string;
-  title: string;
-  department: string;
+  role: string;
   status: '面談準備中' | '進行中' | '完了';
   tags: string[];
-  email: string;
+  createdAt: string;
+  updatedAt: string;
+  logs: number;
+  monthlyInterviewLimit: number;
+  monthlyInterviewRemaining: number;
+  llmCallsPerInterview: number;
 };
 
 type KarteRecord = {
@@ -256,12 +261,17 @@ function UserHome() {
     () => ({
       id: 'USR-2024-021',
       name: '山田 花子',
+      email: 'hanako.yamada@example.com',
       company: 'Career Carte Inc.',
-      title: 'Product Manager',
-      department: 'DXソリューション本部',
+      role: 'Product Manager',
       status: '面談準備中',
       tags: ['転機を検討', '海外志向', 'AI x HR'],
-      email: 'hanako.yamada@example.com',
+      createdAt: '2024-09-05 10:20',
+      updatedAt: '2024-11-30 14:02',
+      logs: 23,
+      monthlyInterviewLimit: 10,
+      monthlyInterviewRemaining: 4,
+      llmCallsPerInterview: 3,
     }),
     [],
   );
@@ -334,8 +344,8 @@ function UserHome() {
     () => defaultSurveyAnswers,
   );
   const [lastSurveyResult, setLastSurveyResult] = useState(() => ({
-    score: 82,
-    submittedAt: '2024/11/20',
+    score: null as number | null,
+    submittedAt: '',
     answers: defaultSurveyAnswers,
   }));
 
@@ -469,7 +479,7 @@ function UserHome() {
             <Flex direction={{ base: 'column', md: 'row' }} align={{ md: 'center' }} gap={6}>
               <Stack spacing={1} flex="1">
                 <Heading size="lg">{profile.name} さんのマイページ</Heading>
-                <Text color="gray.600">{profile.company} / {profile.department}</Text>
+                <Text color="gray.600">{profile.company} / {profile.role}</Text>
                 <Text color="gray.500">ID: {profile.id}</Text>
               </Stack>
               <Stack align="flex-start" spacing={2}>
@@ -499,6 +509,28 @@ function UserHome() {
                 <Button colorScheme="blue" size="lg" onClick={handleStartInterview}>
                   面談ルームへ進む
                 </Button>
+                <SimpleGrid columns={2} spacing={3} w="full">
+                  <Box border="1px solid" borderColor="blue.100" bg="blue.50" borderRadius="md" p={2}>
+                    <Stack spacing={1}>
+                      <Text fontSize="sm" color="blue.800" fontWeight="semibold">
+                        月間面談可能回数
+                      </Text>
+                      <Text fontSize="sm" color="blue.700">
+                        {profile.monthlyInterviewLimit}回（残り{profile.monthlyInterviewRemaining}回）
+                      </Text>
+                    </Stack>
+                  </Box>
+                  <Box border="1px solid" borderColor="blue.100" bg="blue.50" borderRadius="md" p={2}>
+                    <Stack spacing={1}>
+                      <Text fontSize="sm" color="blue.800" fontWeight="semibold">
+                        AI利用可能回数
+                      </Text>
+                      <Text fontSize="sm" color="blue.700">
+                        面談あたり{profile.llmCallsPerInterview}回
+                      </Text>
+                    </Stack>
+                  </Box>
+                </SimpleGrid>
               </Stack>
             </Box>
 
@@ -511,6 +543,16 @@ function UserHome() {
                 <Button variant="solid" size="lg" colorScheme="pink" onClick={surveyModalDisclosure.onOpen}>
                   アンケートを開く
                 </Button>
+                <Box border="1px solid" borderColor="pink.100" bg="pink.50" borderRadius="md" p={2}>
+                  <Stack spacing={1}>
+                    <Text fontSize="sm" color="pink.800" fontWeight="semibold">
+                      前回アンケートスコア
+                    </Text>
+                    <Text fontSize="sm" color="pink.700">
+                      {lastSurveyResult.score === null ? '--点 / 100点' : `${lastSurveyResult.score}点 / 100点`}
+                    </Text>
+                  </Stack>
+                </Box>
               </Stack>
             </Box>
 
@@ -546,17 +588,17 @@ function UserHome() {
                       </Stack>
                       <Stack spacing={0.5}>
                         <Text fontSize="sm" color="gray.500">
-                          会社 / 部署
+                          会社 / 役職
                         </Text>
                         <Text fontWeight="semibold">
-                          {profile.company} / {profile.department}
+                          {profile.company} / {profile.role}
                         </Text>
                       </Stack>
                       <Stack spacing={0.5}>
                         <Text fontSize="sm" color="gray.500">
                           役職
                         </Text>
-                        <Text fontWeight="semibold">{profile.title}</Text>
+                        <Text fontWeight="semibold">{profile.role}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
                         <Text fontSize="sm" color="gray.500">
@@ -688,10 +730,10 @@ function UserHome() {
                     前回アンケートスコア
                   </Text>
                   <Text fontSize="2xl" fontWeight="bold">
-                    {lastSurveyResult.score}点 / 100点
+                    {lastSurveyResult.score === null ? '--点 / 100点' : `${lastSurveyResult.score}点 / 100点`}
                   </Text>
                   <Text fontSize="sm" color="gray.500">
-                    回答日: {lastSurveyResult.submittedAt}
+                    回答日: {lastSurveyResult.submittedAt || '未回答'}
                   </Text>
                   <Button size="sm" variant="outline" alignSelf="flex-start" onClick={handleEditLastSurvey}>
                     前回回答を編集する
