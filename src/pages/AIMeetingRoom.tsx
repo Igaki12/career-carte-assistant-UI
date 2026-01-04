@@ -472,20 +472,21 @@ function AIMeetingRoom() {
   const insertTextAtCursor = useCallback((incomingText: string) => {
     if (!incomingText) return;
     const textarea = textareaRef.current;
+    const shouldPreserveFocus = textarea ? document.activeElement === textarea : false;
     setTextValue((prev) => {
       if (!textarea) {
         return `${prev}${incomingText}`;
       }
-      const selectionStart = textarea.selectionStart ?? prev.length;
-      const selectionEnd = textarea.selectionEnd ?? prev.length;
+      const selectionStart = shouldPreserveFocus ? (textarea.selectionStart ?? prev.length) : prev.length;
+      const selectionEnd = shouldPreserveFocus ? (textarea.selectionEnd ?? prev.length) : prev.length;
       const nextValue =
         prev.slice(0, selectionStart) + incomingText + prev.slice(selectionEnd);
 
       requestAnimationFrame(() => {
+        if (!shouldPreserveFocus) return;
         const cursorPosition = selectionStart + incomingText.length;
         textarea.selectionStart = cursorPosition;
         textarea.selectionEnd = cursorPosition;
-        textarea.focus();
       });
 
       return nextValue;
