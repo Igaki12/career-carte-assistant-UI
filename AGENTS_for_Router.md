@@ -34,7 +34,7 @@ src/
 │   ├── Admin.tsx         # 【管理者用】管理画面
 │   └── AIMeetingRoom.tsx # AI面談機能（既存アプリの移植先）
 ├── App.tsx               # ルーティング定義 (Routes)
-├── main.tsx              # エントリーポイント (Router設定)
+├── main.tsx              # エントリーポイント (HashRouter設定)
 └── ...
 ```
 
@@ -50,6 +50,7 @@ src/
   * **実装内容:**
       * ヒーローエリア（キャッチコピー等）。
       * **仮設リンクボタン:** UserHome, ConsultantHome, Admin への直接リンク（開発用）。
+      * **主要CTA:** AI面談ルーム (`/app`) への遷移ボタン。
       * **将来のTODO:** ログインフォーム（ID/Pass）の実装。認証成功後に各Homeへリダイレクトするロジックの配置場所となる。
 
 #### B. UserHome.tsx (User Dashboard)
@@ -57,45 +58,40 @@ src/
 一般ユーザー（求職者・社員など）のマイページ。
 
   * **表示データ:**
-      * ID, 名前, 会社名, 職種, Role(社内の役割), ステータス, タグ, Tier(LLM使用プラン)
+      * ID, 名前, 会社名, 職種, ステータス, タグ
+      * 月間面談上限/残り、LLM使用回数/面談
+      * アカウント詳細（メール等）は折りたたみ表示
   * **実装機能:**
     1.  **AI面談スタート:** `AIMeetingRoom.tsx` への遷移ボタン。
-    2.  **カルテ確認・出力:** 過去の面談結果（カルテ）の閲覧とCSV/PDFダウンロード。
-    3.  **アカウント情報確認:** 自身の登録情報の閲覧。パスワードのリセット機能。
+    2.  **カルテ確認・出力:** 過去の面談結果（カルテ）の閲覧とCSV/PDFダウンロード（ダミー）。
+    3.  **アカウント情報確認:** 自身の登録情報の閲覧。パスワードのリセットモーダル（ダミー）を用意。
     4.  **カルテ閲覧（モーダル）:** 最新カルテは詳細表示と編集、過去カルテは作成日/ステータス/Aのみの簡易表示。
-    5.  **ユーザアンケート:** 25問（15問メニュー形式 + 10問リッカート形式）。前回スコア表示と前回回答の編集導線を用意。1問4点換算で100点満点。
-    
+    5.  **ユーザアンケート:** 25問（全問リッカート形式）。前回スコア表示と前回回答の編集導線を用意。1問4点換算で100点満点。
 
 #### C. ConsultantHome.tsx (Consultant Dashboard)
 
 キャリアコンサルタント用の管理画面。
 
   * **表示データ:**
-      * ID, 名前, 会社名, 職種, **担当ユーザー一覧**, ステータス
+      * ID, 名前, 会社名, 役職, Role, ステータス, タグ
+      * 担当ユーザー一覧（担当ユーザー名/会社/職種/最終面談/フォーカス/ステータス）
   * **実装機能:** 
     1.  **対象ユーザカルテ閲覧・修正:** 担当するユーザーのカルテを確認し、最新カルテのA〜G項目を編集できる機能。
-    2.  **コンサルアカウント確認:** 自身の情報閲覧。パスワードのリセット機能。
-    3.  **メール問い合わせ:** 管理者またはユーザーへの問い合わせフォーム起動。
-    4.  **クライアントAI練習面談:** （未実装・リンクのみ設置予定）コンサルタント自身の練習用モード。
+    2.  **コンサルアカウント確認:** 自身の情報閲覧。パスワードのリセットモーダル（ダミー）。
+    3.  **メール問い合わせ:** 管理者または担当ユーザーへの問い合わせフォーム起動（宛先/件名/本文）。
+    4.  **クライアントAI練習面談:** クリック時に「準備中」トーストを表示。
     5.  **カルテ閲覧（モーダル）:** 最新カルテは詳細表示と編集、過去カルテは作成日/ステータス/Aのみの簡易表示。
-    
 
 #### D. Admin.tsx (Administrator Dashboard)
 
 システム全体の管理画面。
 
   * **実装機能:**
-    1.  **アカウント管理:** ユーザーとコンサルタントの情報・操作ログの閲覧／ソート／フィルター機能。Excelライクなテーブル＋並び替えボタン＋検索ボックスを実装済みで、一覧下には「アカウント追加」の大ボタン→Collapseで個別登録フォーム＋CSV一括モーダルが開く。
-    2.  **アカウント追加 (ユーザー / コンサルタント):** それぞれ個別追加フォーム（氏名・メール・会社・ロール・ステータス）とCSVアップロードモーダルを装備。CSVモーダルではファイル確認・プレビュー・実行確認を行ってから登録する。
-    3.  **LLM使用回数設定:** Tier（`tier1` / `tier2` / `tier3` / `free`）ごとにモデル・月次上限・メモを管理。左カラムでTierを選択、右カラムで利用状況（使用モデル・使用量・進捗バー）と設定フォーム（モデル選択、上限値、メモ）を編集できる。
-
-  * **Tierダミーデータ:**  
-    | Tier | 想定ロール | プラン名 | モデル | 使用状況 | 上限 | 備考 |
-    | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-    | Tier 1 | 役員・経営層向け | Enterprise Tier 1 | gpt-4o | 188 | 400 | 戦略レビュー向けハイタッチ枠 |
-    | Tier 2 | ミドルマネジメント | Enterprise Tier 2 | gpt-4o-mini | 120 | 300 | 自由対話＋カルテ整理 |
-    | Tier 3 | 若手社員向け | Business Tier | gpt-4o-mini | 86 | 200 | 必要に応じTier2昇格 |
-    | Free | 評価版 | Free Trial | gpt-4o-mini | 24 | 60 | 体験利用（月2回程度） |
+    1.  **アカウント管理:** ユーザー/コンサルタントの一覧をテーブル表示。検索、ステータスフィルタ、ソート、チェックボックス選択・全件選択に対応。
+    2.  **アカウント追加 (ユーザー / コンサルタント):** 個別追加フォーム（氏名・メール・会社・ロール・ステータス）とCSV一括追加モーダル（プレビュー/確認付き）を用意。
+    3.  **編集機能:** 行単位の編集モーダルと一括編集モーダルを実装。月間面談上限/残り、LLM使用回数/面談を編集可能。
+    4.  **列情報:** 面談上限/残り、LLM使用回数/面談、操作ログ件数を表示。
+    5.  **パスワード再発行:** 行アクションでダミー通知を表示。
 
 #### E. AIMeetingRoom.tsx (Core Feature)
 
@@ -122,50 +118,42 @@ src/
 
 #### Phase 1: 依存関係の追加
 
-```bash
-npm install react-router-dom
-```
+- `react-router-dom` 導入済み。
 
 #### Phase 2: コンポーネントの分離・作成
 
-1.  **`AIMeetingRoom.tsx`**: 既存ロジックを移動。
-2.  **`Home.tsx`**: ランディングページUI作成（Chakra UI使用）。ログイン機能は「Coming Soon」またはモックで配置。
-3.  **`UserHome.tsx`, `ConsultantHome.tsx`, `Admin.tsx`**: それぞれの要件に基づいた仮のUI（ボタン配置など）を作成。
+1.  **`AIMeetingRoom.tsx`**: 既存ロジックを移動済み。
+2.  **`Home.tsx`**: ランディングページUI作成済み（Chakra UI使用）。
+3.  **`UserHome.tsx`, `ConsultantHome.tsx`, `Admin.tsx`**: それぞれの要件に基づいたUIを実装済み。
 
 #### Phase 3: ルーティングの実装
 
 **`src/App.tsx` (Routing Definition)**
 
-```jsx
-import { Routes, Route, Link } from 'react-router-dom'
-import Home from './pages/Home'
-import UserHome from './pages/UserHome'
-import ConsultantHome from './pages/ConsultantHome'
-import Admin from './pages/Admin'
-import AIMeetingRoom from './pages/AIMeetingRoom'
-import { Box } from '@chakra-ui/react'
+```tsx
+import { Box } from '@chakra-ui/react';
+import { Route, Routes } from 'react-router-dom';
+import Admin from './pages/Admin';
+import AIMeetingRoom from './pages/AIMeetingRoom';
+import ConsultantHome from './pages/ConsultantHome';
+import Home from './pages/Home';
+import UserHome from './pages/UserHome';
 
 function App() {
   return (
-    <Box minH="100vh">
+    <Box minH="100vh" bg="gray.900">
       <Routes>
-        {/* Public Landing & Login */}
         <Route path="/" element={<Home />} />
-        
-        {/* Role Based Dashboards */}
         <Route path="/user" element={<UserHome />} />
         <Route path="/consultant" element={<ConsultantHome />} />
         <Route path="/admin" element={<Admin />} />
-        
-        {/* Core Feature (AI Interview) */}
-        {/* 将来的に /app/:sessionId のようにIDを渡す想定 */}
         <Route path="/app" element={<AIMeetingRoom />} />
       </Routes>
     </Box>
-  )
+  );
 }
 
-export default App
+export default App;
 ```
 
 -----
@@ -193,17 +181,53 @@ export default App
 
 -----
 
-### 8\. Vite設定 (Current Status)
+### 8. SSOディープリンク設計メモ (Post-VPS Implementation)
+
+VPS移行後に実装する前提で、既存サービスからUserHomeへSSOディープリンクで遷移できるようにする。
+
+#### A. ルーティング方針
+
+- 現在の `/#/user` から **ID由来のアドレス** へ移行する。
+- 例（VPS移行後・BrowserRouter想定）: `/user/:userId`  
+- GitHub Pages運用時のHashRouter例: `/#/user/:userId`
+
+#### B. SSO遷移URL例
+
+- `https://app.example.com/user/USR-2024-021?token=SSO_TOKEN`
+- tokenは短命・ワンタイムを想定し、署名検証を行う。
+
+#### C. フロント側の処理
+
+- `useParams()` で `userId` を取得。
+- `useSearchParams()` で `token` を取得。
+- `token` がある場合は `POST /auth/sso/exchange` などで検証し、セッションを確立。
+- 失敗時はエラー表示またはログイン/エラーページへ遷移。
+
+#### D. バックエンド側の処理
+
+- `token` の署名・有効期限・ワンタイム利用を検証。
+- `userId` との整合性を確認。
+- 成功時にフロント用セッション（JWT or HttpOnly Cookie）を返却。
+
+#### E. セキュリティ注意点
+
+- 生のID露出を避けたい場合は、推測不能IDや署名付きIDを採用する。
+- ディープリンクは短命・ワンタイム運用を前提にする。
+
+-----
+
+### 9. Vite設定 (Current Status)
 
 GitHub Pages用の設定を維持。
 
-```javascript
+```ts
 export default defineConfig({
-  plugins: [react()],
-  base: '/YOUR_REPOSITORY_NAME/', 
+  base: './',
   build: {
     outDir: 'docs',
-  }
+    emptyOutDir: true,
+  },
+  plugins: [react()],
 })
 ```
 

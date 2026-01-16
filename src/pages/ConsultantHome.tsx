@@ -354,7 +354,7 @@ function ConsultantHome() {
                 <Text color="gray.500">ID: {profile.id} / Role: {profile.role}</Text>
               </Stack>
               <Stack align="flex-start" spacing={2}>
-                <Badge colorScheme="green" borderRadius="md" px={3} py={1}>
+                <Badge colorScheme="green" borderRadius="full" px={3} py={1}>
                   {profile.status}
                 </Badge>
                 <Flex wrap="wrap" gap={2}>

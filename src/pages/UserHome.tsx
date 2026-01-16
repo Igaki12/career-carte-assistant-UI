@@ -483,7 +483,7 @@ function UserHome() {
                 <Text color="gray.500">ID: {profile.id}</Text>
               </Stack>
               <Stack align="flex-start" spacing={2}>
-                <Badge colorScheme="purple" borderRadius="md" px={3} py={1}>
+                <Badge colorScheme="purple" borderRadius="full" px={3} py={1}>
                   {profile.status}
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
