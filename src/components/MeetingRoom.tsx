@@ -530,7 +530,9 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     async (content: string) => {
       if (!content.trim()) return;
       if (!hasConversationQuota) {
-        notifyApiLimit(isInitialMeeting ? undefined : '継続面談は2回までメッセージを送信できます。');
+        notifyApiLimit(
+          isInitialMeeting ? undefined : `継続面談は${conversationQuotaLimit}回までメッセージを送信できます。`,
+        );
         return;
       }
       if (!ensureApiKey()) return;
