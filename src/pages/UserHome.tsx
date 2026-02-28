@@ -42,6 +42,15 @@ const SHIRP_LABELS: Record<ShirpKey, string> = {
   '#': '# その他 (自由記述)',
 };
 
+const SHIRP_HINTS: Record<ShirpKey, string> = {
+  S: '組織適応 / 自身への評価 / 良好な人間関係 / #そのほかの現状',
+  H: '希望する収入 / 希望する仕事内容 / 希望する勤務形態 / #そのほかの希望',
+  I: 'スキルの課題 / 健康上の課題 / 年齢の課題 / 家庭の課題 / #そのほかの課題',
+  R: '強みとなる資格 / 強みとなる経験 / 強みとなる協力者 / 強みとなる時間や資金 / #そのほかの強み',
+  P: 'S〜Rの情報を元に、AIが解決に向けたプランを生成する',
+  '#': 'S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄',
+};
+
 const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   growth_orientation: '成長志向',
   problem_solving_orientation: '課題解決志向',
@@ -595,6 +604,9 @@ function UserHome() {
                             <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
                               {SHIRP_LABELS[key]}
                             </Text>
+                            <Text fontSize="xs" color="gray.400" mb={1}>
+                              {SHIRP_HINTS[key]}
+                            </Text>
                             <Textarea
                               value={latestDraft[key] ?? ''}
                               onChange={(event) =>
@@ -615,6 +627,9 @@ function UserHome() {
                           <Box key={key}>
                             <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
                               {SHIRP_LABELS[key]}
+                            </Text>
+                            <Text fontSize="xs" color="gray.400" mb={1}>
+                              {SHIRP_HINTS[key]}
                             </Text>
                             <Box borderWidth="1px" borderRadius="md" p={3} fontSize="sm" bg="gray.50">
                               {karteRecords[0].data.shirp[key] || '未記入'}
