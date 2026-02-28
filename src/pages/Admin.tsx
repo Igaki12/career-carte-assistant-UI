@@ -45,8 +45,8 @@ type AccountRecord = {
   createdAt: string;
   updatedAt: string;
   logs: number;
-  monthlyInterviewLimit: number;
-  monthlyInterviewRemaining: number;
+  initialInterviewRemaining: number;
+  continuousInterviewRemaining: number;
   llmCallsPerInterview: number;
 };
 
@@ -73,8 +73,8 @@ type AccountEditForm = {
   company: string;
   role: string;
   status: string;
-  monthlyInterviewLimit: string;
-  monthlyInterviewRemaining: string;
+  initialInterviewRemaining: string;
+  continuousInterviewRemaining: string;
   llmCallsPerInterview: string;
 };
 
@@ -82,8 +82,8 @@ type BulkEditForm = {
   company: string;
   role: string;
   status: string;
-  monthlyInterviewLimit: string;
-  monthlyInterviewRemaining: string;
+  initialInterviewRemaining: string;
+  continuousInterviewRemaining: string;
   llmCallsPerInterview: string;
 };
 
@@ -106,8 +106,8 @@ function Admin() {
       createdAt: '2024-09-05 10:20',
       updatedAt: '2024-11-30 14:02',
       logs: 23,
-      monthlyInterviewLimit: 10,
-      monthlyInterviewRemaining: 4,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 4,
       llmCallsPerInterview: 3,
     },
     {
@@ -120,8 +120,8 @@ function Admin() {
       createdAt: '2024-08-12 09:50',
       updatedAt: '2024-11-18 16:35',
       logs: 17,
-      monthlyInterviewLimit: 10,
-      monthlyInterviewRemaining: 7,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 7,
       llmCallsPerInterview: 3,
     },
     {
@@ -134,8 +134,8 @@ function Admin() {
       createdAt: '2024-07-25 11:05',
       updatedAt: '2024-10-28 13:12',
       logs: 29,
-      monthlyInterviewLimit: 10,
-      monthlyInterviewRemaining: 1,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 1,
       llmCallsPerInterview: 3,
     },
   ]);
@@ -151,8 +151,8 @@ function Admin() {
       createdAt: '2024-05-10 08:45',
       updatedAt: '2024-11-28 17:25',
       logs: 61,
-      monthlyInterviewLimit: 10,
-      monthlyInterviewRemaining: 2,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 2,
       llmCallsPerInterview: 3,
     },
     {
@@ -165,8 +165,8 @@ function Admin() {
       createdAt: '2024-06-02 11:30',
       updatedAt: '2024-11-15 12:05',
       logs: 48,
-      monthlyInterviewLimit: 10,
-      monthlyInterviewRemaining: 6,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 6,
       llmCallsPerInterview: 3,
     },
     {
@@ -179,8 +179,8 @@ function Admin() {
       createdAt: '2024-04-22 14:20',
       updatedAt: '2024-09-01 09:15',
       logs: 12,
-      monthlyInterviewLimit: 10,
-      monthlyInterviewRemaining: 9,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 9,
       llmCallsPerInterview: 3,
     },
   ]);
@@ -194,8 +194,8 @@ function Admin() {
     company: '',
     role: '',
     status: '',
-    monthlyInterviewLimit: '',
-    monthlyInterviewRemaining: '',
+    initialInterviewRemaining: '',
+    continuousInterviewRemaining: '',
     llmCallsPerInterview: '',
   });
   const [bulkTarget, setBulkTarget] = useState<'user' | 'consultant' | null>(null);
@@ -203,8 +203,8 @@ function Admin() {
     company: '',
     role: '',
     status: '',
-    monthlyInterviewLimit: '',
-    monthlyInterviewRemaining: '',
+    initialInterviewRemaining: '',
+    continuousInterviewRemaining: '',
     llmCallsPerInterview: '',
   });
 
@@ -269,8 +269,8 @@ function Admin() {
     company: account.company,
     role: account.role,
     status: account.status,
-    monthlyInterviewLimit: account.monthlyInterviewLimit.toString(),
-    monthlyInterviewRemaining: account.monthlyInterviewRemaining.toString(),
+    initialInterviewRemaining: account.initialInterviewRemaining.toString(),
+    continuousInterviewRemaining: account.continuousInterviewRemaining.toString(),
     llmCallsPerInterview: account.llmCallsPerInterview.toString(),
   });
 
@@ -377,8 +377,8 @@ function Admin() {
         createdAt: timestamp,
         updatedAt: timestamp,
         logs: 0,
-        monthlyInterviewLimit: 10,
-        monthlyInterviewRemaining: 10,
+        initialInterviewRemaining: 10,
+        continuousInterviewRemaining: 10,
         llmCallsPerInterview: 3,
       },
       ...prev,
@@ -422,8 +422,8 @@ function Admin() {
         createdAt: timestamp,
         updatedAt: timestamp,
         logs: 0,
-        monthlyInterviewLimit: 10,
-        monthlyInterviewRemaining: 10,
+        initialInterviewRemaining: 10,
+        continuousInterviewRemaining: 10,
         llmCallsPerInterview: 3,
       },
       ...prev,
@@ -550,8 +550,8 @@ function Admin() {
       company: '',
       role: '',
       status: '',
-      monthlyInterviewLimit: '',
-      monthlyInterviewRemaining: '',
+      initialInterviewRemaining: '',
+      continuousInterviewRemaining: '',
       llmCallsPerInterview: '',
     });
     bulkEditDisclosure.onOpen();
@@ -561,16 +561,16 @@ function Admin() {
     event.preventDefault();
     if (!editingAccount || !editTarget) return;
 
-    const limitValue = Number(editForm.monthlyInterviewLimit);
-    const remainingValue = Number(editForm.monthlyInterviewRemaining);
+    const initialRemainingValue = Number(editForm.initialInterviewRemaining);
+    const continuousRemainingValue = Number(editForm.continuousInterviewRemaining);
     const llmValue = Number(editForm.llmCallsPerInterview);
 
     if (
-      Number.isNaN(limitValue) ||
-      Number.isNaN(remainingValue) ||
+      Number.isNaN(initialRemainingValue) ||
+      Number.isNaN(continuousRemainingValue) ||
       Number.isNaN(llmValue) ||
-      limitValue <= 0 ||
-      remainingValue < 0 ||
+      initialRemainingValue < 0 ||
+      continuousRemainingValue < 0 ||
       llmValue <= 0
     ) {
       toast({
@@ -593,8 +593,8 @@ function Admin() {
               company: editForm.company,
               role: editForm.role,
               status: editForm.status,
-              monthlyInterviewLimit: limitValue,
-              monthlyInterviewRemaining: Math.min(remainingValue, limitValue),
+              initialInterviewRemaining: initialRemainingValue,
+              continuousInterviewRemaining: continuousRemainingValue,
               llmCallsPerInterview: llmValue,
               updatedAt: nextTimestamp,
             }
@@ -623,20 +623,22 @@ function Admin() {
 
     if (selectedIds.length === 0) return;
 
-    const limitValue =
-      bulkForm.monthlyInterviewLimit.trim() === ''
+    const initialRemainingValue =
+      bulkForm.initialInterviewRemaining.trim() === ''
         ? null
-        : Number(bulkForm.monthlyInterviewLimit);
-    const remainingValue =
-      bulkForm.monthlyInterviewRemaining.trim() === ''
+        : Number(bulkForm.initialInterviewRemaining);
+    const continuousRemainingValue =
+      bulkForm.continuousInterviewRemaining.trim() === ''
         ? null
-        : Number(bulkForm.monthlyInterviewRemaining);
+        : Number(bulkForm.continuousInterviewRemaining);
     const llmValue =
       bulkForm.llmCallsPerInterview.trim() === '' ? null : Number(bulkForm.llmCallsPerInterview);
 
     if (
-      (limitValue !== null && (Number.isNaN(limitValue) || limitValue <= 0)) ||
-      (remainingValue !== null && (Number.isNaN(remainingValue) || remainingValue < 0)) ||
+      (initialRemainingValue !== null &&
+        (Number.isNaN(initialRemainingValue) || initialRemainingValue < 0)) ||
+      (continuousRemainingValue !== null &&
+        (Number.isNaN(continuousRemainingValue) || continuousRemainingValue < 0)) ||
       (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0))
     ) {
       toast({
@@ -652,16 +654,14 @@ function Admin() {
     const applyUpdate = (accounts: AccountRecord[]) =>
       accounts.map((account) => {
         if (!selectedIds.includes(account.id)) return account;
-        const nextLimit = limitValue ?? account.monthlyInterviewLimit;
-        const nextRemaining =
-          remainingValue ?? Math.min(account.monthlyInterviewRemaining, nextLimit);
         return {
           ...account,
           company: bulkForm.company.trim() === '' ? account.company : bulkForm.company,
           role: bulkForm.role.trim() === '' ? account.role : bulkForm.role,
           status: bulkForm.status.trim() === '' ? account.status : bulkForm.status,
-          monthlyInterviewLimit: nextLimit,
-          monthlyInterviewRemaining: Math.min(nextRemaining, nextLimit),
+          initialInterviewRemaining: initialRemainingValue ?? account.initialInterviewRemaining,
+          continuousInterviewRemaining:
+            continuousRemainingValue ?? account.continuousInterviewRemaining,
           llmCallsPerInterview: llmValue ?? account.llmCallsPerInterview,
           updatedAt: nextTimestamp,
         };
@@ -840,13 +840,13 @@ function Admin() {
                         <SortButton label="更新日時" target="user" column="updatedAt" />
                       </Th>
                       <Th>
-                        <SortButton label="月間上限" target="user" column="monthlyInterviewLimit" />
+                        <SortButton label="初回面談残り" target="user" column="initialInterviewRemaining" />
                       </Th>
                       <Th>
                         <SortButton
-                          label="残り"
+                          label="継続面談残り"
                           target="user"
-                          column="monthlyInterviewRemaining"
+                          column="continuousInterviewRemaining"
                         />
                       </Th>
                       <Th>
@@ -905,8 +905,8 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">{account.monthlyInterviewLimit}回</Td>
-                        <Td fontSize="sm">{account.monthlyInterviewRemaining}回</Td>
+                        <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
+                        <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
                         <Td fontSize="sm">{account.llmCallsPerInterview}回</Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
@@ -1150,16 +1150,16 @@ function Admin() {
                       </Th>
                       <Th>
                         <SortButton
-                          label="月間上限"
+                          label="初回面談残り"
                           target="consultant"
-                          column="monthlyInterviewLimit"
+                          column="initialInterviewRemaining"
                         />
                       </Th>
                       <Th>
                         <SortButton
-                          label="残り"
+                          label="継続面談残り"
                           target="consultant"
-                          column="monthlyInterviewRemaining"
+                          column="continuousInterviewRemaining"
                         />
                       </Th>
                       <Th>
@@ -1218,8 +1218,8 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">{account.monthlyInterviewLimit}回</Td>
-                        <Td fontSize="sm">{account.monthlyInterviewRemaining}回</Td>
+                        <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
+                        <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
                         <Td fontSize="sm">{account.llmCallsPerInterview}回</Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
@@ -1487,29 +1487,29 @@ function Admin() {
                   <Divider />
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <FormControl isRequired>
-                      <FormLabel>月間面談上限</FormLabel>
+                      <FormLabel>初回面談残り回数</FormLabel>
                       <Input
                         type="number"
-                        min="1"
-                        value={editForm.monthlyInterviewLimit}
+                        min="0"
+                        value={editForm.initialInterviewRemaining}
                         onChange={(event) =>
                           setEditForm((prev) => ({
                             ...prev,
-                            monthlyInterviewLimit: event.target.value,
+                            initialInterviewRemaining: event.target.value,
                           }))
                         }
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>残り面談回数</FormLabel>
+                      <FormLabel>継続面談残り回数</FormLabel>
                       <Input
                         type="number"
                         min="0"
-                        value={editForm.monthlyInterviewRemaining}
+                        value={editForm.continuousInterviewRemaining}
                         onChange={(event) =>
                           setEditForm((prev) => ({
                             ...prev,
-                            monthlyInterviewRemaining: event.target.value,
+                            continuousInterviewRemaining: event.target.value,
                           }))
                         }
                       />
@@ -1607,31 +1607,31 @@ function Admin() {
               <Divider />
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                 <FormControl>
-                  <FormLabel>月間面談上限</FormLabel>
+                  <FormLabel>初回面談残り回数</FormLabel>
                   <Input
                     type="number"
-                    min="1"
+                    min="0"
                     placeholder="変更しない"
-                    value={bulkForm.monthlyInterviewLimit}
+                    value={bulkForm.initialInterviewRemaining}
                     onChange={(event) =>
                       setBulkForm((prev) => ({
                         ...prev,
-                        monthlyInterviewLimit: event.target.value,
+                        initialInterviewRemaining: event.target.value,
                       }))
                     }
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>残り面談回数</FormLabel>
+                  <FormLabel>継続面談残り回数</FormLabel>
                   <Input
                     type="number"
                     min="0"
                     placeholder="変更しない"
-                    value={bulkForm.monthlyInterviewRemaining}
+                    value={bulkForm.continuousInterviewRemaining}
                     onChange={(event) =>
                       setBulkForm((prev) => ({
                         ...prev,
-                        monthlyInterviewRemaining: event.target.value,
+                        continuousInterviewRemaining: event.target.value,
                       }))
                     }
                   />

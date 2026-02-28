@@ -1,9 +1,10 @@
 import { Box } from '@chakra-ui/react';
 import { Route, Routes } from 'react-router-dom';
 import Admin from './pages/Admin';
-import AIMeetingRoom from './pages/AIMeetingRoom';
+import ContinuousMeetingRoom from './pages/ContinuousMeetingRoom';
 import ConsultantHome from './pages/ConsultantHome';
 import Home from './pages/Home';
+import InitialMeetingRoom from './pages/InitialMeetingRoom';
 import UserHome from './pages/UserHome';
 
 function App() {
@@ -14,7 +15,8 @@ function App() {
         <Route path="/user" element={<UserHome />} />
         <Route path="/consultant" element={<ConsultantHome />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/app" element={<AIMeetingRoom />} />
+        <Route path="/app/initial" element={<InitialMeetingRoom />} />
+        <Route path="/app/continuous" element={<ContinuousMeetingRoom />} />
       </Routes>
     </Box>
   );

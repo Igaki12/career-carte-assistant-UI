@@ -47,7 +47,7 @@ type StageProps = {
   isSpeaking: boolean;
   conversationStarted: boolean;
   progress: number;
-  isFreeMode?: boolean;
+  showProgress?: boolean;
 };
 
 type BlinkState = {
@@ -64,7 +64,7 @@ type NodState = {
   current: number;
 };
 
-const VrmStage = ({ isSpeaking, conversationStarted, progress, isFreeMode }: StageProps) => {
+const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = true }: StageProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -464,7 +464,7 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, isFreeMode }: Sta
       _active={{ bg: 'rgba(15,23,42,0.95)' }}
       title={`背景: ${currentBackground.label}`}
     />
-      {!isFreeMode && (
+      {showProgress && (
         <Box
           position="absolute"
           bottom={3}

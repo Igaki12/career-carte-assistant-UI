@@ -15,13 +15,24 @@ function Home() {
           </Text>
           <Button
             as={RouterLink}
-            to="/app"
+            to="/app/initial"
             colorScheme="teal"
             size="lg"
             alignSelf="flex-start"
             px={10}
           >
-            AI面談を始める
+            初回面談を始める
+          </Button>
+          <Button
+            as={RouterLink}
+            to="/app/continuous"
+            variant="outline"
+            colorScheme="teal"
+            size="lg"
+            alignSelf="flex-start"
+            px={10}
+          >
+            継続面談を始める
           </Button>
           <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
             <Button as={RouterLink} to="/user" variant="outline" colorScheme="teal">
