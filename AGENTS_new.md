@@ -3,7 +3,7 @@
 以下がアップデートされた新しい `AGENTS.md` です。
 
 ```markdown
-# Career Carte Assistant – エージェント設計書
+# Career Karte Assistant – エージェント設計書
 
 ## 1. プロジェクトのゴールと開発方針
 現在の単一機能Reactアプリを、将来的な拡張性とVPS運用を見据えた **役割別 SPA (Single Page Application)** 構成へリファクタリングし、統合的なキャリアコンサルタントシミュレータを構築する。
