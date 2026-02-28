@@ -214,7 +214,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const shouldResumeAudioRef = useRef(false);
 
   const isInitialMeeting = meetingType === 'initial';
-  const maxApiCalls = isInitialMeeting ? 4 : 3;
+  const maxApiCalls = isInitialMeeting ? 10 : 7; // 初回面談は10回、継続面談は7回までAPI呼び出し可能（フィードバック生成を含む）
   const conversationQuotaLimit = Math.max(isInitialMeeting ? maxApiCalls : maxApiCalls - 1, 0);
   const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
   const hasApiBudget = apiUsageCount < maxApiCalls;
