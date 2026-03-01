@@ -13,7 +13,9 @@ type Props = {
 const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
   const gradientId = useId();
   const count = Math.min(labels.length, values.length);
-  const center = size / 2;
+  const padding = 44;
+  const canvasSize = size + padding * 2;
+  const center = canvasSize / 2;
   const radius = size * 0.32;
   const labelRadius = size * 0.42;
   const angleStep = (Math.PI * 2) / count;
@@ -44,8 +46,8 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
   });
 
   return (
-    <Box w={`${size}px`} h={`${size}px`} mx="auto">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <Box w={`${canvasSize}px`} h={`${canvasSize}px`} mx="auto">
+      <svg width={canvasSize} height={canvasSize} viewBox={`0 0 ${canvasSize} ${canvasSize}`}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.45" />
