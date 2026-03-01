@@ -555,7 +555,7 @@ function UserHome() {
                       前回アンケートスコア
                     </Text>
                     {hasSurvey ? (
-                      <SurveyRadar labels={Object.values(SURVEY_LABELS)} values={surveyScores} size={220} />
+                      <SurveyRadar labels={Object.values(SURVEY_LABELS)} values={surveyScores} size={200} />
                     ) : (
                       <Text fontSize="sm" color="pink.700">
                         --
