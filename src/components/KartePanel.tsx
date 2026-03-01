@@ -1,4 +1,4 @@
-import { Box, SimpleGrid, Stack, Text } from '@chakra-ui/react';
+import { Box, SimpleGrid, Stack, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from '@chakra-ui/react';
 import SurveyRadar from './SurveyRadar';
 import { SHIRP_KEYS } from '../types';
 import type { KarteData, ShirpKey, SurveyFactorKey } from '../types';
@@ -44,32 +44,88 @@ const KartePanel = ({ data }: Props) => {
           <Text fontSize="sm" fontWeight="bold" color="gray.500" mb={3}>
             デモグラフィック (個人情報)
           </Text>
-          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
-            <Box>
-              <Text fontSize="xs" color="gray.500">氏名</Text>
-              <Text fontWeight="semibold" fontSize="sm">
-                {data.demographics.name ?? '未入力'}
-              </Text>
-            </Box>
-            <Box>
-              <Text fontSize="xs" color="gray.500">年齢</Text>
-              <Text fontWeight="semibold" fontSize="sm">
-                {data.demographics.age ?? '未入力'}
-              </Text>
-            </Box>
-            <Box>
-              <Text fontSize="xs" color="gray.500">所属企業</Text>
-              <Text fontWeight="semibold" fontSize="sm">
-                {data.demographics.company ?? '未入力'}
-              </Text>
-            </Box>
-            <Box>
-              <Text fontSize="xs" color="gray.500">職種</Text>
-              <Text fontWeight="semibold" fontSize="sm">
-                {data.demographics.jobTitle ?? '未入力'}
-              </Text>
-            </Box>
-          </SimpleGrid>
+          <Tabs variant="soft-rounded" colorScheme="blue">
+            <TabList mb={3}>
+              <Tab fontSize="sm">基本情報</Tab>
+              <Tab fontSize="sm">個人情報詳細</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel px={0}>
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">氏名</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.name ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">年齢</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.age ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">所属企業</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.company ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">職種</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.jobTitle ?? '未入力'}
+                    </Text>
+                  </Box>
+                </SimpleGrid>
+              </TabPanel>
+              <TabPanel px={0}>
+                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">勤務地(都道府県)</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.workLocationPrefecture ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">転職歴(回数)</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.jobChangeCount ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">勤続年数(年)</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.yearsOfService ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">性別</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.gender ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">現在の婚姻関係</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.maritalStatus ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">子供の有無(人)</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.childrenCount ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">末子の年齢(歳)</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {data.demographics.youngestChildAge ?? '未入力'}
+                    </Text>
+                  </Box>
+                </SimpleGrid>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         </Box>
 
         <Box>

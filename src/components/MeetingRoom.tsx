@@ -45,6 +45,13 @@ const createEmptyKarte = (): KarteData => ({
     age: null,
     company: null,
     jobTitle: null,
+    workLocationPrefecture: null,
+    jobChangeCount: null,
+    yearsOfService: null,
+    gender: null,
+    maritalStatus: null,
+    childrenCount: null,
+    youngestChildAge: null,
   },
   shirp: {
     S: null,

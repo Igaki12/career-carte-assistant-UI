@@ -20,6 +20,11 @@ import {
   RadioGroup,
   SimpleGrid,
   Stack,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Text,
   Textarea,
   useDisclosure,
@@ -111,6 +116,14 @@ type Profile = {
   email: string;
   company: string;
   role: string;
+  age: string;
+  workLocationPrefecture: string;
+  jobChangeCount: string;
+  yearsOfService: string;
+  gender: string;
+  maritalStatus: string;
+  childrenCount: string;
+  youngestChildAge: string;
   status: '面談準備中' | '進行中' | '完了';
   tags: string[];
   createdAt: string;
@@ -196,6 +209,14 @@ function UserHome() {
       email: 'hanako.yamada@example.com',
       company: 'Career Carte Inc.',
       role: 'Product Manager',
+      age: '32',
+      workLocationPrefecture: '東京都',
+      jobChangeCount: '2',
+      yearsOfService: '4',
+      gender: '女性',
+      maritalStatus: '既婚',
+      childrenCount: '1',
+      youngestChildAge: '4',
       status: '面談準備中',
       tags: ['Tech領域', '人材開発', 'PM'],
       createdAt: '2024-09-05 10:20',
@@ -222,6 +243,13 @@ function UserHome() {
           age: '32',
           company: 'Career Carte Inc.',
           jobTitle: 'Product Manager',
+          workLocationPrefecture: '東京都',
+          jobChangeCount: '2',
+          yearsOfService: '4',
+          gender: '女性',
+          maritalStatus: '既婚',
+          childrenCount: '1',
+          youngestChildAge: '4',
         },
         shirp: {
           S: '組織の裁量は大きいが、成長機会の減少を感じている。チームとは良好な関係。',
@@ -254,6 +282,13 @@ function UserHome() {
           age: '32',
           company: 'Career Carte Inc.',
           jobTitle: 'Product Manager',
+          workLocationPrefecture: '東京都',
+          jobChangeCount: '1',
+          yearsOfService: '2',
+          gender: '女性',
+          maritalStatus: '既婚',
+          childrenCount: '1',
+          youngestChildAge: '2',
         },
         shirp: {
           S: '現職の業務量と成長曲線に不満。',
@@ -405,6 +440,38 @@ function UserHome() {
                 <Heading size="lg">{profile.name} さんのマイページ</Heading>
                 <Text color="gray.600">{profile.company} / {profile.role}</Text>
                 <Text color="gray.500">ID: {profile.id}</Text>
+                <Box mt={3} borderWidth="1px" borderColor="gray.200" borderRadius="lg" p={3} bg="gray.50">
+                  <Text fontSize="sm" fontWeight="bold" color="gray.600" mb={2}>
+                    プロフィールメモ
+                  </Text>
+                  <Tabs variant="enclosed" size="sm">
+                    <TabList>
+                      <Tab>基本情報</Tab>
+                      <Tab>個人情報詳細</Tab>
+                    </TabList>
+                    <TabPanels>
+                      <TabPanel px={0} pt={3}>
+                        <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                          <Text fontSize="sm">氏名: {profile.name}</Text>
+                          <Text fontSize="sm">年齢: {profile.age}</Text>
+                          <Text fontSize="sm">所属企業: {profile.company}</Text>
+                          <Text fontSize="sm">職種: {profile.role}</Text>
+                        </SimpleGrid>
+                      </TabPanel>
+                      <TabPanel px={0} pt={3}>
+                        <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                          <Text fontSize="sm">勤務地(都道府県): {profile.workLocationPrefecture}</Text>
+                          <Text fontSize="sm">転職歴(回数): {profile.jobChangeCount}</Text>
+                          <Text fontSize="sm">勤続年数(年): {profile.yearsOfService}</Text>
+                          <Text fontSize="sm">性別: {profile.gender}</Text>
+                          <Text fontSize="sm">現在の婚姻関係: {profile.maritalStatus}</Text>
+                          <Text fontSize="sm">子供の有無(人): {profile.childrenCount}</Text>
+                          <Text fontSize="sm">末子の年齢(歳): {profile.youngestChildAge}</Text>
+                        </SimpleGrid>
+                      </TabPanel>
+                    </TabPanels>
+                  </Tabs>
+                </Box>
               </Stack>
               <Stack align="flex-start" spacing={2}>
                 <Badge colorScheme="purple" borderRadius="full" px={3} py={1}>
@@ -526,24 +593,70 @@ function UserHome() {
                 </Button>
                 <Collapse in={accountDisclosure.isOpen} animateOpacity>
                   <Box pt={4}>
-                    <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                      <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">氏名</Text>
-                        <Text fontWeight="semibold">{profile.name}</Text>
-                      </Stack>
-                      <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">会社 / 役職</Text>
-                        <Text fontWeight="semibold">{profile.company} / {profile.role}</Text>
-                      </Stack>
-                      <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">役職</Text>
-                        <Text fontWeight="semibold">{profile.role}</Text>
-                      </Stack>
-                      <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">メール</Text>
-                        <Text fontWeight="semibold">{profile.email}</Text>
-                      </Stack>
-                    </SimpleGrid>
+                    <Tabs variant="enclosed" size="sm">
+                      <TabList>
+                        <Tab>基本情報</Tab>
+                        <Tab>個人情報詳細</Tab>
+                      </TabList>
+                      <TabPanels>
+                        <TabPanel px={0} pt={3}>
+                          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">氏名</Text>
+                              <Text fontWeight="semibold">{profile.name}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">年齢</Text>
+                              <Text fontWeight="semibold">{profile.age}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">所属企業</Text>
+                              <Text fontWeight="semibold">{profile.company}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">職種</Text>
+                              <Text fontWeight="semibold">{profile.role}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">メール</Text>
+                              <Text fontWeight="semibold">{profile.email}</Text>
+                            </Stack>
+                          </SimpleGrid>
+                        </TabPanel>
+                        <TabPanel px={0} pt={3}>
+                          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">勤務地(都道府県)</Text>
+                              <Text fontWeight="semibold">{profile.workLocationPrefecture}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">転職歴(回数)</Text>
+                              <Text fontWeight="semibold">{profile.jobChangeCount}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">勤続年数(年)</Text>
+                              <Text fontWeight="semibold">{profile.yearsOfService}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">性別</Text>
+                              <Text fontWeight="semibold">{profile.gender}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">現在の婚姻関係</Text>
+                              <Text fontWeight="semibold">{profile.maritalStatus}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">子供の有無(人)</Text>
+                              <Text fontWeight="semibold">{profile.childrenCount}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color="gray.500">末子の年齢(歳)</Text>
+                              <Text fontWeight="semibold">{profile.youngestChildAge}</Text>
+                            </Stack>
+                          </SimpleGrid>
+                        </TabPanel>
+                      </TabPanels>
+                    </Tabs>
                     <Button mt={4} colorScheme="red" variant="outline" onClick={resetModalDisclosure.onOpen}>
                       パスワードを再設定する
                     </Button>
@@ -576,12 +689,33 @@ function UserHome() {
                       <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
                         デモグラフィック
                       </Text>
-                      <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                        <Text fontSize="sm">氏名: {karteRecords[0].data.demographics.name ?? '未入力'}</Text>
-                        <Text fontSize="sm">年齢: {karteRecords[0].data.demographics.age ?? '未入力'}</Text>
-                        <Text fontSize="sm">所属企業: {karteRecords[0].data.demographics.company ?? '未入力'}</Text>
-                        <Text fontSize="sm">職種: {karteRecords[0].data.demographics.jobTitle ?? '未入力'}</Text>
-                      </SimpleGrid>
+                      <Tabs variant="enclosed" size="sm">
+                        <TabList>
+                          <Tab>基本情報</Tab>
+                          <Tab>個人情報詳細</Tab>
+                        </TabList>
+                        <TabPanels>
+                          <TabPanel px={0} pt={3}>
+                            <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                              <Text fontSize="sm">氏名: {karteRecords[0].data.demographics.name ?? '未入力'}</Text>
+                              <Text fontSize="sm">年齢: {karteRecords[0].data.demographics.age ?? '未入力'}</Text>
+                              <Text fontSize="sm">所属企業: {karteRecords[0].data.demographics.company ?? '未入力'}</Text>
+                              <Text fontSize="sm">職種: {karteRecords[0].data.demographics.jobTitle ?? '未入力'}</Text>
+                            </SimpleGrid>
+                          </TabPanel>
+                          <TabPanel px={0} pt={3}>
+                            <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                              <Text fontSize="sm">勤務地(都道府県): {karteRecords[0].data.demographics.workLocationPrefecture ?? '未入力'}</Text>
+                              <Text fontSize="sm">転職歴(回数): {karteRecords[0].data.demographics.jobChangeCount ?? '未入力'}</Text>
+                              <Text fontSize="sm">勤続年数(年): {karteRecords[0].data.demographics.yearsOfService ?? '未入力'}</Text>
+                              <Text fontSize="sm">性別: {karteRecords[0].data.demographics.gender ?? '未入力'}</Text>
+                              <Text fontSize="sm">現在の婚姻関係: {karteRecords[0].data.demographics.maritalStatus ?? '未入力'}</Text>
+                              <Text fontSize="sm">子供の有無(人): {karteRecords[0].data.demographics.childrenCount ?? '未入力'}</Text>
+                              <Text fontSize="sm">末子の年齢(歳): {karteRecords[0].data.demographics.youngestChildAge ?? '未入力'}</Text>
+                            </SimpleGrid>
+                          </TabPanel>
+                        </TabPanels>
+                      </Tabs>
                     </Box>
                     <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
                       <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>

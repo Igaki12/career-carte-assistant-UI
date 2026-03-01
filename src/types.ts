@@ -14,6 +14,13 @@ export type DemographicData = {
   age: string | null;
   company: string | null;
   jobTitle: string | null;
+  workLocationPrefecture: string | null;
+  jobChangeCount: string | null;
+  yearsOfService: string | null;
+  gender: string | null;
+  maritalStatus: string | null;
+  childrenCount: string | null;
+  youngestChildAge: string | null;
 };
 
 export type SurveyFactorKey =
