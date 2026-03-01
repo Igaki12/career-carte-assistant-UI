@@ -13,7 +13,7 @@ type Props = {
 const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
   const gradientId = useId();
   const count = Math.min(labels.length, values.length);
-  const padding = 44;
+  const padding = 56;
   const canvasSize = size + padding * 2;
   const center = canvasSize / 2;
   const radius = size * 0.32;
