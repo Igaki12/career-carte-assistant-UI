@@ -260,6 +260,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const shouldResumeAudioRef = useRef(false);
 
   const isInitialMeeting = meetingType === 'initial';
+  const isTurnTakingMode = !isInitialMeeting && continuousMode === 'turn';
   const maxApiCalls = isInitialMeeting ? 10 : 7; // 初回面談は10回、継続面談は7回までAPI呼び出し可能（フィードバック生成を含む）
   const conversationQuotaLimit = Math.max(isInitialMeeting ? maxApiCalls : maxApiCalls - 1, 0);
   const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
@@ -656,7 +657,11 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           return;
         }
 
-        insertTextAtCursor(text);
+        if (isTurnTakingMode) {
+          await handleUserMessage(text);
+        } else {
+          insertTextAtCursor(text);
+        }
       } catch (error) {
         console.error(error);
         toast({
@@ -668,7 +673,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [apiKey, ensureApiKey, insertTextAtCursor, toast],
+    [apiKey, ensureApiKey, handleUserMessage, insertTextAtCursor, isTurnTakingMode, toast],
   );
 
   const toggleRecording = async () => {
@@ -720,6 +725,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     }
   };
 
+  const getTurnTakingConversationHistory = useCallback(() => {
+    return messagesRef.current.filter((message, index) => !(index === 0 && message.role === 'assistant'));
+  }, []);
+
   const handleOpenKarteModal = useCallback(() => {
     if (isBusy) {
       toast({
@@ -745,9 +754,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       return;
     }
     if (!ensureApiKey()) return;
-    await runLLMProcess(messagesRef.current, true);
+    const finalInputHistory = isTurnTakingMode ? getTurnTakingConversationHistory() : messagesRef.current;
+    await runLLMProcess(finalInputHistory, true);
     setKarteModalOpen(true);
-  }, [ensureApiKey, hasApiBudget, isInitialMeeting, notifyApiLimit, runLLMProcess]);
+  }, [ensureApiKey, getTurnTakingConversationHistory, hasApiBudget, isInitialMeeting, isTurnTakingMode, notifyApiLimit, runLLMProcess]);
 
   const persistKarte = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -821,7 +831,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   <Badge colorScheme={apiStatusColor}>{apiStatusLabel}</Badge>
                   {!isInitialMeeting && (
                     <Badge colorScheme={continuousMode === 'turn' ? 'purple' : 'blue'}>
-                      {continuousMode === 'turn' ? 'ターンテイキングモード (準備中)' : '通常モード'}
+                      {continuousMode === 'turn' ? 'ターンテイキングモード (Realtime API・未実装)' : '通常モード'}
                     </Badge>
                   )}
                   <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)}>
@@ -868,95 +878,128 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               minH={0}
               overflow="hidden"
             >
-              <Box ref={chatContainerRef} flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="gray.50">
-                {messages.map((message, index) => {
-                  const isUser = message.role === 'user';
-                  return (
-                    <Flex key={`${message.role}-${index}-${message.content.slice(0, 8)}`} justify={isUser ? 'flex-end' : 'flex-start'} mb={3}>
-                      <Box
-                        bg={isUser ? 'blue.600' : 'white'}
-                        color={isUser ? 'white' : 'gray.800'}
-                        borderRadius="2xl"
-                        borderTopRightRadius={isUser ? '0' : '2xl'}
-                        borderTopLeftRadius={isUser ? '2xl' : '0'}
-                        px={4}
-                        py={3}
-                        boxShadow="sm"
-                        maxW="80%"
-                        fontSize="sm"
-                        whiteSpace="pre-wrap"
-                      >
-                        {message.content}
-                      </Box>
-                    </Flex>
-                  );
-                })}
-              </Box>
+              {isTurnTakingMode ? (
+                <Box flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="gray.50">
+                  <Stack spacing={3}>
+                    <Box bg="purple.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="purple.200">
+                      <Text fontSize="xs" color="purple.700">
+                        Realtime APIは未実装です。現在は音声入力ベースで会話し、終了時に会話履歴とカルテを使って1回だけ更新します。
+                      </Text>
+                    </Box>
+                    <KartePanel data={karte} />
+                  </Stack>
+                </Box>
+              ) : (
+                <Box ref={chatContainerRef} flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="gray.50">
+                  {messages.map((message, index) => {
+                    const isUser = message.role === 'user';
+                    return (
+                      <Flex key={`${message.role}-${index}-${message.content.slice(0, 8)}`} justify={isUser ? 'flex-end' : 'flex-start'} mb={3}>
+                        <Box
+                          bg={isUser ? 'blue.600' : 'white'}
+                          color={isUser ? 'white' : 'gray.800'}
+                          borderRadius="2xl"
+                          borderTopRightRadius={isUser ? '0' : '2xl'}
+                          borderTopLeftRadius={isUser ? '2xl' : '0'}
+                          px={4}
+                          py={3}
+                          boxShadow="sm"
+                          maxW="80%"
+                          fontSize="sm"
+                          whiteSpace="pre-wrap"
+                        >
+                          {message.content}
+                        </Box>
+                      </Flex>
+                    );
+                  })}
+                </Box>
+              )}
               <ProcessingIndicator message={processingText} />
               <Box borderTopWidth="1px" borderColor="gray.100" p={4}>
                 <Stack spacing={3}>
-                  <Flex gap={3} align="center">
-                    <IconButton
-                      aria-label="音声入力"
-                      icon={<FaMicrophone />}
-                      colorScheme={isRecording ? 'red' : 'blue'}
-                      isDisabled={isBusy || !hasConversationQuota}
-                      onClick={toggleRecording}
-                      isRound
-                      minW="56px"
-                      h="56px"
-                    />
-                    <Box position="relative" flex="1">
-                      <Textarea
-                        ref={textareaRef}
-                        value={textValue}
-                        onChange={(e) => setTextValue(e.target.value)}
-                        placeholder={textareaPlaceholder}
-                        borderRadius="xl"
-                        bg="white"
-                        borderColor="gray.200"
-                        resize="none"
-                        rows={isTextareaExpanded ? 6 : 2}
-                        flex="1"
-                        pr="2"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && e.shiftKey) {
-                            e.preventDefault();
-                            handleUserMessage(textValue);
-                          }
-                        }}
-                        isDisabled={isBusy}
-                      />
+                  {isTurnTakingMode ? (
+                    <Flex gap={3} align="center" justify="center">
                       <IconButton
-                        aria-label={isTextareaExpanded ? 'テキストエリアを縮小' : 'テキストエリアを拡張'}
-                        icon={<FaUpDown />}
-                        onClick={toggleTextareaExpanded}
-                        variant="solid"
-                        colorScheme="blackAlpha"
-                        opacity={0.6}
-                        _hover={{ opacity: 0.9 }}
-                        size="sm"
-                        position="absolute"
-                        top="2"
-                        right="2"
-                        borderRadius="lg"
+                        aria-label="音声入力"
+                        icon={<FaMicrophone />}
+                        colorScheme={isRecording ? 'red' : 'blue'}
+                        isDisabled={isBusy || !hasConversationQuota}
+                        onClick={toggleRecording}
+                        isRound
+                        minW="56px"
+                        h="56px"
                       />
-                    </Box>
-                    <IconButton
-                      aria-label="送信"
-                      icon={<FaPaperPlane />}
-                      colorScheme="blue"
-                      onClick={() => handleUserMessage(textValue)}
-                      isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
-                      borderRadius="full"
-                      minW="56px"
-                      h="56px"
-                    />
-                  </Flex>
+                      <Text fontSize="sm" color="gray.600">
+                        マイクで話すと自動で送信されます（残り{remainingMessages}回）
+                      </Text>
+                    </Flex>
+                  ) : (
+                    <Flex gap={3} align="center">
+                      <IconButton
+                        aria-label="音声入力"
+                        icon={<FaMicrophone />}
+                        colorScheme={isRecording ? 'red' : 'blue'}
+                        isDisabled={isBusy || !hasConversationQuota}
+                        onClick={toggleRecording}
+                        isRound
+                        minW="56px"
+                        h="56px"
+                      />
+                      <Box position="relative" flex="1">
+                        <Textarea
+                          ref={textareaRef}
+                          value={textValue}
+                          onChange={(e) => setTextValue(e.target.value)}
+                          placeholder={textareaPlaceholder}
+                          borderRadius="xl"
+                          bg="white"
+                          borderColor="gray.200"
+                          resize="none"
+                          rows={isTextareaExpanded ? 6 : 2}
+                          flex="1"
+                          pr="2"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.shiftKey) {
+                              e.preventDefault();
+                              handleUserMessage(textValue);
+                            }
+                          }}
+                          isDisabled={isBusy}
+                        />
+                        <IconButton
+                          aria-label={isTextareaExpanded ? 'テキストエリアを縮小' : 'テキストエリアを拡張'}
+                          icon={<FaUpDown />}
+                          onClick={toggleTextareaExpanded}
+                          variant="solid"
+                          colorScheme="blackAlpha"
+                          opacity={0.6}
+                          _hover={{ opacity: 0.9 }}
+                          size="sm"
+                          position="absolute"
+                          top="2"
+                          right="2"
+                          borderRadius="lg"
+                        />
+                      </Box>
+                      <IconButton
+                        aria-label="送信"
+                        icon={<FaPaperPlane />}
+                        colorScheme="blue"
+                        onClick={() => handleUserMessage(textValue)}
+                        isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
+                        borderRadius="full"
+                        minW="56px"
+                        h="56px"
+                      />
+                    </Flex>
+                  )}
                   <Stack spacing={2}>
-                    <Button leftIcon={<FaWandMagicSparkles />} variant="ghost" colorScheme="purple" onClick={handleOpenKarteModal} isDisabled={messages.length <= 1 || isBusy}>
-                      カルテを確認
-                    </Button>
+                    {!isTurnTakingMode && (
+                      <Button leftIcon={<FaWandMagicSparkles />} variant="ghost" colorScheme="purple" onClick={handleOpenKarteModal} isDisabled={messages.length <= 1 || isBusy}>
+                        カルテを確認
+                      </Button>
+                    )}
                     {!isInitialMeeting && (
                       <Button variant="solid" colorScheme="teal" onClick={handleFinalizeContinuous} isDisabled={messages.length <= 1 || isBusy}>
                         面談を終了してフィードバックを見る

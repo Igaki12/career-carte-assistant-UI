@@ -883,7 +883,7 @@ function UserHome() {
           <ModalBody>
             <Stack spacing={3}>
               <Text fontSize="sm" color="gray.600">
-                継続面談では通信方式を選択できます。ターンテイキングモードは将来の課金を想定しています。
+                継続面談では通信方式を選択できます。ターンテイキングモード（Realtime API）は現在未実装です。
               </Text>
               <RadioGroup value={continuousMode} onChange={(value) => setContinuousMode(value as 'normal' | 'turn')}>
                 <Stack spacing={3}>
@@ -892,7 +892,7 @@ function UserHome() {
                   </Box>
                   <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'turn' ? 'purple.300' : 'gray.200'}>
                     <Flex align="center" justify="space-between" gap={2}>
-                      <Radio value="turn">ターンテイキングモード (Realtime API)</Radio>
+                      <Radio value="turn">ターンテイキングモード (Realtime API・未実装)</Radio>
                       <Badge colorScheme="purple">課金準備中</Badge>
                     </Flex>
                     <Text fontSize="xs" color="gray.500" mt={2}>
