@@ -17,30 +17,48 @@ import {
 
 type ApiKeyModalProps = {
   isOpen: boolean;
-  currentKey?: string;
-  onSave: (value: string) => void;
+  openAiApiKey?: string;
+  geminiApiKey?: string;
+  onSave: (value: { openAiApiKey: string; geminiApiKey: string }) => void;
 };
 
-const ApiKeyModal = ({ isOpen, currentKey = '', onSave }: ApiKeyModalProps) => {
-  const [value, setValue] = useState(currentKey);
-  const [error, setError] = useState('');
+const ApiKeyModal = ({ isOpen, openAiApiKey = '', geminiApiKey = '', onSave }: ApiKeyModalProps) => {
+  const [openAiValue, setOpenAiValue] = useState(openAiApiKey);
+  const [geminiValue, setGeminiValue] = useState(geminiApiKey);
+  const [openAiError, setOpenAiError] = useState('');
+  const [geminiError, setGeminiError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-      setValue(currentKey);
-      setError('');
+      setOpenAiValue(openAiApiKey);
+      setGeminiValue(geminiApiKey);
+      setOpenAiError('');
+      setGeminiError('');
     }
-  }, [currentKey, isOpen]);
+  }, [geminiApiKey, isOpen, openAiApiKey]);
 
   const handleSave = () => {
-    const trimmed = value.trim();
-    if (trimmed.length < 10 || !trimmed.startsWith('sk-')) {
-      setError('有効なOpenAI APIキーを入力してください。');
+    const trimmedOpenAiKey = openAiValue.trim();
+    const trimmedGeminiKey = geminiValue.trim();
+
+    if (trimmedOpenAiKey.length < 10 || !trimmedOpenAiKey.startsWith('sk-')) {
+      setOpenAiError('有効なOpenAI APIキーを入力してください。');
       return;
     }
-    onSave(trimmed);
-    setValue('');
-    setError('');
+
+    if (trimmedGeminiKey && trimmedGeminiKey.length < 10) {
+      setGeminiError('Gemini APIキーが短すぎます。空欄のままでも保存できます。');
+      return;
+    }
+
+    onSave({
+      openAiApiKey: trimmedOpenAiKey,
+      geminiApiKey: trimmedGeminiKey,
+    });
+    setOpenAiValue('');
+    setGeminiValue('');
+    setOpenAiError('');
+    setGeminiError('');
   };
 
   return (
@@ -53,22 +71,44 @@ const ApiKeyModal = ({ isOpen, currentKey = '', onSave }: ApiKeyModalProps) => {
             <Alert status="info" variant="subtle" borderRadius="md">
               <AlertIcon />
               <AlertDescription fontSize="sm">
-                キーはブラウザ内にのみ保存されます。通信は直接OpenAIに送られ、サーバーには保存されません。
+                OpenAIキーは会話と音声認識に必須です。Geminiキーは任意で、入力されている場合のみTTSに使用します。キーはブラウザ内にのみ保存され、サーバーには保存されません。
               </AlertDescription>
             </Alert>
             <Stack spacing={2}>
               <Text fontSize="sm" color="gray.600">
-                OpenAI API Key (sk-...)
+                OpenAI API Key (必須)
               </Text>
               <Input
                 type="password"
                 placeholder="sk-********************************"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
+                value={openAiValue}
+                onChange={(e) => {
+                  setOpenAiValue(e.target.value);
+                  if (openAiError) setOpenAiError('');
+                }}
               />
-              {error && (
+              {openAiError && (
                 <Text fontSize="xs" color="red.500">
-                  {error}
+                  {openAiError}
+                </Text>
+              )}
+            </Stack>
+            <Stack spacing={2}>
+              <Text fontSize="sm" color="gray.600">
+                Gemini API Key (任意 / TTS専用)
+              </Text>
+              <Input
+                type="password"
+                placeholder="AIza********************************"
+                value={geminiValue}
+                onChange={(e) => {
+                  setGeminiValue(e.target.value);
+                  if (geminiError) setGeminiError('');
+                }}
+              />
+              {geminiError && (
+                <Text fontSize="xs" color="red.500">
+                  {geminiError}
                 </Text>
               )}
             </Stack>

@@ -38,6 +38,10 @@ type Props = {
 };
 
 const LOCAL_STORAGE_KARTE_KEY = 'cca-karte';
+const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
+const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
+const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
+const GEMINI_TTS_PROMPT_PREFIX = 'Read aloud in a warm and friendly tone: ';
 
 const createEmptyKarte = (): KarteData => ({
   demographics: {
@@ -227,10 +231,47 @@ const updateShirp = (prev: KarteData, updates?: Partial<Record<ShirpKey, string>
   return { ...prev, shirp: nextShirp };
 };
 
+const decodeBase64ToUint8Array = (base64: string) => {
+  const normalized = base64.replace(/\s/g, '');
+  const binary = atob(normalized);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+};
+
+const buildWavBlobFromMonoPcm16 = (pcmBytes: Uint8Array, sampleRate = 24000) => {
+  const wavHeader = new ArrayBuffer(44);
+  const view = new DataView(wavHeader);
+  const channels = 1;
+  const bytesPerSample = 2;
+  const byteRate = sampleRate * channels * bytesPerSample;
+  const blockAlign = channels * bytesPerSample;
+  const pcmBuffer = new Uint8Array(pcmBytes).buffer;
+
+  view.setUint32(0, 0x52494646, false);
+  view.setUint32(4, 36 + pcmBytes.byteLength, true);
+  view.setUint32(8, 0x57415645, false);
+  view.setUint32(12, 0x666d7420, false);
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bytesPerSample * 8, true);
+  view.setUint32(36, 0x64617461, false);
+  view.setUint32(40, pcmBuffer.byteLength, true);
+
+  return new Blob([wavHeader, pcmBuffer], { type: 'audio/wav' });
+};
+
 const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const toast = useToast();
   const navigate = useNavigate();
-  const [apiKey, setApiKey] = useState('');
+  const [openAiApiKey, setOpenAiApiKey] = useState('');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isApiModalOpen, setApiModalOpen] = useState(false);
   const [karte, setKarte] = useState<KarteData>(createEmptyKarte);
   const [messages, setMessages] = useState<ConversationMessage[]>([
@@ -305,22 +346,43 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const saved = window.localStorage.getItem('cca-api-key');
-    if (saved) {
-      setApiKey(saved);
-    } else {
+    const savedOpenAiKey = window.localStorage.getItem(LOCAL_STORAGE_OPENAI_KEY);
+    const savedGeminiKey = window.localStorage.getItem(LOCAL_STORAGE_GEMINI_KEY);
+    const legacyOpenAiKey = window.localStorage.getItem(LEGACY_LOCAL_STORAGE_OPENAI_KEY);
+    const resolvedOpenAiKey = savedOpenAiKey || legacyOpenAiKey || '';
+
+    if (resolvedOpenAiKey) {
+      setOpenAiApiKey(resolvedOpenAiKey);
+    }
+    if (savedGeminiKey) {
+      setGeminiApiKey(savedGeminiKey);
+    }
+    if (legacyOpenAiKey && !savedOpenAiKey) {
+      window.localStorage.setItem(LOCAL_STORAGE_OPENAI_KEY, legacyOpenAiKey);
+      window.localStorage.removeItem(LEGACY_LOCAL_STORAGE_OPENAI_KEY);
+    }
+    if (!resolvedOpenAiKey) {
       setApiModalOpen(true);
     }
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (apiKey) {
-      window.localStorage.setItem('cca-api-key', apiKey);
+    if (openAiApiKey) {
+      window.localStorage.setItem(LOCAL_STORAGE_OPENAI_KEY, openAiApiKey);
     } else {
-      window.localStorage.removeItem('cca-api-key');
+      window.localStorage.removeItem(LOCAL_STORAGE_OPENAI_KEY);
     }
-  }, [apiKey]);
+  }, [openAiApiKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (geminiApiKey) {
+      window.localStorage.setItem(LOCAL_STORAGE_GEMINI_KEY, geminiApiKey);
+    } else {
+      window.localStorage.removeItem(LOCAL_STORAGE_GEMINI_KEY);
+    }
+  }, [geminiApiKey]);
 
   useEffect(() => {
     const greeting = greetingForMeeting(meetingType);
@@ -361,10 +423,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [meetingType]);
 
   useEffect(() => {
-    if (!apiKey) {
+    if (!openAiApiKey) {
       setApiModalOpen(true);
     }
-  }, [apiKey]);
+  }, [openAiApiKey]);
 
   useEffect(
     () => () => {
@@ -423,7 +485,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   );
 
   const ensureApiKey = useCallback(() => {
-    if (apiKey) return true;
+    if (openAiApiKey) return true;
     toast({
       title: 'APIキーが必要です',
       description: '先にOpenAIのAPIキーを設定してください。',
@@ -432,63 +494,152 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     });
     setApiModalOpen(true);
     return false;
-  }, [apiKey, toast]);
+  }, [openAiApiKey, toast]);
+
+  const playAudioBlob = useCallback(
+    async (blob: Blob) => {
+      const url = URL.createObjectURL(blob);
+      disposeActiveAudio();
+      const audio = new Audio(url);
+      audio.playbackRate = 1.2;
+      activeAudioRef.current = audio;
+      audioSourceUrlRef.current = url;
+      audioResumePositionRef.current = 0;
+      shouldResumeAudioRef.current = false;
+
+      const handleAudioComplete = () => {
+        if (activeAudioRef.current === audio) {
+          disposeActiveAudio();
+        } else {
+          URL.revokeObjectURL(url);
+        }
+      };
+
+      audio.onended = handleAudioComplete;
+      audio.onerror = handleAudioComplete;
+
+      if (isKarteModalOpen) {
+        shouldResumeAudioRef.current = true;
+        return;
+      }
+
+      try {
+        await audio.play();
+        setIsSpeaking(true);
+      } catch (playError) {
+        if (activeAudioRef.current === audio) {
+          disposeActiveAudio();
+        } else {
+          URL.revokeObjectURL(url);
+        }
+        throw playError;
+      }
+    },
+    [disposeActiveAudio, isKarteModalOpen],
+  );
+
+  const playWithOpenAiTts = useCallback(
+    async (text: string) => {
+      if (!openAiApiKey || !text) {
+        throw new Error('OpenAI APIキーが設定されていません。');
+      }
+
+      const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openAiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'tts-1',
+          input: text,
+          voice: 'sage',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('OpenAIの音声生成リクエストに失敗しました。');
+      }
+
+      const blob = await response.blob();
+      await playAudioBlob(blob);
+    },
+    [openAiApiKey, playAudioBlob],
+  );
+
+  const playWithGeminiTts = useCallback(
+    async (text: string) => {
+      if (!geminiApiKey || !text) {
+        throw new Error('Gemini APIキーが設定されていません。');
+      }
+
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': geminiApiKey,
+          },
+          body: JSON.stringify({
+            model: 'gemini-2.5-flash-preview-tts',
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `${GEMINI_TTS_PROMPT_PREFIX}${text}`,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              responseModalities: ['AUDIO'],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: 'Zephyr',
+                  },
+                },
+              },
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Geminiの音声生成リクエストに失敗しました。');
+      }
+
+      const data = await response.json();
+      const inlineAudio = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data as string | undefined;
+      if (!inlineAudio) {
+        throw new Error('Geminiの音声データが取得できませんでした。');
+      }
+
+      const pcmBytes = decodeBase64ToUint8Array(inlineAudio);
+      const wavBlob = buildWavBlobFromMonoPcm16(pcmBytes);
+      await playAudioBlob(wavBlob);
+    },
+    [geminiApiKey, playAudioBlob],
+  );
 
   const playTextToSpeech = useCallback(
     async (text: string) => {
-      if (!apiKey || !text) return;
+      if (!openAiApiKey || !text) return;
+
       try {
-        const response = await fetch('https://api.openai.com/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'tts-1',
-            input: text,
-            voice: 'sage',
-          }),
-        });
-        if (!response.ok) {
-          throw new Error('音声生成リクエストに失敗しました。');
-        }
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        disposeActiveAudio();
-        const audio = new Audio(url);
-        audio.playbackRate = 1.2;
-        activeAudioRef.current = audio;
-        audioSourceUrlRef.current = url;
-        audioResumePositionRef.current = 0;
-        shouldResumeAudioRef.current = false;
-
-        const handleAudioComplete = () => {
-          if (activeAudioRef.current === audio) {
-            disposeActiveAudio();
-          } else {
-            URL.revokeObjectURL(url);
-          }
-        };
-
-        audio.onended = handleAudioComplete;
-        audio.onerror = handleAudioComplete;
-
-        if (isKarteModalOpen) {
-          shouldResumeAudioRef.current = true;
-        } else {
+        if (geminiApiKey) {
           try {
-            await audio.play();
-            setIsSpeaking(true);
-          } catch (playError) {
-            if (activeAudioRef.current === audio) {
-              disposeActiveAudio();
-            } else {
-              URL.revokeObjectURL(url);
-            }
-            throw playError;
+            await playWithGeminiTts(text);
+            return;
+          } catch (geminiError) {
+            console.error(geminiError);
+            await playWithOpenAiTts(text);
+            return;
           }
         }
+
+        await playWithOpenAiTts(text);
       } catch (error) {
         console.error(error);
         toast({
@@ -499,7 +650,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         });
       }
     },
-    [apiKey, disposeActiveAudio, isKarteModalOpen, toast],
+    [geminiApiKey, openAiApiKey, playWithGeminiTts, playWithOpenAiTts, toast],
   );
 
   const runLLMProcess = useCallback(
@@ -519,7 +670,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${openAiApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -570,7 +721,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [apiKey, ensureApiKey, isInitialMeeting, karte.shirp, maxApiCalls, playTextToSpeech, toast],
+    [ensureApiKey, isInitialMeeting, karte.shirp, maxApiCalls, openAiApiKey, playTextToSpeech, toast],
   );
 
   const handleUserMessage = useCallback(
@@ -637,7 +788,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${openAiApiKey}`,
           },
           body: formData,
         });
@@ -673,7 +824,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [apiKey, ensureApiKey, handleUserMessage, insertTextAtCursor, isTurnTakingMode, toast],
+    [ensureApiKey, handleUserMessage, insertTextAtCursor, isTurnTakingMode, openAiApiKey, toast],
   );
 
   const toggleRecording = async () => {
@@ -777,16 +928,22 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     navigate('/user');
   }, [disposeActiveAudio, navigate, persistKarte, toast]);
 
-  const apiStatusLabel = apiKey ? 'API Key: 設定済' : 'API Key: 未設定';
-  const apiStatusColor = apiKey ? 'green' : 'gray';
+  const apiStatusLabel = openAiApiKey
+    ? geminiApiKey
+      ? 'OpenAI/Gemini Key: 設定済'
+      : 'OpenAI Key: 設定済 / Gemini Key: 未設定'
+    : 'OpenAI Key: 未設定';
+  const apiStatusColor = openAiApiKey ? 'green' : 'gray';
 
   return (
     <Box bg="gray.100" minH="100dvh" h="100dvh" py={{ base: 4, md: 6 }} px={{ base: 3, md: 6 }} overflow="hidden">
       <ApiKeyModal
         isOpen={isApiModalOpen}
-        currentKey={apiKey}
+        openAiApiKey={openAiApiKey}
+        geminiApiKey={geminiApiKey}
         onSave={(value) => {
-          setApiKey(value);
+          setOpenAiApiKey(value.openAiApiKey);
+          setGeminiApiKey(value.geminiApiKey);
           setApiModalOpen(false);
         }}
       />
