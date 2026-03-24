@@ -581,7 +581,7 @@ function UserHome() {
           </Box>
 
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiPlayCircle /> 面談スタート
@@ -598,41 +598,41 @@ function UserHome() {
                   </Button>
                 </Stack>
                 <SimpleGrid columns={2} spacing={3} w="full">
-                  <Box border="1px solid" borderColor="blue.100" bg="blue.50" borderRadius="md" p={2}>
-                    <Stack spacing={1}>
-                      <Text fontSize="sm" color="blue.800" fontWeight="semibold">
+                  <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="blue.400">
+                    <Stack spacing={0}>
+                      <Text fontSize="xs" color="gray.500" fontWeight="bold">
                         初回面談残り回数
                       </Text>
-                      <Text fontSize="sm" color="blue.700">
-                        {profile.initialInterviewLimit}回（残り{profile.initialInterviewRemaining}回）
+                      <Text fontSize="md" color="gray.800" fontWeight="bold">
+                        {profile.initialInterviewLimit}回 <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">（残り{profile.initialInterviewRemaining}回）</Text>
                       </Text>
                     </Stack>
                   </Box>
-                  <Box border="1px solid" borderColor="teal.100" bg="teal.50" borderRadius="md" p={2}>
-                    <Stack spacing={1}>
-                      <Text fontSize="sm" color="teal.800" fontWeight="semibold">
+                  <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="teal.400">
+                    <Stack spacing={0}>
+                      <Text fontSize="xs" color="gray.500" fontWeight="bold">
                         継続面談残り回数
                       </Text>
-                      <Text fontSize="sm" color="teal.700">
-                        {profile.continuousInterviewLimit}回（残り{profile.continuousInterviewRemaining}回）
+                      <Text fontSize="md" color="gray.800" fontWeight="bold">
+                        {profile.continuousInterviewLimit}回 <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">（残り{profile.continuousInterviewRemaining}回）</Text>
                       </Text>
                     </Stack>
                   </Box>
                 </SimpleGrid>
-                <Box border="1px solid" borderColor="blue.100" bg="blue.50" borderRadius="md" p={2}>
-                  <Stack spacing={1}>
-                    <Text fontSize="sm" color="blue.800" fontWeight="semibold">
+                <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="purple.400">
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="xs" color="gray.500" fontWeight="bold">
                       AI利用可能回数
                     </Text>
-                    <Text fontSize="sm" color="blue.700">
+                    <Text fontSize="sm" color="gray.700" fontWeight="semibold">
                       面談あたり{profile.llmCallsPerInterview}回
                     </Text>
-                  </Stack>
+                  </Flex>
                 </Box>
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiClipboard /> ユーザアンケート
@@ -641,16 +641,16 @@ function UserHome() {
                 <Button variant="solid" size="lg" colorScheme="pink" onClick={surveyModalDisclosure.onOpen}>
                   アンケートを開く
                 </Button>
-                <Box border="1px solid" borderColor="pink.100" bg="pink.50" borderRadius="md" p={2}>
-                  <Stack spacing={2}>
-                    <Text fontSize="sm" color="pink.800" fontWeight="semibold">
+                <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={4} borderLeft="4px solid" borderLeftColor="pink.400">
+                  <Stack spacing={4} align="center">
+                    <Text fontSize="sm" color="gray.600" fontWeight="bold" alignSelf="flex-start">
                       前回アンケートスコア
                     </Text>
                     {hasSurvey ? (
                       <SurveyRadar labels={Object.values(SURVEY_LABELS)} values={surveyScores} size={200} />
                     ) : (
-                      <Text fontSize="sm" color="pink.700">
-                        --
+                      <Text fontSize="sm" color="gray.400" py={8}>
+                        未回答
                       </Text>
                     )}
                   </Stack>
@@ -658,7 +658,7 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiBookOpen /> カルテ確認・出力
@@ -674,7 +674,7 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiRefreshCw /> アカウント情報確認

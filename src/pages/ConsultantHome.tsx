@@ -24,8 +24,12 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
+import userHomeHeroBg1 from '../../userHome-hero-bg1.jpg';
+import userHomeHeroBg2 from '../../userHome-hero-bg2.jpg';
+import userHomeHeroBg3 from '../../userHome-hero-bg3.jpg';
 import SurveyRadar from '../components/SurveyRadar';
 import { SHIRP_KEYS } from '../types';
 import type { KarteData, ShirpKey, SurveyFactorKey } from '../types';
@@ -85,6 +89,30 @@ const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   emotional_response_tendency: '情動反応傾向',
 };
 
+const CONSULTANT_HERO_BACKGROUNDS = [userHomeHeroBg1, userHomeHeroBg2, userHomeHeroBg3];
+const heroReveal = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+`;
+const heroContentSlide = keyframes`
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+`;
+
 const createEmptyKarte = (): KarteData => ({
   demographics: {
     name: null,
@@ -124,6 +152,9 @@ function ConsultantHome() {
   const profileDisclosure = useDisclosure();
   const emailDisclosure = useDisclosure();
   const karteDisclosure = useDisclosure();
+  const [heroBackground] = useState(
+    () => CONSULTANT_HERO_BACKGROUNDS[Math.floor(Math.random() * CONSULTANT_HERO_BACKGROUNDS.length)] ?? userHomeHeroBg1,
+  );
 
   const profile = useMemo<ConsultantProfile>(
     () => ({
@@ -250,15 +281,61 @@ function ConsultantHome() {
   };
 
   return (
-    <Box bg="gray.50" minH="100dvh" py={12} overflowY="auto">
+    <Box bgGradient="linear(to-br, gray.600, gray.700, gray.800)" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
-          <Box bg="white" borderRadius="xl" boxShadow="sm" px={{ base: 6, md: 10 }} py={{ base: 6, md: 8 }}>
-            <Flex direction={{ base: 'column', md: 'row' }} align={{ md: 'center' }} gap={6}>
+          <Box
+            position="relative"
+            borderRadius="2xl"
+            boxShadow="xl"
+            px={{ base: 6, md: 10 }}
+            py={{ base: 5, md: 7 }}
+            bgImage={`linear-gradient(rgba(8, 15, 26, 0.68), rgba(8, 15, 26, 0.72)), url(${heroBackground})`}
+            bgPosition="center"
+            bgRepeat="no-repeat"
+            bgSize="cover"
+            overflow="hidden"
+            animation={`${heroReveal} 0.9s cubic-bezier(0.22, 1, 0.36, 1) both`}
+            _before={{
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              bg: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 30%, rgba(8,15,26,0.12) 100%)',
+              pointerEvents: 'none',
+            }}
+          >
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align={{ md: 'center' }}
+              gap={6}
+              position="relative"
+              zIndex={1}
+              animation={`${heroContentSlide} 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both`}
+            >
               <Stack spacing={1} flex="1">
-                <Heading size="lg">{profile.name} さんのコンサルタント画面</Heading>
-                <Text color="gray.600">{profile.company} / {profile.title}</Text>
-                <Text color="gray.500">ID: {profile.id}</Text>
+                <Heading size="lg" color="white">{profile.name} さんのコンサルタント画面</Heading>
+                <Text color="whiteAlpha.900">{profile.company} / {profile.title}</Text>
+                <Text color="whiteAlpha.800">ID: {profile.id}</Text>
+                <Box
+                  mt={3}
+                  borderWidth="1px"
+                  borderColor="whiteAlpha.300"
+                  borderRadius="xl"
+                  p={4}
+                  bg="blackAlpha.500"
+                  backdropFilter="blur(10px)"
+                  boxShadow="0 20px 50px rgba(0, 0, 0, 0.18)"
+                >
+                  <Text fontSize="sm" fontWeight="bold" color="whiteAlpha.900" mb={3}>
+                    コンサルタント概要
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                    <Text fontSize="sm" color="whiteAlpha.900">役割: {profile.role}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">ステータス: {profile.status}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">担当ユーザー数: {assignedUsers.length} 名</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
+                  </SimpleGrid>
+                </Box>
               </Stack>
               <Stack align="flex-start" spacing={2}>
                 <Badge colorScheme="green" borderRadius="full" px={3} py={1}>
@@ -266,7 +343,7 @@ function ConsultantHome() {
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
-                    <Badge key={tag} colorScheme="gray" variant="subtle">
+                    <Badge key={tag} bg="whiteAlpha.240" color="white" borderRadius="full" variant="solid">
                       {tag}
                     </Badge>
                   ))}
@@ -276,7 +353,7 @@ function ConsultantHome() {
           </Box>
 
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiUsers /> 担当ユーザー一覧
@@ -306,7 +383,7 @@ function ConsultantHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiCpu /> AI練習面談 (ロードマップ)
@@ -318,7 +395,7 @@ function ConsultantHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiMail /> メール問い合わせ
@@ -330,7 +407,7 @@ function ConsultantHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="lg" boxShadow="xs" p={6}>
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiRefreshCw /> アカウント情報確認
