@@ -3,7 +3,7 @@ import { Box, Button, Container, Heading, Stack, Text } from '@chakra-ui/react';
 
 function Home() {
   return (
-    <Box minH="100vh" bgGradient="linear(to-b, gray.900, gray.800)" color="white">
+    <Box minH="100dvh" bgGradient="linear(to-b, gray.900, gray.800)" color="white">
       <Container maxW="3xl" py={{ base: 16, md: 24 }}>
         <Stack spacing={8}>
           <Heading size="2xl" lineHeight="short">

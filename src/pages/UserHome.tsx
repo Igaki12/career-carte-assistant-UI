@@ -30,10 +30,14 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import userHomeHeroBg1 from '../../userHome-hero-bg1.jpg';
+import userHomeHeroBg2 from '../../userHome-hero-bg2.jpg';
+import userHomeHeroBg3 from '../../userHome-hero-bg3.jpg';
 import SurveyRadar from '../components/SurveyRadar';
 import { SHIRP_KEYS } from '../types';
 import type { KarteData, ShirpData, ShirpKey, SurveyFactorKey, SurveyResult } from '../types';
@@ -73,6 +77,30 @@ const SURVEY_FACTOR_KEYS: SurveyFactorKey[] = [
 ];
 
 const LIKERT_OPTIONS = ['全くそう思わない', 'そう思わない', 'どちらでもない', 'そう思う', 'とてもそう思う'];
+
+const USER_HOME_HERO_BACKGROUNDS = [userHomeHeroBg1, userHomeHeroBg2, userHomeHeroBg3];
+const heroReveal = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+`;
+const heroContentSlide = keyframes`
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+`;
 
 type SurveyQuestion = {
   id: string;
@@ -193,6 +221,9 @@ function UserHome() {
 
   const [continuousMode, setContinuousMode] = useState<'normal' | 'turn'>('normal');
   const [isEditingLatest, setIsEditingLatest] = useState(false);
+  const [heroBackground] = useState(
+    () => USER_HOME_HERO_BACKGROUNDS[Math.floor(Math.random() * USER_HOME_HERO_BACKGROUNDS.length)] ?? userHomeHeroBg1,
+  );
   const [latestDraft, setLatestDraft] = useState<ShirpData>({
     S: '',
     H: '',
@@ -431,42 +462,103 @@ function UserHome() {
   const hasSurvey = surveyScores.some((score) => score > 0);
 
   return (
-    <Box bg="gray.50" height="100dvh" py={12} overflowY="scroll">
+    <Box bgGradient="linear(to-br, gray.50, gray.100, gray.200)" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
-          <Box bg="white" borderRadius="xl" boxShadow="sm" px={{ base: 6, md: 10 }} py={{ base: 6, md: 8 }}>
-            <Flex direction={{ base: 'column', md: 'row' }} align={{ md: 'center' }} gap={6}>
+          <Box
+            position="relative"
+            borderRadius="2xl"
+            boxShadow="xl"
+            px={{ base: 6, md: 10 }}
+            py={{ base: 5, md: 7 }}
+            bgImage={`linear-gradient(rgba(8, 15, 26, 0.68), rgba(8, 15, 26, 0.72)), url(${heroBackground})`}
+            bgPosition="center"
+            bgRepeat="no-repeat"
+            bgSize="cover"
+            overflow="hidden"
+            animation={`${heroReveal} 0.9s cubic-bezier(0.22, 1, 0.36, 1) both`}
+            _before={{
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              bg: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 30%, rgba(8,15,26,0.12) 100%)',
+              pointerEvents: 'none',
+            }}
+          >
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align={{ md: 'center' }}
+              gap={6}
+              position="relative"
+              zIndex={1}
+              animation={`${heroContentSlide} 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both`}
+            >
               <Stack spacing={1} flex="1">
-                <Heading size="lg">{profile.name} さんのマイページ</Heading>
-                <Text color="gray.600">{profile.company} / {profile.role}</Text>
-                <Text color="gray.500">ID: {profile.id}</Text>
-                <Box mt={3} borderWidth="1px" borderColor="gray.200" borderRadius="lg" p={3} bg="gray.50">
-                  <Text fontSize="sm" fontWeight="bold" color="gray.600" mb={2}>
+                <Heading size="lg" color="white">
+                  {profile.name} さんのマイページ
+                </Heading>
+                <Text color="whiteAlpha.900">{profile.company} / {profile.role}</Text>
+                <Text color="whiteAlpha.800">ID: {profile.id}</Text>
+                <Box
+                  mt={3}
+                  borderWidth="1px"
+                  borderColor="whiteAlpha.300"
+                  borderRadius="xl"
+                  p={3}
+                  bg="blackAlpha.500"
+                  backdropFilter="blur(10px)"
+                  boxShadow="0 20px 50px rgba(0, 0, 0, 0.18)"
+                >
+                  <Text fontSize="sm" fontWeight="bold" color="whiteAlpha.900" mb={2}>
                     プロフィールメモ
                   </Text>
                   <Tabs variant="enclosed" size="sm">
-                    <TabList>
-                      <Tab>基本情報</Tab>
-                      <Tab>個人情報詳細</Tab>
+                    <TabList borderColor="whiteAlpha.300">
+                      <Tab
+                        color="whiteAlpha.800"
+                        bg="whiteAlpha.80"
+                        borderColor="whiteAlpha.200"
+                        _selected={{
+                          color: 'white',
+                          bg: 'whiteAlpha.220',
+                          borderColor: 'whiteAlpha.400',
+                        }}
+                        _hover={{ color: 'white', borderColor: 'whiteAlpha.400' }}
+                      >
+                        基本情報
+                      </Tab>
+                      <Tab
+                        color="whiteAlpha.800"
+                        bg="whiteAlpha.80"
+                        borderColor="whiteAlpha.200"
+                        _selected={{
+                          color: 'white',
+                          bg: 'whiteAlpha.220',
+                          borderColor: 'whiteAlpha.400',
+                        }}
+                        _hover={{ color: 'white', borderColor: 'whiteAlpha.400' }}
+                      >
+                        個人情報詳細
+                      </Tab>
                     </TabList>
                     <TabPanels>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                          <Text fontSize="sm">氏名: {profile.name}</Text>
-                          <Text fontSize="sm">年齢: {profile.age}</Text>
-                          <Text fontSize="sm">所属企業: {profile.company}</Text>
-                          <Text fontSize="sm">職種: {profile.role}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">年齢: {profile.age}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">所属企業: {profile.company}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.role}</Text>
                         </SimpleGrid>
                       </TabPanel>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                          <Text fontSize="sm">勤務地(都道府県): {profile.workLocationPrefecture}</Text>
-                          <Text fontSize="sm">転職歴(回数): {profile.jobChangeCount}</Text>
-                          <Text fontSize="sm">勤続年数(年): {profile.yearsOfService}</Text>
-                          <Text fontSize="sm">性別: {profile.gender}</Text>
-                          <Text fontSize="sm">現在の婚姻関係: {profile.maritalStatus}</Text>
-                          <Text fontSize="sm">子供の有無(人): {profile.childrenCount}</Text>
-                          <Text fontSize="sm">末子の年齢(歳): {profile.youngestChildAge}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">勤務地(都道府県): {profile.workLocationPrefecture}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">転職歴(回数): {profile.jobChangeCount}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">勤続年数(年): {profile.yearsOfService}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">性別: {profile.gender}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">現在の婚姻関係: {profile.maritalStatus}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">子供の有無(人): {profile.childrenCount}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">末子の年齢(歳): {profile.youngestChildAge}</Text>
                         </SimpleGrid>
                       </TabPanel>
                     </TabPanels>
@@ -479,7 +571,7 @@ function UserHome() {
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
-                    <Badge key={tag} colorScheme="gray" variant="subtle">
+                    <Badge key={tag} bg="whiteAlpha.240" color="white" borderRadius="full" variant="solid">
                       {tag}
                     </Badge>
                   ))}
