@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, IconButton, Text } from '@chakra-ui/react';
-import { RepeatIcon } from '@chakra-ui/icons';
+import { RepeatIcon, ViewIcon } from '@chakra-ui/icons';
 import {
   AmbientLight,
   Clock,
@@ -9,6 +9,7 @@ import {
   MathUtils,
   Material,
   Mesh,
+  Object3D,
   PerspectiveCamera,
   Scene,
   Vector3,
@@ -24,7 +25,19 @@ import {
   VRMUtils,
 } from '@pixiv/three-vrm';
 
-const MODEL_PATH = `${import.meta.env.BASE_URL}models/sample.vrm`;
+const STAGE_MODELS = [
+  {
+    id: 'sample',
+    label: 'Sample Model',
+    path: `${import.meta.env.BASE_URL}models/sample.vrm`,
+  },
+  {
+    id: 'counsel1',
+    label: 'Counsel 1',
+    path: `${import.meta.env.BASE_URL}models/counsel1.vrm`,
+  },
+] as const;
+
 const STAGE_BACKGROUNDS = [
   {
     id: 'relax-room',
@@ -64,6 +77,71 @@ type NodState = {
   current: number;
 };
 
+type MorphTargetBinding = {
+  mesh: Mesh;
+  index: number;
+};
+
+type DirectMorphTargetMap = {
+  mouthOpen: MorphTargetBinding[];
+  blinkLeft: MorphTargetBinding[];
+  blinkRight: MorphTargetBinding[];
+};
+
+type ExpressionSupport = {
+  relaxed: boolean;
+  surprised: boolean;
+  blink: boolean;
+  blinkLeft: boolean;
+  blinkRight: boolean;
+};
+
+type BoneRotation = {
+  x?: number;
+  y?: number;
+  z?: number;
+};
+
+type StagePose = {
+  armRotations: Partial<Record<VRMHumanBoneName, BoneRotation>>;
+  headTiltDeg: number;
+  cameraPosition: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  lookAt: {
+    x: number;
+    y: number;
+    z: number;
+  };
+};
+
+const STAGE_MODEL_POSES: Record<(typeof STAGE_MODELS)[number]['id'], StagePose> = {
+  sample: {
+    armRotations: {
+      [VRMHumanBoneName.LeftUpperArm]: { x: -12, y: 10, z: -75 },
+      [VRMHumanBoneName.LeftLowerArm]: { x: -5, y: 8, z: -5 },
+      [VRMHumanBoneName.RightUpperArm]: { x: -12, y: -10, z: 75 },
+      [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
+    },
+    headTiltDeg: -5,
+    cameraPosition: { x: 0, y: 1.45, z: 1.2 },
+    lookAt: { x: 0, y: 1.45, z: 0 },
+  },
+  counsel1: {
+    armRotations: {
+      [VRMHumanBoneName.LeftUpperArm]: { x: 10, y: 3, z: -24 },
+      [VRMHumanBoneName.LeftLowerArm]: { x: -6, y: 1, z: -4 },
+      [VRMHumanBoneName.RightUpperArm]: { x: 10, y: -3, z: 24 },
+      [VRMHumanBoneName.RightLowerArm]: { x: -6, y: -1, z: 4 },
+    },
+    headTiltDeg: -5,
+    cameraPosition: { x: 0, y: 1.58, z: 2.25 },
+    lookAt: { x: 0, y: 1.34, z: 0 },
+  },
+};
+
 const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = true }: StageProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
@@ -80,8 +158,22 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
     target: 0,
     current: 0,
   });
-  const baseNeckRotationRef = useRef<Euler | null>(null);
+  const motionBoneRef = useRef<Object3D | null>(null);
+  const baseMotionRotationRef = useRef<Euler | null>(null);
+  const directMorphTargetsRef = useRef<DirectMorphTargetMap>({
+    mouthOpen: [],
+    blinkLeft: [],
+    blinkRight: [],
+  });
+  const expressionSupportRef = useRef<ExpressionSupport>({
+    relaxed: false,
+    surprised: false,
+    blink: false,
+    blinkLeft: false,
+    blinkRight: false,
+  });
   const [isReady, setIsReady] = useState(false);
+  const [modelIndex, setModelIndex] = useState(0);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
 
   // isSpeakingの変更でupdateIdleMotionが再生成され、メインのuseEffectが走ってモデルがリロードされるのを防ぐためRefで管理
@@ -90,19 +182,128 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
     isSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
 
+  const currentModel = STAGE_MODELS[modelIndex];
   const currentBackground = STAGE_BACKGROUNDS[backgroundIndex];
+  const handleNextModel = useCallback(() => {
+    setModelIndex((prev) => (prev + 1) % STAGE_MODELS.length);
+  }, []);
   const handleNextBackground = useCallback(() => {
     setBackgroundIndex((prev) => (prev + 1) % STAGE_BACKGROUNDS.length);
   }, []);
 
-  const setIdleExpression = useCallback(() => {
-    const manager = vrmRef.current?.expressionManager;
-    if (!manager) return;
-    manager.setValue(VRMExpressionPresetName.Relaxed, 0.6);
-    manager.setValue(VRMExpressionPresetName.Surprised, 0);
-    manager.setValue(VRMExpressionPresetName.Blink, 0);
-    manager.update();
+  const setDirectMorphWeight = useCallback((bindings: MorphTargetBinding[], weight: number) => {
+    const clamped = MathUtils.clamp(weight, 0, 1);
+    bindings.forEach(({ mesh, index }) => {
+      if (!mesh.morphTargetInfluences || mesh.morphTargetInfluences[index] == null) return;
+      mesh.morphTargetInfluences[index] = clamped;
+    });
   }, []);
+
+  const collectDirectMorphTargets = useCallback((root: Object3D): DirectMorphTargetMap => {
+    const morphTargets: DirectMorphTargetMap = {
+      mouthOpen: [],
+      blinkLeft: [],
+      blinkRight: [],
+    };
+
+    const register = (
+      dictionary: Record<string, number>,
+      mesh: Mesh,
+      targetName: string,
+      bindings: MorphTargetBinding[],
+    ) => {
+      const index = dictionary[targetName];
+      if (index == null) return;
+      bindings.push({ mesh, index });
+    };
+
+    root.traverse((object) => {
+      if (!('isMesh' in object) || !object.isMesh) return;
+
+      const mesh = object as Mesh;
+      if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
+
+      register(mesh.morphTargetDictionary, mesh, 'V_Open', morphTargets.mouthOpen);
+      register(mesh.morphTargetDictionary, mesh, 'Eye_Blink_L', morphTargets.blinkLeft);
+      register(mesh.morphTargetDictionary, mesh, 'Eye_Blink_R', morphTargets.blinkRight);
+    });
+
+    return morphTargets;
+  }, []);
+
+  const getMotionBone = useCallback((vrm: VRM | null) => {
+    const humanoid = vrm?.humanoid;
+    if (!humanoid) return null;
+    return humanoid.getNormalizedBoneNode(VRMHumanBoneName.Neck)
+      ?? humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
+  }, []);
+
+  const applyFacialState = useCallback(
+    ({
+      blinkWeight,
+      relaxedWeight,
+      surprisedWeight,
+    }: {
+      blinkWeight?: number;
+      relaxedWeight?: number;
+      surprisedWeight?: number;
+    }) => {
+      const manager = vrmRef.current?.expressionManager;
+      const support = expressionSupportRef.current;
+      let shouldUpdateManager = false;
+
+      if (relaxedWeight != null && manager && support.relaxed) {
+        manager.setValue(VRMExpressionPresetName.Relaxed, relaxedWeight);
+        shouldUpdateManager = true;
+      }
+
+      if (surprisedWeight != null) {
+        if (manager && support.surprised) {
+          manager.setValue(VRMExpressionPresetName.Surprised, surprisedWeight);
+          shouldUpdateManager = true;
+        } else {
+          setDirectMorphWeight(directMorphTargetsRef.current.mouthOpen, surprisedWeight);
+        }
+      }
+
+      if (blinkWeight != null) {
+        const hasManagedBlink = support.blink || support.blinkLeft || support.blinkRight;
+        if (manager) {
+          if (support.blink) {
+            manager.setValue(VRMExpressionPresetName.Blink, blinkWeight);
+            shouldUpdateManager = true;
+          } else {
+            if (support.blinkLeft) {
+              manager.setValue(VRMExpressionPresetName.BlinkLeft, blinkWeight);
+              shouldUpdateManager = true;
+            }
+            if (support.blinkRight) {
+              manager.setValue(VRMExpressionPresetName.BlinkRight, blinkWeight);
+              shouldUpdateManager = true;
+            }
+          }
+        }
+
+        if (!hasManagedBlink) {
+          setDirectMorphWeight(directMorphTargetsRef.current.blinkLeft, blinkWeight);
+          setDirectMorphWeight(directMorphTargetsRef.current.blinkRight, blinkWeight);
+        }
+      }
+
+      if (shouldUpdateManager) {
+        manager?.update();
+      }
+    },
+    [setDirectMorphWeight],
+  );
+
+  const setIdleExpression = useCallback(() => {
+    applyFacialState({
+      relaxedWeight: 0.6,
+      surprisedWeight: 0,
+      blinkWeight: 0,
+    });
+  }, [applyFacialState]);
 
   const resetIdleMotionState = useCallback(() => {
     const now = performance.now();
@@ -128,6 +329,7 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
     const humanoid = vrm.humanoid;
     const controls = controlsRef.current;
     const camera = cameraRef.current;
+    const stagePose = STAGE_MODEL_POSES[currentModel.id];
     vrm.scene.rotation.y = 0;
 
     if (humanoid) {
@@ -141,38 +343,30 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
           );
         }
       };
-      setBoneEuler(VRMHumanBoneName.LeftUpperArm, {
-        x: MathUtils.degToRad(-12),
-        y: MathUtils.degToRad(10),
-        z: MathUtils.degToRad(-75),
+      Object.entries(stagePose.armRotations).forEach(([boneName, rotation]) => {
+        setBoneEuler(boneName as VRMHumanBoneName, {
+          x: rotation.x == null ? undefined : MathUtils.degToRad(rotation.x),
+          y: rotation.y == null ? undefined : MathUtils.degToRad(rotation.y),
+          z: rotation.z == null ? undefined : MathUtils.degToRad(rotation.z),
+        });
       });
-      setBoneEuler(VRMHumanBoneName.LeftLowerArm, {
-        x: MathUtils.degToRad(-5),
-        y: MathUtils.degToRad(8),
-        z: MathUtils.degToRad(-5),
-      });
-      setBoneEuler(VRMHumanBoneName.RightUpperArm, {
-        x: MathUtils.degToRad(-12),
-        y: MathUtils.degToRad(-10),
-        z: MathUtils.degToRad(75),
-      });
-      setBoneEuler(VRMHumanBoneName.RightLowerArm, {
-        x: MathUtils.degToRad(-5),
-        y: MathUtils.degToRad(-8),
-        z: MathUtils.degToRad(5),
-      });
-      const neck = humanoid.getNormalizedBoneNode(VRMHumanBoneName.Neck);
-      if (neck) {
-        neck.rotation.set(MathUtils.degToRad(-5), 0, 0);
-        baseNeckRotationRef.current = neck.rotation.clone();
+      const motionBone = getMotionBone(vrm);
+      motionBoneRef.current = motionBone;
+      if (motionBone) {
+        motionBone.rotation.set(MathUtils.degToRad(stagePose.headTiltDeg), 0, 0);
+        baseMotionRotationRef.current = motionBone.rotation.clone();
       }
       humanoid.update();
     }
 
     if (!camera) return;
 
-    const targetCameraPos = new Vector3(0, 1.45, 1.2);
-    const targetLookAt = new Vector3(0, 1.45, 0);
+    const targetCameraPos = new Vector3(
+      stagePose.cameraPosition.x,
+      stagePose.cameraPosition.y,
+      stagePose.cameraPosition.z,
+    );
+    const targetLookAt = new Vector3(stagePose.lookAt.x, stagePose.lookAt.y, stagePose.lookAt.z);
     const startCameraPos = camera.position.clone();
     const startTime = performance.now();
     const duration = 850;
@@ -208,7 +402,7 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
     };
 
     poseAnimationRef.current = requestAnimationFrame(animate);
-  }, []);
+  }, [currentModel.id, getMotionBone]);
 
   const updateIdleMotion = useCallback(
     (timestamp: number) => {
@@ -216,9 +410,10 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
       if (!vrm) return;
 
       const humanoid = vrm.humanoid;
-      if (humanoid && baseNeckRotationRef.current) {
-        const neck = humanoid.getNormalizedBoneNode(VRMHumanBoneName.Neck);
-        if (neck) {
+      const motionBone = motionBoneRef.current ?? getMotionBone(vrm);
+      if (humanoid && motionBone && baseMotionRotationRef.current) {
+        motionBoneRef.current = motionBone;
+        if (motionBone) {
           const nodState = nodStateRef.current;
           const deltaSeconds = nodState.lastUpdate ? (timestamp - nodState.lastUpdate) / 1000 : 0;
           nodState.lastUpdate = timestamp;
@@ -232,43 +427,55 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
             const magnitude = MathUtils.degToRad(0.7 + Math.random());
             nodState.target = direction * magnitude;
           }
-          const baseRotation = baseNeckRotationRef.current;
-          neck.rotation.set(baseRotation.x + nodState.current, baseRotation.y, baseRotation.z);
+          const baseRotation = baseMotionRotationRef.current;
+          motionBone.rotation.set(baseRotation.x + nodState.current, baseRotation.y, baseRotation.z);
           humanoid.update();
         }
       }
 
-      const manager = vrm.expressionManager;
-      if (manager) {
-        const blinkState = blinkStateRef.current;
-        if (!blinkState.blinking && timestamp - blinkState.lastBlink >= 3000) {
-          blinkState.blinking = true;
-          blinkState.blinkStart = timestamp;
-        }
-        let blinkWeight = 0;
-        if (blinkState.blinking) {
-          const duration = 160;
-          const progress = Math.min((timestamp - blinkState.blinkStart) / duration, 1);
-          blinkWeight = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
-          if (progress >= 1) {
-            blinkState.blinking = false;
-            blinkState.lastBlink = timestamp;
-            blinkWeight = 0;
-          }
-        }
-        manager.setValue(VRMExpressionPresetName.Blink, blinkWeight);
-        if (!isSpeakingRef.current) {
-          manager.setValue(VRMExpressionPresetName.Relaxed, 0.6);
-        }
-        manager.update();
+      const blinkState = blinkStateRef.current;
+      if (!blinkState.blinking && timestamp - blinkState.lastBlink >= 3000) {
+        blinkState.blinking = true;
+        blinkState.blinkStart = timestamp;
       }
+      let blinkWeight = 0;
+      if (blinkState.blinking) {
+        const duration = 160;
+        const progress = Math.min((timestamp - blinkState.blinkStart) / duration, 1);
+        blinkWeight = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+        if (progress >= 1) {
+          blinkState.blinking = false;
+          blinkState.lastBlink = timestamp;
+          blinkWeight = 0;
+        }
+      }
+
+      applyFacialState({
+        blinkWeight,
+        relaxedWeight: isSpeakingRef.current ? undefined : 0.6,
+      });
     },
-    [],
+    [applyFacialState, getMotionBone],
   );
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    setIsReady(false);
+    motionBoneRef.current = null;
+    baseMotionRotationRef.current = null;
+    directMorphTargetsRef.current = {
+      mouthOpen: [],
+      blinkLeft: [],
+      blinkRight: [],
+    };
+    expressionSupportRef.current = {
+      relaxed: false,
+      surprised: false,
+      blink: false,
+      blinkLeft: false,
+      blinkRight: false,
+    };
 
     const scene = new Scene();
     scene.background = null;
@@ -307,7 +514,7 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
     loader.register((parser) => new VRMLoaderPlugin(parser, { autoUpdateHumanBones: true }));
 
     loader.load(
-      MODEL_PATH,
+      currentModel.path,
       (gltf) => {
         const vrm = gltf.userData.vrm as VRM | undefined;
         if (!vrm) {
@@ -319,12 +526,16 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
         vrm.scene.rotation.y = Math.PI;
         scene.add(vrm.scene);
         vrmRef.current = vrm;
-        if (vrm.humanoid) {
-          const neck = vrm.humanoid.getNormalizedBoneNode(VRMHumanBoneName.Neck);
-          if (neck) {
-            baseNeckRotationRef.current = neck.rotation.clone();
-          }
-        }
+        motionBoneRef.current = getMotionBone(vrm);
+        baseMotionRotationRef.current = motionBoneRef.current?.rotation.clone() ?? null;
+        directMorphTargetsRef.current = collectDirectMorphTargets(vrm.scene);
+        expressionSupportRef.current = {
+          relaxed: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Relaxed)?.binds.length ?? 0) > 0,
+          surprised: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Surprised)?.binds.length ?? 0) > 0,
+          blink: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Blink)?.binds.length ?? 0) > 0,
+          blinkLeft: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.BlinkLeft)?.binds.length ?? 0) > 0,
+          blinkRight: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.BlinkRight)?.binds.length ?? 0) > 0,
+        };
         resetIdleMotionState();
         setIdleExpression();
         setIsReady(true);
@@ -333,6 +544,7 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
       undefined,
       (error) => {
         console.error('VRM load failed', error);
+        setIsReady(false);
       },
     );
 
@@ -396,8 +608,18 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
       rendererRef.current = null;
       controlsRef.current = null;
       cameraRef.current = null;
+      motionBoneRef.current = null;
+      baseMotionRotationRef.current = null;
     };
-  }, [applyFrontPose, resetIdleMotionState, setIdleExpression, updateIdleMotion]);
+  }, [
+    applyFrontPose,
+    collectDirectMorphTargets,
+    currentModel.path,
+    getMotionBone,
+    resetIdleMotionState,
+    setIdleExpression,
+    updateIdleMotion,
+  ]);
 
   useEffect(() => {
     if (!conversationStarted || !isReady) return;
@@ -407,30 +629,25 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
 
   useEffect(() => {
     if (!isSpeaking) {
-      const manager = vrmRef.current?.expressionManager;
-      if (manager) {
-        manager.setValue(VRMExpressionPresetName.Surprised, 0);
-        manager.setValue(VRMExpressionPresetName.Relaxed, 0.6);
-        manager.update();
-      }
+      applyFacialState({
+        surprisedWeight: 0,
+        relaxedWeight: 0.6,
+      });
       return;
     }
     const interval = setInterval(() => {
-      const manager = vrmRef.current?.expressionManager;
-      if (!manager) return;
-      manager.setValue(VRMExpressionPresetName.Surprised, 0.05 + Math.random() * 0.25);
-      manager.update();
+      applyFacialState({
+        surprisedWeight: 0.05 + Math.random() * 0.25,
+      });
     }, 350);
     return () => {
       clearInterval(interval);
-      const manager = vrmRef.current?.expressionManager;
-      if (manager) {
-        manager.setValue(VRMExpressionPresetName.Surprised, 0);
-        manager.setValue(VRMExpressionPresetName.Relaxed, 0.6);
-        manager.update();
-      }
+      applyFacialState({
+        surprisedWeight: 0,
+        relaxedWeight: 0.6,
+      });
     };
-  }, [isSpeaking]);
+  }, [applyFacialState, isSpeaking]);
 
   return (
     <Box
@@ -449,6 +666,22 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
       h={{ base: '240px', md: '420px' }}
     >
       <IconButton
+        aria-label="モデルを切り替え"
+        icon={<ViewIcon />}
+        size="sm"
+        onClick={handleNextModel}
+        position="absolute"
+        top={3}
+        left={3}
+        zIndex={2}
+        variant="solid"
+        colorScheme="whiteAlpha"
+        bg="rgba(15,23,42,0.7)"
+        _hover={{ bg: 'rgba(30,41,59,0.85)' }}
+        _active={{ bg: 'rgba(15,23,42,0.95)' }}
+        title={`モデル: ${currentModel.label}`}
+      />
+      <IconButton
         aria-label="背景を切り替え"
         icon={<RepeatIcon />}
         size="sm"
@@ -461,9 +694,9 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
         colorScheme="whiteAlpha"
         bg="rgba(15,23,42,0.7)"
         _hover={{ bg: 'rgba(30,41,59,0.85)' }}
-      _active={{ bg: 'rgba(15,23,42,0.95)' }}
-      title={`背景: ${currentBackground.label}`}
-    />
+        _active={{ bg: 'rgba(15,23,42,0.95)' }}
+        title={`背景: ${currentBackground.label}`}
+      />
       {showProgress && (
         <Box
           position="absolute"
