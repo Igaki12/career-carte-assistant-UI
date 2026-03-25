@@ -35,9 +35,6 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import userHomeHeroBg1 from '../../userHome-hero-bg1.jpg';
-import userHomeHeroBg2 from '../../userHome-hero-bg2.jpg';
-import userHomeHeroBg3 from '../../userHome-hero-bg3.jpg';
 import SurveyRadar from '../components/SurveyRadar';
 import { SHIRP_KEYS } from '../types';
 import type { KarteData, ShirpData, ShirpKey, SurveyFactorKey, SurveyResult } from '../types';
@@ -78,7 +75,7 @@ const SURVEY_FACTOR_KEYS: SurveyFactorKey[] = [
 
 const LIKERT_OPTIONS = ['全くそう思わない', 'そう思わない', 'どちらでもない', 'そう思う', 'とてもそう思う'];
 
-const USER_HOME_HERO_BACKGROUNDS = [userHomeHeroBg1, userHomeHeroBg2, userHomeHeroBg3];
+const USER_HOME_HERO_BACKGROUNDS = ['/hero/user-home-hero-a.jpg', '/hero/user-home-hero-b.jpg'];
 const heroReveal = keyframes`
   from {
     opacity: 0;
@@ -222,7 +219,7 @@ function UserHome() {
   const [continuousMode, setContinuousMode] = useState<'normal' | 'turn'>('normal');
   const [isEditingLatest, setIsEditingLatest] = useState(false);
   const [heroBackground] = useState(
-    () => USER_HOME_HERO_BACKGROUNDS[Math.floor(Math.random() * USER_HOME_HERO_BACKGROUNDS.length)] ?? userHomeHeroBg1,
+    () => USER_HOME_HERO_BACKGROUNDS[Math.floor(Math.random() * USER_HOME_HERO_BACKGROUNDS.length)] ?? USER_HOME_HERO_BACKGROUNDS[0],
   );
   const [latestDraft, setLatestDraft] = useState<ShirpData>({
     S: '',

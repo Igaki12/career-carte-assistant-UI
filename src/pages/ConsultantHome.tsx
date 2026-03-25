@@ -27,9 +27,6 @@ import {
 import { keyframes } from '@emotion/react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
-import userHomeHeroBg1 from '../../userHome-hero-bg1.jpg';
-import userHomeHeroBg2 from '../../userHome-hero-bg2.jpg';
-import userHomeHeroBg3 from '../../userHome-hero-bg3.jpg';
 import SurveyRadar from '../components/SurveyRadar';
 import { SHIRP_KEYS } from '../types';
 import type { KarteData, ShirpKey, SurveyFactorKey } from '../types';
@@ -89,7 +86,7 @@ const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   emotional_response_tendency: '情動反応傾向',
 };
 
-const CONSULTANT_HERO_BACKGROUNDS = [userHomeHeroBg1, userHomeHeroBg2, userHomeHeroBg3];
+const CONSULTANT_HERO_BACKGROUND = '/hero/consultant-home-hero.jpg';
 const heroReveal = keyframes`
   from {
     opacity: 0;
@@ -152,9 +149,7 @@ function ConsultantHome() {
   const profileDisclosure = useDisclosure();
   const emailDisclosure = useDisclosure();
   const karteDisclosure = useDisclosure();
-  const [heroBackground] = useState(
-    () => CONSULTANT_HERO_BACKGROUNDS[Math.floor(Math.random() * CONSULTANT_HERO_BACKGROUNDS.length)] ?? userHomeHeroBg1,
-  );
+  const heroBackground = CONSULTANT_HERO_BACKGROUND;
 
   const profile = useMemo<ConsultantProfile>(
     () => ({
@@ -369,10 +364,14 @@ function ConsultantHome() {
                         <Text fontSize="xs" color="gray.400">
                           最終面談: {user.lastSession}
                         </Text>
-                        <Text fontSize="sm" color="gray.600">
-                          フォーカス: {user.focus}
-                        </Text>
-                        <Badge colorScheme={user.status === '完了' ? 'green' : 'purple'}>{user.status}</Badge>
+                        <Flex align="center" justify="space-between" gap={3}>
+                          <Text fontSize="sm" color="gray.600" flex="1" minW={0}>
+                            フォーカス: {user.focus}
+                          </Text>
+                          <Badge colorScheme={user.status === '完了' ? 'green' : 'purple'} flexShrink={0}>
+                            {user.status}
+                          </Badge>
+                        </Flex>
                         <Button size="sm" variant="outline" onClick={() => handleOpenKarte(karteRecords[0])}>
                           カルテを確認
                         </Button>
