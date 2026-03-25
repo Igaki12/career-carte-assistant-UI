@@ -29,17 +29,17 @@ const STAGE_BACKGROUNDS = [
   {
     id: 'relax-room',
     label: 'Relax Room',
-    image: `${import.meta.env.BASE_URL}vrm-bg/Gemini_Generated_Image_xqrrb5xqrrb5xqrr.png`,
+    image: `${import.meta.env.BASE_URL}vrm-bg/restroom.jpg`,
   },
   {
     id: 'cafe-room',
     label: 'Cafe Room',
-    image: `${import.meta.env.BASE_URL}vrm-bg/cafe-room.png`,
+    image: `${import.meta.env.BASE_URL}vrm-bg/cafe-room.jpg`,
   },
   {
     id: 'plantation-room',
     label: 'Plantation Room',
-    image: `${import.meta.env.BASE_URL}vrm-bg/plantation-room.png`,
+    image: `${import.meta.env.BASE_URL}vrm-bg/plantation-room.jpg`,
   },
 ] as const;
 
