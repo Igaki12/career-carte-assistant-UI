@@ -32,11 +32,13 @@ const STAGE_MODELS = [
     path: `${import.meta.env.BASE_URL}models/sample.vrm`,
   },
   {
-    id: 'counsel1',
-    label: 'Counsel 1',
-    path: `${import.meta.env.BASE_URL}models/counsel1.vrm`,
+    id: 'trial2',
+    label: 'Trial 2',
+    path: `${import.meta.env.BASE_URL}models/trial_2.vrm`,
   },
 ] as const;
+
+export type StageModelId = (typeof STAGE_MODELS)[number]['id'];
 
 const STAGE_BACKGROUNDS = [
   {
@@ -61,6 +63,7 @@ type StageProps = {
   conversationStarted: boolean;
   progress: number;
   showProgress?: boolean;
+  onModelChange?: (modelId: StageModelId) => void;
 };
 
 type BlinkState = {
@@ -117,7 +120,7 @@ type StagePose = {
   };
 };
 
-const STAGE_MODEL_POSES: Record<(typeof STAGE_MODELS)[number]['id'], StagePose> = {
+const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
   sample: {
     armRotations: {
       [VRMHumanBoneName.LeftUpperArm]: { x: -12, y: 10, z: -75 },
@@ -129,20 +132,26 @@ const STAGE_MODEL_POSES: Record<(typeof STAGE_MODELS)[number]['id'], StagePose> 
     cameraPosition: { x: 0, y: 1.45, z: 1.2 },
     lookAt: { x: 0, y: 1.45, z: 0 },
   },
-  counsel1: {
+  trial2: {
     armRotations: {
-      [VRMHumanBoneName.LeftUpperArm]: { x: 10, y: 3, z: -24 },
-      [VRMHumanBoneName.LeftLowerArm]: { x: -6, y: 1, z: -4 },
-      [VRMHumanBoneName.RightUpperArm]: { x: 10, y: -3, z: 24 },
-      [VRMHumanBoneName.RightLowerArm]: { x: -6, y: -1, z: 4 },
+      [VRMHumanBoneName.LeftUpperArm]: { x: 8, y: 4, z: -18 },
+      [VRMHumanBoneName.LeftLowerArm]: { x: -5, y: 1, z: -2 },
+      [VRMHumanBoneName.RightUpperArm]: { x: 8, y: -4, z: 18 },
+      [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -1, z: 2 },
     },
     headTiltDeg: -5,
-    cameraPosition: { x: 0, y: 1.58, z: 2.25 },
+    cameraPosition: { x: 0, y: 1.56, z: 2.2 },
     lookAt: { x: 0, y: 1.34, z: 0 },
   },
 };
 
-const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = true }: StageProps) => {
+const VrmStage = ({
+  isSpeaking,
+  conversationStarted,
+  progress,
+  showProgress = true,
+  onModelChange,
+}: StageProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
@@ -190,6 +199,10 @@ const VrmStage = ({ isSpeaking, conversationStarted, progress, showProgress = tr
   const handleNextBackground = useCallback(() => {
     setBackgroundIndex((prev) => (prev + 1) % STAGE_BACKGROUNDS.length);
   }, []);
+
+  useEffect(() => {
+    onModelChange?.(currentModel.id);
+  }, [currentModel.id, onModelChange]);
 
   const setDirectMorphWeight = useCallback((bindings: MorphTargetBinding[], weight: number) => {
     const clamped = MathUtils.clamp(weight, 0, 1);

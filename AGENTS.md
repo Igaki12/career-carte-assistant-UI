@@ -52,6 +52,23 @@
 - Gemini TTS 実装・更新時は、公式ドキュメントのローカルコピー `gemini-2.5-flash-preview-tts.md` を参照する。
 - OpenAI の公式ドキュメント上、ユーザーには「再生される音声が AI 生成音声であること」を明示する必要がある。
 - OpenAI の現行公式ドキュメントでは `gpt-4o-mini-tts` が推奨されているが、本プロジェクト内の既存実装・表記が `tts-1` の場合は互換性とUI要件を確認した上で切り替える。
+- Gemini TTS は `src/components/MeetingRoom.tsx` の `playWithGeminiTts` から `gemini-2.5-flash-preview-tts:generateContent` を呼び出している。
+- Gemini TTS の話速は現時点で API パラメータ直接指定ではなく、プロンプト文字列で制御している。速度・抑揚・トーン調整時は `GEMINI_TTS_PROMPT_PREFIX` を見直す。
+- Gemini TTS の `voiceName` は、表示中の3Dモデルに連動して切り替える。
+  - `sample.vrm` -> `Kore`
+  - `trial_2.vrm` -> `Zephyr`
+- Gemini TTS の音声モデル切り替えや voice の追加時は、3Dモデル切り替えロジックと対応表を同時に更新する。
+
+### 3.4 VRMモデル運用メモ
+- 面談画面の3Dモデル表示は `src/components/VrmStage.tsx` で管理する。
+- 現在の切り替え対象は `sample.vrm` と `trial_2.vrm` の2体とする。
+- `sample.vrm` は基準モデルとして扱い、姿勢・カメラ・表情挙動を原則変更しない。
+- `trial_2.vrm` は `sample.vrm` とは別設定で、初期姿勢・カメラ距離・表情フォールバックを最適化している。
+- VRM表情バインドが不足するモデルに備えて、`VrmStage.tsx` では以下のフォールバックを持つ。
+  - `neck` がない場合は `head` をモーション用ボーンとして使う
+  - `blink` 系が不足する場合は `Eye_Blink_L` / `Eye_Blink_R` を直接 morph target 駆動する
+  - 口形状が不足する場合は `V_Open` を直接 morph target 駆動する
+- 大容量VRMファイルは Git 管理から外し、`.gitignore` で `public/models` および必要なら `docs/models` 側も個別に無視する。
 
 ## 4. キャリアカルテ（電子カルテ）仕様
 カルテは以下の3段構成でUI表示し、PDF/CSV出力に対応する。

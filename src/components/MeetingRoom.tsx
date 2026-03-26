@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import ApiKeyModal from './ApiKeyModal';
 import KartePanel from './KartePanel';
 import ProcessingIndicator from './ProcessingIndicator';
-import VrmStage from './VrmStage';
+import VrmStage, { type StageModelId } from './VrmStage';
 import { INITIAL_SHIRP_STEP_ORDER, SHIRP_KEYS } from '../types';
 import type { ConversationMessage, KarteData, LlmResponse, ShirpData, ShirpKey } from '../types';
 
@@ -42,6 +42,10 @@ const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
 const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
 const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
 const GEMINI_TTS_PROMPT_PREFIX = 'Read aloud in a warm and friendly tone: ';
+const GEMINI_VOICE_BY_MODEL: Record<StageModelId, string> = {
+  sample: 'Kore',
+  trial2: 'Zephyr',
+};
 
 const createEmptyKarte = (): KarteData => ({
   demographics: {
@@ -289,6 +293,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [feedbackText, setFeedbackText] = useState('');
   const [hasLoadedStoredKarte, setLoadedStoredKarte] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
@@ -593,14 +598,14 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               },
             ],
             generationConfig: {
-              responseModalities: ['AUDIO'],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: {
-                    voiceName: 'Zephyr',
+                  responseModalities: ['AUDIO'],
+                  speechConfig: {
+                    voiceConfig: {
+                      prebuiltVoiceConfig: {
+                        voiceName: GEMINI_VOICE_BY_MODEL[selectedModelId],
+                      },
+                    },
                   },
-                },
-              },
             },
           }),
         },
@@ -620,7 +625,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       const wavBlob = buildWavBlobFromMonoPcm16(pcmBytes);
       await playAudioBlob(wavBlob);
     },
-    [geminiApiKey, playAudioBlob],
+    [geminiApiKey, playAudioBlob, selectedModelId],
   );
 
   const playTextToSpeech = useCallback(
@@ -1012,6 +1017,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               isSpeaking={isSpeaking}
               conversationStarted={conversationStarted}
               progress={initialProgress}
+              onModelChange={setSelectedModelId}
               showProgress={isInitialMeeting}
             />
           </Box>
