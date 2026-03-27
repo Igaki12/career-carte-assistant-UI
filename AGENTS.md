@@ -63,11 +63,17 @@
 - 面談画面の3Dモデル表示は `src/components/VrmStage.tsx` で管理する。
 - 現在の切り替え対象は `sample.vrm` と `trial_2.vrm` の2体とする。
 - `sample.vrm` は基準モデルとして扱い、姿勢・カメラ・表情挙動を原則変更しない。
-- `trial_2.vrm` は `sample.vrm` とは別設定で、初期姿勢・カメラ距離・表情フォールバックを最適化している。
+- `trial_2.vrm` は、初期姿勢については `sample.vrm` と同水準の正面待機ポーズに戻した上で運用する。
+- `trial_2.vrm` のカメラ位置は、`sample.vrm` を基準にしつつも見え方に応じて手動微調整する前提とする。
+- `trial_2.vrm` の表情運用は `sample.vrm` と分離して扱う。
+  - lip sync は `surprised` ではなく `aa` を使用する
+  - lip sync weight は強めに補正して運用する
+  - デフォルト表情として `happy 0.3` を適用する
 - VRM表情バインドが不足するモデルに備えて、`VrmStage.tsx` では以下のフォールバックを持つ。
   - `neck` がない場合は `head` をモーション用ボーンとして使う
   - `blink` 系が不足する場合は `Eye_Blink_L` / `Eye_Blink_R` を直接 morph target 駆動する
   - 口形状が不足する場合は `V_Open` を直接 morph target 駆動する
+- `sample.vrm` は `surprised` ベースの口パクを維持し、`trial_2.vrm` 向けの表情調整が `sample.vrm` に波及しないようモデル別設定で分離する。
 - 大容量VRMファイルは Git 管理から外し、`.gitignore` で `public/models` および必要なら `docs/models` 側も個別に無視する。
 
 ## 4. キャリアカルテ（電子カルテ）仕様
