@@ -92,8 +92,10 @@ type DirectMorphTargetMap = {
 };
 
 type ExpressionSupport = {
+  happy: boolean;
   relaxed: boolean;
   surprised: boolean;
+  aa: boolean;
   blink: boolean;
   blinkLeft: boolean;
   blinkRight: boolean;
@@ -108,6 +110,9 @@ type BoneRotation = {
 type StagePose = {
   armRotations: Partial<Record<VRMHumanBoneName, BoneRotation>>;
   headTiltDeg: number;
+  defaultHappyWeight: number;
+  lipSyncExpression: 'surprised' | 'aa';
+  lipSyncWeightMultiplier: number;
   cameraPosition: {
     x: number;
     y: number;
@@ -129,19 +134,25 @@ const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
       [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
     },
     headTiltDeg: -5,
+    defaultHappyWeight: 0,
+    lipSyncExpression: 'surprised',
+    lipSyncWeightMultiplier: 1,
     cameraPosition: { x: 0, y: 1.45, z: 1.2 },
     lookAt: { x: 0, y: 1.45, z: 0 },
   },
   trial2: {
     armRotations: {
-      [VRMHumanBoneName.LeftUpperArm]: { x: 8, y: 4, z: -18 },
-      [VRMHumanBoneName.LeftLowerArm]: { x: -5, y: 1, z: -2 },
-      [VRMHumanBoneName.RightUpperArm]: { x: 8, y: -4, z: 18 },
-      [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -1, z: 2 },
+      [VRMHumanBoneName.LeftUpperArm]: { x: -12, y: 10, z: -75 },
+      [VRMHumanBoneName.LeftLowerArm]: { x: -5, y: 8, z: -5 },
+      [VRMHumanBoneName.RightUpperArm]: { x: -12, y: -10, z: 75 },
+      [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
     },
-    headTiltDeg: -5,
-    cameraPosition: { x: 0, y: 1.56, z: 2.2 },
-    lookAt: { x: 0, y: 1.34, z: 0 },
+    headTiltDeg: -0,
+    defaultHappyWeight: 0.3,
+    lipSyncExpression: 'aa',
+    lipSyncWeightMultiplier: 5.2,
+    cameraPosition: { x: 0, y: 1.45, z: 1.5 },
+    lookAt: { x: 0, y: 1.45, z: 0 },
   },
 };
 
@@ -175,8 +186,10 @@ const VrmStage = ({
     blinkRight: [],
   });
   const expressionSupportRef = useRef<ExpressionSupport>({
+    happy: false,
     relaxed: false,
     surprised: false,
+    aa: false,
     blink: false,
     blinkLeft: false,
     blinkRight: false,
@@ -251,31 +264,56 @@ const VrmStage = ({
       ?? humanoid.getNormalizedBoneNode(VRMHumanBoneName.Head);
   }, []);
 
+  const getLipSyncPresetName = useCallback((modelId: StageModelId) => {
+    const lipSyncExpression = STAGE_MODEL_POSES[modelId].lipSyncExpression;
+    return lipSyncExpression === 'aa'
+      ? VRMExpressionPresetName.Aa
+      : VRMExpressionPresetName.Surprised;
+  }, []);
+
   const applyFacialState = useCallback(
     ({
       blinkWeight,
+      happyWeight,
       relaxedWeight,
-      surprisedWeight,
+      lipSyncWeight,
     }: {
       blinkWeight?: number;
+      happyWeight?: number;
       relaxedWeight?: number;
-      surprisedWeight?: number;
+      lipSyncWeight?: number;
     }) => {
       const manager = vrmRef.current?.expressionManager;
       const support = expressionSupportRef.current;
+      const stagePose = STAGE_MODEL_POSES[currentModel.id];
+      const lipSyncPresetName = getLipSyncPresetName(currentModel.id);
       let shouldUpdateManager = false;
+
+      if (happyWeight != null && manager && support.happy) {
+        manager.setValue(VRMExpressionPresetName.Happy, happyWeight);
+        shouldUpdateManager = true;
+      }
 
       if (relaxedWeight != null && manager && support.relaxed) {
         manager.setValue(VRMExpressionPresetName.Relaxed, relaxedWeight);
         shouldUpdateManager = true;
       }
 
-      if (surprisedWeight != null) {
-        if (manager && support.surprised) {
-          manager.setValue(VRMExpressionPresetName.Surprised, surprisedWeight);
+      if (lipSyncWeight != null) {
+        const scaledLipSyncWeight = MathUtils.clamp(
+          lipSyncWeight * stagePose.lipSyncWeightMultiplier,
+          0,
+          1,
+        );
+        const hasLipSyncExpression = lipSyncPresetName === VRMExpressionPresetName.Aa
+          ? support.aa
+          : support.surprised;
+
+        if (manager && hasLipSyncExpression) {
+          manager.setValue(lipSyncPresetName, scaledLipSyncWeight);
           shouldUpdateManager = true;
         } else {
-          setDirectMorphWeight(directMorphTargetsRef.current.mouthOpen, surprisedWeight);
+          setDirectMorphWeight(directMorphTargetsRef.current.mouthOpen, scaledLipSyncWeight);
         }
       }
 
@@ -307,16 +345,18 @@ const VrmStage = ({
         manager?.update();
       }
     },
-    [setDirectMorphWeight],
+    [currentModel.id, getLipSyncPresetName, setDirectMorphWeight],
   );
 
   const setIdleExpression = useCallback(() => {
+    const stagePose = STAGE_MODEL_POSES[currentModel.id];
     applyFacialState({
+      happyWeight: stagePose.defaultHappyWeight,
       relaxedWeight: 0.6,
-      surprisedWeight: 0,
+      lipSyncWeight: 0,
       blinkWeight: 0,
     });
-  }, [applyFacialState]);
+  }, [applyFacialState, currentModel.id]);
 
   const resetIdleMotionState = useCallback(() => {
     const now = performance.now();
@@ -483,8 +523,10 @@ const VrmStage = ({
       blinkRight: [],
     };
     expressionSupportRef.current = {
+      happy: false,
       relaxed: false,
       surprised: false,
+      aa: false,
       blink: false,
       blinkLeft: false,
       blinkRight: false,
@@ -543,8 +585,10 @@ const VrmStage = ({
         baseMotionRotationRef.current = motionBoneRef.current?.rotation.clone() ?? null;
         directMorphTargetsRef.current = collectDirectMorphTargets(vrm.scene);
         expressionSupportRef.current = {
+          happy: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Happy)?.binds.length ?? 0) > 0,
           relaxed: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Relaxed)?.binds.length ?? 0) > 0,
           surprised: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Surprised)?.binds.length ?? 0) > 0,
+          aa: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Aa)?.binds.length ?? 0) > 0,
           blink: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Blink)?.binds.length ?? 0) > 0,
           blinkLeft: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.BlinkLeft)?.binds.length ?? 0) > 0,
           blinkRight: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.BlinkRight)?.binds.length ?? 0) > 0,
@@ -641,26 +685,29 @@ const VrmStage = ({
   }, [conversationStarted, isReady, applyFrontPose, setIdleExpression]);
 
   useEffect(() => {
+    const stagePose = STAGE_MODEL_POSES[currentModel.id];
     if (!isSpeaking) {
       applyFacialState({
-        surprisedWeight: 0,
+        happyWeight: stagePose.defaultHappyWeight,
+        lipSyncWeight: 0,
         relaxedWeight: 0.6,
       });
       return;
     }
     const interval = setInterval(() => {
       applyFacialState({
-        surprisedWeight: 0.05 + Math.random() * 0.25,
+        lipSyncWeight: 0.05 + Math.random() * 0.25,
       });
     }, 350);
     return () => {
       clearInterval(interval);
       applyFacialState({
-        surprisedWeight: 0,
+        happyWeight: stagePose.defaultHappyWeight,
+        lipSyncWeight: 0,
         relaxedWeight: 0.6,
       });
     };
-  }, [applyFacialState, isSpeaking]);
+  }, [applyFacialState, currentModel.id, isSpeaking]);
 
   return (
     <Box
