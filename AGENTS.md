@@ -54,6 +54,7 @@
 - OpenAI の現行公式ドキュメントでは `gpt-4o-mini-tts` が推奨されているが、本プロジェクト内の既存実装・表記が `tts-1` の場合は互換性とUI要件を確認した上で切り替える。
 - Gemini TTS は `src/components/MeetingRoom.tsx` の `playWithGeminiTts` から `gemini-2.5-flash-preview-tts:generateContent` を呼び出している。
 - Gemini TTS の話速は現時点で API パラメータ直接指定ではなく、プロンプト文字列で制御している。速度・抑揚・トーン調整時は `GEMINI_TTS_PROMPT_PREFIX` を見直す。
+- 音声再生時の `audio.playbackRate` はTTS種別で分けており、OpenAI `tts-1` は `1.2`、Gemini `gemini-2.5-flash-preview-tts` は `1.0` とする。
 - Gemini TTS の `voiceName` は、表示中の3Dモデルに連動して切り替える。
   - `sample.vrm` -> `Kore`
   - `trial_2.vrm` -> `Zephyr`

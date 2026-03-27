@@ -502,11 +502,11 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [openAiApiKey, toast]);
 
   const playAudioBlob = useCallback(
-    async (blob: Blob) => {
+    async (blob: Blob, playbackRate: number) => {
       const url = URL.createObjectURL(blob);
       disposeActiveAudio();
       const audio = new Audio(url);
-      audio.playbackRate = 1.2;
+      audio.playbackRate = playbackRate;
       activeAudioRef.current = audio;
       audioSourceUrlRef.current = url;
       audioResumePositionRef.current = 0;
@@ -567,7 +567,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       }
 
       const blob = await response.blob();
-      await playAudioBlob(blob);
+      await playAudioBlob(blob, 1.2);
     },
     [openAiApiKey, playAudioBlob],
   );
@@ -623,7 +623,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
       const pcmBytes = decodeBase64ToUint8Array(inlineAudio);
       const wavBlob = buildWavBlobFromMonoPcm16(pcmBytes);
-      await playAudioBlob(wavBlob);
+      await playAudioBlob(wavBlob, 1.0);
     },
     [geminiApiKey, playAudioBlob, selectedModelId],
   );
