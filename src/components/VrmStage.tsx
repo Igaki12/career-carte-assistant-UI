@@ -36,6 +36,11 @@ const STAGE_MODELS = [
     label: 'Trial 2',
     path: `${import.meta.env.BASE_URL}models/trial_2.vrm`,
   },
+  {
+    id: 'youngCounsil',
+    label: 'Young Counsel',
+    path: `${import.meta.env.BASE_URL}models/young_counsil.vrm`,
+  },
 ] as const;
 
 export type StageModelId = (typeof STAGE_MODELS)[number]['id'];
@@ -153,6 +158,20 @@ const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
     lipSyncWeightMultiplier: 5.2,
     cameraPosition: { x: 0, y: 1.45, z: 1.5 },
     lookAt: { x: 0, y: 1.45, z: 0 },
+  },
+  youngCounsil: {
+    armRotations: {
+      [VRMHumanBoneName.LeftUpperArm]: { x: -12, y: 10, z: -75 },
+      [VRMHumanBoneName.LeftLowerArm]: { x: -5, y: 8, z: -5 },
+      [VRMHumanBoneName.RightUpperArm]: { x: -12, y: -10, z: 75 },
+      [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
+    },
+    headTiltDeg: 0,
+    defaultHappyWeight: 0.3,
+    lipSyncExpression: 'aa',
+    lipSyncWeightMultiplier: 5.2,
+    cameraPosition: { x: 0, y: 1.45, z: 1.5 },
+    lookAt: { x: 0, y: 1.55, z: 0 },
   },
 };
 

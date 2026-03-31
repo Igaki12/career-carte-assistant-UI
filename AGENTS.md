@@ -58,11 +58,12 @@
 - Gemini TTS の `voiceName` は、表示中の3Dモデルに連動して切り替える。
   - `sample.vrm` -> `Kore`
   - `trial_2.vrm` -> `Zephyr`
+  - `young_counsil.vrm` -> `Zephyr`
 - Gemini TTS の音声モデル切り替えや voice の追加時は、3Dモデル切り替えロジックと対応表を同時に更新する。
 
 ### 3.4 VRMモデル運用メモ
 - 面談画面の3Dモデル表示は `src/components/VrmStage.tsx` で管理する。
-- 現在の切り替え対象は `sample.vrm` と `trial_2.vrm` の2体とする。
+- 現在の切り替え対象は `sample.vrm`、`trial_2.vrm`、`young_counsil.vrm` の3体とする。
 - `sample.vrm` は基準モデルとして扱い、姿勢・カメラ・表情挙動を原則変更しない。
 - `trial_2.vrm` は、初期姿勢については `sample.vrm` と同水準の正面待機ポーズに戻した上で運用する。
 - `trial_2.vrm` のカメラ位置は、`sample.vrm` を基準にしつつも見え方に応じて手動微調整する前提とする。
@@ -70,11 +71,17 @@
   - lip sync は `surprised` ではなく `aa` を使用する
   - lip sync weight は強めに補正して運用する
   - デフォルト表情として `happy 0.3` を適用する
+- `young_counsil.vrm` は `trial_2.vrm` と同系統の voice / lip sync / 初期表情設定で運用する。
+  - voice は `Zephyr` を使う
+  - lip sync は `aa` を使用し、weight も `trial_2.vrm` と同水準で補正する
+  - デフォルト表情として `happy 0.3` を適用する
+  - 初期カメラは上半身の収まりに合わせて個別に手動調整する
+  - `blink` / `relaxed` はモデルが持つネイティブ expression を優先する
 - VRM表情バインドが不足するモデルに備えて、`VrmStage.tsx` では以下のフォールバックを持つ。
   - `neck` がない場合は `head` をモーション用ボーンとして使う
   - `blink` 系が不足する場合は `Eye_Blink_L` / `Eye_Blink_R` を直接 morph target 駆動する
   - 口形状が不足する場合は `V_Open` を直接 morph target 駆動する
-- `sample.vrm` は `surprised` ベースの口パクを維持し、`trial_2.vrm` 向けの表情調整が `sample.vrm` に波及しないようモデル別設定で分離する。
+- `sample.vrm` は `surprised` ベースの口パクを維持し、`trial_2.vrm` / `young_counsil.vrm` 向けの表情調整が `sample.vrm` に波及しないようモデル別設定で分離する。
 - 大容量VRMファイルは Git 管理から外し、`.gitignore` で `public/models` および必要なら `docs/models` 側も個別に無視する。
 
 ## 4. キャリアカルテ（電子カルテ）仕様

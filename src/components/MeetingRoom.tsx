@@ -41,11 +41,29 @@ const LOCAL_STORAGE_KARTE_KEY = 'cca-karte';
 const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
 const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
 const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
+const OPENAI_MEETING_MODEL = 'gpt-4o-2024-11-20';
 const GEMINI_TTS_PROMPT_PREFIX = 'Read aloud in a warm and friendly tone: ';
 const GEMINI_VOICE_BY_MODEL: Record<StageModelId, string> = {
   sample: 'Kore',
   trial2: 'Zephyr',
+  youngCounsil: 'Zephyr',
 };
+const MEETING_RESPONSE_SCHEMA_NAME = 'meeting_room_response';
+const MEETING_FINALIZE_RESPONSE_SCHEMA_NAME = 'meeting_room_finalize_response';
+const SHIRP_SCHEMA_PROPERTIES = {
+  S: { type: ['string', 'null'] },
+  H: { type: ['string', 'null'] },
+  I: { type: ['string', 'null'] },
+  R: { type: ['string', 'null'] },
+  P: { type: ['string', 'null'] },
+  '#': { type: ['string', 'null'] },
+} as const;
+const INTERNAL_REPLY_PATTERNS = [
+  /["“”']updated_shirp["“”']\s*:/i,
+  /["“”']is_complete["“”']\s*:/i,
+  /["“”']feedback["“”']\s*:/i,
+  /[{\[]\s*["“”']reply["“”']\s*:/i,
+];
 
 const createEmptyKarte = (): KarteData => ({
   demographics: {
@@ -156,13 +174,9 @@ ${AI_RESPONSE_GUIDELINES}
 3. S,H,I,Rが全て埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
 4. 3の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
 5. 余談やS〜Pに当てはまらない内容は#に記録してください。
-
-# 出力 (JSONのみ)
-{
-  "reply": "ユーザーへの返答",
-  "updated_shirp": { "S": "..." },
-  "is_complete": boolean
-}
+6. response_format の JSON Schema に厳密に従って出力してください。
+7. reply にはユーザーに見せる自然な返答だけを書いてください。
+8. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
 `.trim();
 };
 
@@ -180,13 +194,9 @@ ${AI_RESPONSE_GUIDELINES}
 # 指示
 1. ユーザーが自由に話せるように傾聴し、深掘り質問やプロービングを行います。
 2. ユーザーの発話から得た情報で、SHIRPを部分的に更新してください。
-
-# 出力 (JSONのみ)
-{
-  "reply": "共感や深掘りの返答",
-  "updated_shirp": { "H": "..." },
-  "is_complete": false
-}
+3. response_format の JSON Schema に厳密に従って出力してください。
+4. reply にはユーザーに見せる自然な返答だけを書いてください。
+5. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
 `.trim();
 
 const buildContinuousFinalizePrompt = (shirp: ShirpData) => `
@@ -205,22 +215,122 @@ ${AI_RESPONSE_GUIDELINES}
 2. 足りない項目は補足し、P(プラン)を生成してください。
 3. 面談後のキャリアに関する簡単なフィードバックを80~120文字で作成してください。
 4. reply の最後に、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を含めてください。
-
-# 出力 (JSONのみ)
-{
-  "reply": "まとめ・補足質問",
-  "updated_shirp": { "P": "..." },
-  "feedback": "フィードバック内容",
-  "is_complete": true
-}
+5. response_format の JSON Schema に厳密に従って出力してください。
+6. reply にはユーザーに見せる自然な返答だけを書いてください。
+7. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
 `.trim();
 
-const safeParse = (content: string): LlmResponse | null => {
+const createMeetingResponseSchema = (finalize: boolean) => ({
+  name: finalize ? MEETING_FINALIZE_RESPONSE_SCHEMA_NAME : MEETING_RESPONSE_SCHEMA_NAME,
+  strict: true,
+  schema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      reply: {
+        type: 'string',
+      },
+      updated_shirp: {
+        type: 'object',
+        additionalProperties: false,
+        properties: SHIRP_SCHEMA_PROPERTIES,
+        required: SHIRP_KEYS,
+      },
+      is_complete: {
+        type: 'boolean',
+      },
+      ...(finalize
+        ? {
+            feedback: {
+              type: 'string',
+            },
+          }
+        : {}),
+    },
+    required: finalize
+      ? ['reply', 'updated_shirp', 'feedback', 'is_complete']
+      : ['reply', 'updated_shirp', 'is_complete'],
+  },
+});
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const hasSuspiciousReplyContent = (reply: string) =>
+  INTERNAL_REPLY_PATTERNS.some((pattern) => pattern.test(reply));
+
+const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResponse => {
+  let parsed: unknown;
+
   try {
-    return JSON.parse(content) as LlmResponse;
+    parsed = JSON.parse(content);
   } catch {
-    return null;
+    throw new Error('AI応答のJSON解析に失敗しました。');
   }
+
+  if (!isRecord(parsed)) {
+    throw new Error('AI応答の形式が不正です。');
+  }
+
+  const allowedTopLevelKeys = finalize
+    ? new Set(['reply', 'updated_shirp', 'feedback', 'is_complete'])
+    : new Set(['reply', 'updated_shirp', 'is_complete']);
+
+  Object.keys(parsed).forEach((key) => {
+    if (!allowedTopLevelKeys.has(key)) {
+      throw new Error('AI応答の形式が不正です。');
+    }
+  });
+
+  const reply = parsed.reply;
+  if (typeof reply !== 'string' || !reply.trim()) {
+    throw new Error('AI応答のreplyが不正です。');
+  }
+  if (hasSuspiciousReplyContent(reply)) {
+    throw new Error('AI応答のreplyに内部データが混在しています。');
+  }
+
+  const updatedShirp = parsed.updated_shirp;
+  if (!isRecord(updatedShirp)) {
+    throw new Error('AI応答のupdated_shirpが不正です。');
+  }
+
+  const validatedUpdates: Partial<Record<ShirpKey, string>> = {};
+  Object.entries(updatedShirp).forEach(([key, value]) => {
+    if (!SHIRP_KEYS.includes(key as ShirpKey)) {
+      throw new Error('AI応答のupdated_shirpに許可されていないキーがあります。');
+    }
+    if (value !== null && typeof value !== 'string') {
+      throw new Error('AI応答のupdated_shirpの値が不正です。');
+    }
+    if (typeof value === 'string') {
+      validatedUpdates[key as ShirpKey] = value;
+    }
+  });
+
+  const isComplete = parsed.is_complete;
+  if (typeof isComplete !== 'boolean') {
+    throw new Error('AI応答のis_completeが不正です。');
+  }
+
+  if (finalize) {
+    const feedback = parsed.feedback;
+    if (typeof feedback !== 'string' || !feedback.trim()) {
+      throw new Error('AI応答のfeedbackが不正です。');
+    }
+    return {
+      reply: reply.trim(),
+      updated_shirp: validatedUpdates,
+      feedback: feedback.trim(),
+      is_complete: isComplete,
+    };
+  }
+
+  return {
+    reply: reply.trim(),
+    updated_shirp: validatedUpdates,
+    is_complete: isComplete,
+  };
 };
 
 const updateShirp = (prev: KarteData, updates?: Partial<Record<ShirpKey, string>>) => {
@@ -679,22 +789,29 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: OPENAI_MEETING_MODEL,
             messages: [{ role: 'system', content: systemPrompt }, ...history],
-            response_format: { type: 'json_object' },
+            response_format: {
+              type: 'json_schema',
+              json_schema: createMeetingResponseSchema(finalize),
+            },
           }),
         });
 
+        const data = await response.json();
         if (!response.ok) {
-          throw new Error('OpenAIからの応答がありませんでした。');
+          const apiErrorMessage = data?.error?.message as string | undefined;
+          throw new Error(apiErrorMessage || 'OpenAIからの応答がありませんでした。');
+        }
+        const refusal = data.choices?.[0]?.message?.refusal as string | undefined;
+        if (refusal) {
+          throw new Error('AIがこのリクエストへの応答を拒否しました。');
         }
 
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content;
+        const content = data.choices?.[0]?.message?.content as string | undefined;
         if (!content) throw new Error('AI応答の形式が不正です。');
 
-        const parsed = safeParse(content);
-        if (!parsed) throw new Error('AI応答のJSON解析に失敗しました。');
+        const parsed = parseStructuredLlmResponse(content, finalize);
 
         setKarte((prev) => updateShirp(prev, parsed.updated_shirp));
 
