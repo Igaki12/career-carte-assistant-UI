@@ -45,7 +45,19 @@
   - 「面談を終了してフィードバックを見る」ボタン押下でターンテイキングを終了する。
   - Realtimeセッションの会話履歴（テキスト）を取得する。
   - 取得した履歴 + 既存カルテを入力として、1回だけ要約/更新を実行する（`updated_shirp` と `feedback` を生成）。
-  - 生成後は「カルテ確認 -> 保存 -> UserHomeへ戻る」の順で完了する。
+- 生成後は「カルテ確認 -> 保存 -> UserHomeへ戻る」の順で完了する。
+
+### 3.2.2 OpenAI会話応答実装メモ
+- 面談中の会話応答生成は `src/components/MeetingRoom.tsx` の `runLLMProcess` から `https://api.openai.com/v1/chat/completions` を呼び出している。
+- 会話応答モデルは `gpt-4o-2024-11-20` に固定する。
+- OpenAI 応答の `response_format` は `json_object` ではなく、`json_schema` + `strict: true` の Structured Outputs を使う。
+- schema は通常応答用と finalize 用で分け、最低限以下を返させる。
+  - 通常応答: `reply`, `updated_shirp`, `is_complete`
+  - finalize 応答: `reply`, `updated_shirp`, `feedback`, `is_complete`
+- `updated_shirp` の許可キーは `S`, `H`, `I`, `R`, `P`, `#` のみとし、ランタイム検証でも同じ制約をかける。
+- Structured Outputs を使っていても `reply` に内部 JSON 断片が混ざる可能性はゼロではないため、`updated_shirp` / `is_complete` / `feedback` などの内部キーが混ざる応答は不正として破棄する。
+- 不正応答や refusal 時は assistant メッセージを追加せず、TTS にも流さない。
+- OpenAI API の失敗時は `error.message` を優先して表示し、400系エラーの原因が追えるようにする。
 
 ### 3.3 音声合成実装メモ
 - OpenAI TTS 実装・更新時は、公式ドキュメントのローカルコピー `openai-tts-1.md` を参照する。

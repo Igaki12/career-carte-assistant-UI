@@ -23,8 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Large local 3D assets
+# Large(over 100MB) local 3D assets
 public/models/trial_2.vrm
 docs/models/trial_2.vrm
-public/models/young_counsil.vrm
-docs/models/young_counsil.vrm
