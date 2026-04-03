@@ -15,27 +15,6 @@ function Home() {
           </Text>
           <Button
             as={RouterLink}
-            to="/app/initial"
-            colorScheme="teal"
-            size="lg"
-            alignSelf="flex-start"
-            px={10}
-          >
-            初回面談を始める
-          </Button>
-          <Button
-            as={RouterLink}
-            to="/app/continuous"
-            variant="outline"
-            colorScheme="teal"
-            size="lg"
-            alignSelf="flex-start"
-            px={10}
-          >
-            継続面談を始める
-          </Button>
-          <Button
-            as={RouterLink}
             to="/user/demographics"
             variant="solid"
             colorScheme="orange"
@@ -43,8 +22,32 @@ function Home() {
             alignSelf="flex-start"
             px={10}
           >
-            デモグラフィックを設定
+            プロフィールを設定
           </Button>
+          <Stack direction={{ base: 'column', md: 'row' }} spacing={4} align="stretch" w="full">
+            <Button
+              as={RouterLink}
+              to="/app/initial"
+              colorScheme="teal"
+              size="lg"
+              px={10}
+              flex="1"
+            >
+              初回面談を始める
+            </Button>
+            <Button
+              as={RouterLink}
+              to="/app/continuous"
+              variant="outline"
+              colorScheme="teal"
+              size="lg"
+              px={10}
+              flex="1"
+            >
+              継続面談を始める
+            </Button>
+          </Stack>
+
           <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
             <Button as={RouterLink} to="/user" variant="outline" colorScheme="teal">
               ユーザーダッシュボード画面

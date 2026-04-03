@@ -114,7 +114,7 @@ function DemographicsSetup() {
 
     saveDemoUserState(nextState);
     toast({
-      title: 'デモグラフィックを保存しました',
+      title: 'プロフィールを保存しました',
       description: 'プロフィール設定を反映しました。',
       status: 'success',
       duration: 2400,
@@ -134,7 +134,7 @@ function DemographicsSetup() {
       <Container maxW="4xl">
         <Stack spacing={8}>
           <Stack spacing={3}>
-            <Heading size="lg">デモグラフィック初期設定</Heading>
+            <Heading size="lg">プロフィール初期設定</Heading>
             <Text color="gray.600">
               まだプロフィールが設定されていないため、初回面談とユーザーホームで使う基本情報を先に登録します。
             </Text>

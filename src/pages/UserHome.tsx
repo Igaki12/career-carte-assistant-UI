@@ -570,7 +570,7 @@ function UserHome() {
                       プロフィールメモ
                     </Text>
                     <Button size="xs" colorScheme="orange" variant="outline" onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
-                      デモグラフィックを編集
+                      プロフィールを編集
                     </Button>
                   </Flex>
                   <Tabs variant="enclosed" size="sm">
@@ -837,7 +837,7 @@ function UserHome() {
                     </Tabs>
                     <Flex mt={4} gap={3} wrap="wrap">
                       <Button colorScheme="orange" variant="outline" onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
-                        デモグラフィックを編集
+                        プロフィールを編集
                       </Button>
                       <Button colorScheme="red" variant="outline" onClick={resetModalDisclosure.onOpen}>
                         パスワードを再設定する

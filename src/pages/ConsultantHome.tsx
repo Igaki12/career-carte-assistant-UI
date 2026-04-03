@@ -455,9 +455,9 @@ function ConsultantHome() {
                   <Badge colorScheme="green">{selectedRecord.statusLabel}</Badge>
                 </Flex>
                 <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
-                    デモグラフィック
-                  </Text>
+                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
+                        プロフィール
+                      </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
                     <Text fontSize="sm">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
                     <Text fontSize="sm">年齢: {selectedRecord.data.demographics.age ?? '未入力'}</Text>

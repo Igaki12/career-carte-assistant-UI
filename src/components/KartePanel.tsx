@@ -42,7 +42,7 @@ const KartePanel = ({ data }: Props) => {
       <Stack spacing={6}>
         <Box>
           <Text fontSize="sm" fontWeight="bold" color="gray.500" mb={3}>
-            デモグラフィック (個人情報)
+            プロフィール (個人情報)
           </Text>
           <Tabs variant="soft-rounded" colorScheme="blue">
             <TabList mb={3}>
