@@ -84,6 +84,7 @@
   - lip sync weight は強めに補正して運用する
   - デフォルト表情として `happy 0.3` を適用する
 - `young_counsil.vrm` は `trial_2.vrm` と同系統の voice / lip sync / 初期表情設定で運用する。
+  - モデルの改良版へ差し替える場合も、原則として `youngCounsil` の model id と `public/models/young_counsil.vrm` / `docs/models/young_counsil.vrm` の参照名は維持したまま中身を置き換える
   - voice は `Zephyr` を使う
   - lip sync は `aa` を使用し、weight も `trial_2.vrm` と同水準で補正する
   - デフォルト表情として `happy 0.3` を適用する
@@ -94,7 +95,8 @@
   - `blink` 系が不足する場合は `Eye_Blink_L` / `Eye_Blink_R` を直接 morph target 駆動する
   - 口形状が不足する場合は `V_Open` を直接 morph target 駆動する
 - `sample.vrm` は `surprised` ベースの口パクを維持し、`trial_2.vrm` / `young_counsil.vrm` 向けの表情調整が `sample.vrm` に波及しないようモデル別設定で分離する。
-- 大容量VRMファイルは Git 管理から外し、`.gitignore` で `public/models` および必要なら `docs/models` 側も個別に無視する。
+- 大容量VRMファイルのうちローカル配置用の `public/models` は `.gitignore` 管理とする。
+- GitHub Pages は `docs` 配下を配信するため、公開に必要な `docs/models` の VRM は ignore せずデプロイ対象として扱う。
 
 ## 4. キャリアカルテ（電子カルテ）仕様
 カルテは以下の3段構成でUI表示し、PDF/CSV出力に対応する。
