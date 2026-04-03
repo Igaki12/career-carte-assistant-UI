@@ -32,12 +32,29 @@ import {
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import type { FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import KartePanel from '../components/KartePanel';
 import SurveyRadar from '../components/SurveyRadar';
+import {
+  applyDemographicsToKarte,
+  createEmptyKarte,
+  createEmptySurvey,
+  hasConfiguredDemographics,
+  loadDemoUserState,
+  saveDemoUserState,
+} from '../lib/demoUserState';
 import { SHIRP_KEYS } from '../types';
-import type { KarteData, ShirpData, ShirpKey, SurveyFactorKey, SurveyResult } from '../types';
+import type {
+  ContinuousMode,
+  DemoUserState,
+  MeetingType,
+  ShirpData,
+  ShirpKey,
+  SurveyFactorKey,
+  SurveyResult,
+} from '../types';
 
 const SHIRP_LABELS: Record<ShirpKey, string> = {
   S: 'S. 現状 (Satisfaction/現状)',
@@ -74,8 +91,8 @@ const SURVEY_FACTOR_KEYS: SurveyFactorKey[] = [
 ];
 
 const LIKERT_OPTIONS = ['全くそう思わない', 'そう思わない', 'どちらでもない', 'そう思う', 'とてもそう思う'];
-
 const USER_HOME_HERO_BACKGROUNDS = ['/hero/user-home-hero-a.jpg', '/hero/user-home-hero-b.jpg'];
+
 const heroReveal = keyframes`
   from {
     opacity: 0;
@@ -88,6 +105,7 @@ const heroReveal = keyframes`
     filter: blur(0);
   }
 `;
+
 const heroContentSlide = keyframes`
   from {
     opacity: 0;
@@ -105,6 +123,41 @@ type SurveyQuestion = {
   label: string;
   type: 'likert';
   options: string[];
+};
+
+type ProfileView = {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  age: string;
+  workLocationPrefecture: string;
+  jobChangeCount: string;
+  yearsOfService: string;
+  gender: string;
+  maritalStatus: string;
+  childrenCount: string;
+  youngestChildAge: string;
+  statusSummary: string;
+  statusDetails: Array<{
+    label: string;
+    colorScheme: string;
+  }>;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  logs: number;
+  initialInterviewLimit: number;
+  initialInterviewRemaining: number;
+  continuousInterviewLimit: number;
+  continuousInterviewRemaining: number;
+  llmCallsPerInterview: number;
+};
+
+type PendingStart = {
+  meetingType: MeetingType;
+  continuousMode: ContinuousMode | null;
 };
 
 const SURVEY_QUESTIONS: SurveyQuestion[] = [
@@ -135,50 +188,11 @@ const SURVEY_QUESTIONS: SurveyQuestion[] = [
   { id: 'q6_134', index: 25, label: '自分の感情の変化に気づきやすい', type: 'likert', options: LIKERT_OPTIONS },
 ];
 
-type Profile = {
-  id: string;
-  name: string;
-  email: string;
-  company: string;
-  role: string;
-  age: string;
-  workLocationPrefecture: string;
-  jobChangeCount: string;
-  yearsOfService: string;
-  gender: string;
-  maritalStatus: string;
-  childrenCount: string;
-  youngestChildAge: string;
-  status: '面談準備中' | '進行中' | '完了';
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  logs: number;
-  initialInterviewLimit: number;
-  initialInterviewRemaining: number;
-  continuousInterviewLimit: number;
-  continuousInterviewRemaining: number;
-  llmCallsPerInterview: number;
-};
-
-type KarteRecord = {
-  id: string;
-  atCreated: string;
-  atUpdated: string;
-  statusLabel: string;
-  data: KarteData;
-};
-
-const createEmptySurvey = (): SurveyResult => ({
-  factors: {
-    growth_orientation: null,
-    problem_solving_orientation: null,
-    organization_contribution_orientation: null,
-    interpersonal_adaptation_orientation: null,
-    emotional_response_tendency: null,
-  },
-  lastUpdated: null,
-});
+const createDefaultSurveyAnswers = () =>
+  SURVEY_QUESTIONS.reduce<Record<string, string>>((acc, question) => {
+    acc[question.id] = question.options[2] ?? '';
+    return acc;
+  }, {});
 
 const calculateSurveyFactors = (answers: Record<string, string>): SurveyResult => {
   const groups = SURVEY_FACTOR_KEYS.map((key, groupIndex) => {
@@ -207,16 +221,94 @@ const calculateSurveyFactors = (answers: Record<string, string>): SurveyResult =
   };
 };
 
+const formatShortDate = () =>
+  new Date().toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+const getDraftMetaLabel = (meetingType: MeetingType) => (meetingType === 'initial' ? '初回面談の下書き' : '継続面談の下書き');
+
+const resolveProfile = (userState: DemoUserState): ProfileView => {
+  const latestRecord = userState.karteRecords[0];
+  const hasDraft = Boolean(userState.draftSessions.initial || userState.draftSessions.continuous);
+  const demographics = userState.demographics;
+  const hasInitialCompleted = userState.karteRecords.some((record) => record.meetingType === 'initial');
+  const hasContinuousCompleted = userState.karteRecords.some((record) => record.meetingType === 'continuous');
+  const statusDetails: ProfileView['statusDetails'] = [];
+
+  if (hasConfiguredDemographics(demographics)) {
+    statusDetails.push({ label: 'プロフィール設定完了', colorScheme: 'orange' });
+  }
+  if (hasInitialCompleted) {
+    statusDetails.push({ label: '初回面談完了', colorScheme: 'blue' });
+  }
+  if (hasContinuousCompleted) {
+    statusDetails.push({ label: '継続面談完了', colorScheme: 'teal' });
+  }
+  if (hasDraft) {
+    statusDetails.push({ label: '面談下書きあり', colorScheme: 'purple' });
+  }
+
+  const statusSummary = hasDraft
+    ? '進行中の面談あり'
+    : hasContinuousCompleted
+      ? '継続面談まで完了'
+      : hasInitialCompleted
+        ? '初回面談まで完了'
+        : hasConfiguredDemographics(demographics)
+          ? 'プロフィール設定完了'
+          : '面談準備中';
+
+  return {
+    id: 'USR-2024-021',
+    name: demographics.name || '未設定',
+    email: 'hanako.yamada@example.com',
+    company: demographics.company || 'Career Carte Assistant Demo',
+    role: demographics.jobTitle || '未設定',
+    age: demographics.age || '未設定',
+    workLocationPrefecture: demographics.workLocationPrefecture || '未設定',
+    jobChangeCount: demographics.jobChangeCount || '未設定',
+    yearsOfService: demographics.yearsOfService || '未設定',
+    gender: demographics.gender || '未設定',
+    maritalStatus: demographics.maritalStatus || '未設定',
+    childrenCount: demographics.childrenCount || '未設定',
+    youngestChildAge: demographics.youngestChildAge || '未設定',
+    statusSummary,
+    statusDetails,
+    tags: [demographics.company, demographics.jobTitle, demographics.workLocationPrefecture].filter(
+      (value): value is string => Boolean(value),
+    ),
+    createdAt: '2024-09-05 10:20',
+    updatedAt:
+      userState.draftSessions.continuous?.updatedAt ||
+      userState.draftSessions.initial?.updatedAt ||
+      latestRecord?.atUpdated ||
+      '未更新',
+    logs: userState.karteRecords.reduce((sum, record) => sum + record.conversationLog.length, 0),
+    initialInterviewLimit: 1,
+    initialInterviewRemaining: latestRecord?.meetingType === 'initial' ? 0 : 1,
+    continuousInterviewLimit: 4,
+    continuousInterviewRemaining: Math.max(4 - userState.karteRecords.filter((record) => record.meetingType === 'continuous').length, 0),
+    llmCallsPerInterview: 3,
+  };
+};
+
 function UserHome() {
   const toast = useToast();
   const navigate = useNavigate();
   const accountDisclosure = useDisclosure();
   const karteModalDisclosure = useDisclosure();
+  const conversationLogDisclosure = useDisclosure();
   const resetModalDisclosure = useDisclosure();
   const surveyModalDisclosure = useDisclosure();
   const continuousModeDisclosure = useDisclosure();
+  const resumeDraftDisclosure = useDisclosure();
 
-  const [continuousMode, setContinuousMode] = useState<'normal' | 'turn'>('normal');
+  const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
+  const [continuousMode, setContinuousMode] = useState<ContinuousMode>('normal');
+  const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
   const [isEditingLatest, setIsEditingLatest] = useState(false);
   const [heroBackground] = useState(
     () => USER_HOME_HERO_BACKGROUNDS[Math.floor(Math.random() * USER_HOME_HERO_BACKGROUNDS.length)] ?? USER_HOME_HERO_BACKGROUNDS[0],
@@ -229,121 +321,51 @@ function UserHome() {
     P: '',
     '#': '',
   });
-
-  const profile = useMemo<Profile>(
-    () => ({
-      id: 'USR-2024-021',
-      name: '山田 花子',
-      email: 'hanako.yamada@example.com',
-      company: 'Career Carte Inc.',
-      role: 'Product Manager',
-      age: '32',
-      workLocationPrefecture: '東京都',
-      jobChangeCount: '2',
-      yearsOfService: '4',
-      gender: '女性',
-      maritalStatus: '既婚',
-      childrenCount: '1',
-      youngestChildAge: '4',
-      status: '面談準備中',
-      tags: ['Tech領域', '人材開発', 'PM'],
-      createdAt: '2024-09-05 10:20',
-      updatedAt: '2024-11-30 14:02',
-      logs: 23,
-      initialInterviewLimit: 1,
-      initialInterviewRemaining: 1,
-      continuousInterviewLimit: 4,
-      continuousInterviewRemaining: 2,
-      llmCallsPerInterview: 3,
-    }),
-    [],
-  );
-
-  const [karteRecords, setKarteRecords] = useState<KarteRecord[]>(() => [
-    {
-      id: 'karte-002',
-      atCreated: '2024/11/20',
-      atUpdated: '2024/11/30',
-      statusLabel: 'ユーザー編集済み',
-      data: {
-        demographics: {
-          name: '山田 花子',
-          age: '32',
-          company: 'Career Carte Inc.',
-          jobTitle: 'Product Manager',
-          workLocationPrefecture: '東京都',
-          jobChangeCount: '2',
-          yearsOfService: '4',
-          gender: '女性',
-          maritalStatus: '既婚',
-          childrenCount: '1',
-          youngestChildAge: '4',
-        },
-        shirp: {
-          S: '組織の裁量は大きいが、成長機会の減少を感じている。チームとは良好な関係。',
-          H: '年収は現状維持以上。事業開発に関わる仕事と柔軟な働き方を希望。',
-          I: 'マネジメント経験が浅く、英語でのプレゼンに課題。',
-          R: '新規事業の立ち上げ経験、社内メンターの存在、学習時間の確保。',
-          P: '半年以内にマネジメント研修へ参加し、英語ピッチ練習を週1回継続する。',
-          '#': '次回は転職検討の判断軸を深掘りしたい。',
-        },
-        survey: {
-          factors: {
-            growth_orientation: 78,
-            problem_solving_orientation: 72,
-            organization_contribution_orientation: 65,
-            interpersonal_adaptation_orientation: 80,
-            emotional_response_tendency: 58,
-          },
-          lastUpdated: '2024/11/10',
-        },
-      },
-    },
-    {
-      id: 'karte-001',
-      atCreated: '2024/09/05',
-      atUpdated: '2024/09/05',
-      statusLabel: '作成済み',
-      data: {
-        demographics: {
-          name: '山田 花子',
-          age: '32',
-          company: 'Career Carte Inc.',
-          jobTitle: 'Product Manager',
-          workLocationPrefecture: '東京都',
-          jobChangeCount: '1',
-          yearsOfService: '2',
-          gender: '女性',
-          maritalStatus: '既婚',
-          childrenCount: '1',
-          youngestChildAge: '2',
-        },
-        shirp: {
-          S: '現職の業務量と成長曲線に不満。',
-          H: '3〜5年後に事業責任者を目指す。',
-          I: '意思決定の軸が曖昧。',
-          R: '営業→PMへの転向経験。',
-          P: '次回までにキャリアの優先順位を整理する。',
-          '#': '転職の是非を含めた相談をしたい。',
-        },
-        survey: createEmptySurvey(),
-      },
-    },
-  ]);
-
-  const defaultSurveyAnswers = useMemo(() => {
-    return SURVEY_QUESTIONS.reduce<Record<string, string>>((acc, question) => {
-      acc[question.id] = question.options[2] ?? '';
-      return acc;
-    }, {});
-  }, []);
-
+  const defaultSurveyAnswers = useMemo(() => createDefaultSurveyAnswers(), []);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
-  const [lastSurveyResult, setLastSurveyResult] = useState<SurveyResult>(() => createEmptySurvey());
   const [lastSurveyAnswers, setLastSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
 
+  const profile = useMemo(() => resolveProfile(userState), [userState]);
+  const latestKarte = useMemo(
+    () => applyDemographicsToKarte(userState.latestKarte ?? createEmptyKarte(), userState.demographics),
+    [userState.demographics, userState.latestKarte],
+  );
+  const latestRecord = userState.karteRecords[0] ?? null;
+  const surveyScores = SURVEY_FACTOR_KEYS.map((key) => latestKarte.survey.factors[key] ?? 0);
+  const hasSurvey = surveyScores.some((score) => score > 0);
+
+  if (!hasConfiguredDemographics(userState.demographics)) {
+    return <Navigate to="/user/demographics?returnTo=%2Fuser" replace />;
+  }
+
+  const persistUserState = (nextState: DemoUserState) => {
+    setUserState(nextState);
+    saveDemoUserState(nextState);
+  };
+
+  const startMeeting = (meetingType: MeetingType, mode: ContinuousMode | null, draftAction?: 'resume' | 'fresh') => {
+    const query = new URLSearchParams();
+    if (mode) {
+      query.set('mode', mode);
+    }
+    if (draftAction) {
+      query.set('draft', draftAction);
+    }
+    const path = meetingType === 'initial' ? '/app/initial' : '/app/continuous';
+    navigate(query.size > 0 ? `${path}?${query.toString()}` : path);
+  };
+
+  const handleOpenResumeDraft = (meetingType: MeetingType, mode: ContinuousMode | null) => {
+    setPendingStart({ meetingType, continuousMode: mode });
+    resumeDraftDisclosure.onOpen();
+  };
+
   const handleStartInitial = () => {
-    navigate('/app/initial');
+    if (userState.draftSessions.initial) {
+      handleOpenResumeDraft('initial', null);
+      return;
+    }
+    startMeeting('initial', null);
   };
 
   const handleStartContinuous = () => {
@@ -351,8 +373,36 @@ function UserHome() {
   };
 
   const handleConfirmContinuous = () => {
-    navigate(`/app/continuous?mode=${continuousMode}`);
     continuousModeDisclosure.onClose();
+    if (userState.draftSessions.continuous) {
+      handleOpenResumeDraft('continuous', continuousMode);
+      return;
+    }
+    startMeeting('continuous', continuousMode);
+  };
+
+  const handleResumeDraft = () => {
+    if (!pendingStart) return;
+    const draft =
+      pendingStart.meetingType === 'initial' ? userState.draftSessions.initial : userState.draftSessions.continuous;
+    const mode = pendingStart.meetingType === 'continuous' ? draft?.continuousMode ?? pendingStart.continuousMode ?? 'normal' : null;
+    resumeDraftDisclosure.onClose();
+    startMeeting(pendingStart.meetingType, mode, 'resume');
+  };
+
+  const handleStartFresh = () => {
+    if (!pendingStart) return;
+    const nextState: DemoUserState = {
+      ...userState,
+      draftSessions: {
+        ...userState.draftSessions,
+        [pendingStart.meetingType]: null,
+      },
+    };
+    persistUserState(nextState);
+    const mode = pendingStart.meetingType === 'continuous' ? pendingStart.continuousMode ?? 'normal' : null;
+    resumeDraftDisclosure.onClose();
+    startMeeting(pendingStart.meetingType, mode, 'fresh');
   };
 
   const handleDownload = (type: 'csv' | 'pdf') => {
@@ -368,20 +418,32 @@ function UserHome() {
   const handleSurveySubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const surveyResult = calculateSurveyFactors(surveyAnswers);
-    setLastSurveyResult(surveyResult);
+    const nextLatestKarte = {
+      ...latestKarte,
+      survey: surveyResult,
+    };
+
+    const nextState: DemoUserState = {
+      ...userState,
+      latestKarte: nextLatestKarte,
+      karteRecords:
+        userState.karteRecords.length > 0
+          ? [
+              {
+                ...userState.karteRecords[0],
+                data: {
+                  ...userState.karteRecords[0].data,
+                  survey: surveyResult,
+                },
+                atUpdated: formatShortDate(),
+              },
+              ...userState.karteRecords.slice(1),
+            ]
+          : userState.karteRecords,
+    };
+
+    persistUserState(nextState);
     setLastSurveyAnswers(surveyAnswers);
-    setKarteRecords((prev) => {
-      if (prev.length === 0) return prev;
-      const latest = prev[0];
-      const updated: KarteRecord = {
-        ...latest,
-        data: {
-          ...latest.data,
-          survey: surveyResult,
-        },
-      };
-      return [updated, ...prev.slice(1)];
-    });
     toast({
       title: 'アンケートを送信しました',
       description: '貴重なご意見をありがとうございます。',
@@ -407,56 +469,53 @@ function UserHome() {
     resetModalDisclosure.onClose();
   };
 
-  useEffect(() => {
-    if (!karteModalDisclosure.isOpen) {
-      return;
-    }
-    const latestRecord = karteRecords[0];
-    if (!latestRecord) {
-      return;
-    }
-    setIsEditingLatest(false);
-    setLatestDraft({ ...latestRecord.data.shirp });
-  }, [karteModalDisclosure.isOpen, karteRecords]);
-
   const handleStartEdit = () => {
-    const latestRecord = karteRecords[0];
-    if (!latestRecord) {
-      return;
-    }
-    setLatestDraft({ ...latestRecord.data.shirp });
+    setLatestDraft({
+      ...latestKarte.shirp,
+      S: latestKarte.shirp.S ?? '',
+      H: latestKarte.shirp.H ?? '',
+      I: latestKarte.shirp.I ?? '',
+      R: latestKarte.shirp.R ?? '',
+      P: latestKarte.shirp.P ?? '',
+      '#': latestKarte.shirp['#'] ?? '',
+    });
     setIsEditingLatest(true);
   };
 
   const handleSaveEdit = () => {
-    const latestRecord = karteRecords[0];
-    if (!latestRecord) {
-      return;
-    }
-    const formattedDate = new Date().toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    const nextRecord: KarteRecord = {
-      ...latestRecord,
-      statusLabel: 'ユーザー編集済み',
-      atUpdated: formattedDate,
-      data: {
-        ...latestRecord.data,
-        shirp: { ...latestRecord.data.shirp, ...latestDraft },
-      },
+    const atUpdated = formatShortDate();
+    const nextLatestKarte = {
+      ...latestKarte,
+      shirp: { ...latestKarte.shirp, ...latestDraft },
     };
-    setKarteRecords((prev) => [nextRecord, ...prev.slice(1)]);
+
+    const nextRecords =
+      userState.karteRecords.length > 0
+        ? [
+            {
+              ...userState.karteRecords[0],
+              statusLabel: 'ユーザー編集済み',
+              atUpdated,
+              data: {
+                ...userState.karteRecords[0].data,
+                shirp: { ...userState.karteRecords[0].data.shirp, ...latestDraft },
+              },
+            },
+            ...userState.karteRecords.slice(1),
+          ]
+        : userState.karteRecords;
+
+    persistUserState({
+      ...userState,
+      latestKarte: nextLatestKarte,
+      karteRecords: nextRecords,
+    });
     setIsEditingLatest(false);
   };
 
   const handleCancelEdit = () => {
     setIsEditingLatest(false);
   };
-
-  const surveyScores = SURVEY_FACTOR_KEYS.map((key) => lastSurveyResult.factors[key] ?? 0);
-  const hasSurvey = surveyScores.some((score) => score > 0);
 
   return (
     <Box bgGradient="linear(to-br, gray.50, gray.100, gray.200)" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
@@ -506,9 +565,14 @@ function UserHome() {
                   backdropFilter="blur(10px)"
                   boxShadow="0 20px 50px rgba(0, 0, 0, 0.18)"
                 >
-                  <Text fontSize="sm" fontWeight="bold" color="whiteAlpha.900" mb={2}>
-                    プロフィールメモ
-                  </Text>
+                  <Flex justify="space-between" align={{ base: 'flex-start', md: 'center' }} gap={3} mb={2} direction={{ base: 'column', md: 'row' }}>
+                    <Text fontSize="sm" fontWeight="bold" color="whiteAlpha.900">
+                      プロフィールメモ
+                    </Text>
+                    <Button size="xs" colorScheme="orange" variant="outline" onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
+                      デモグラフィックを編集
+                    </Button>
+                  </Flex>
                   <Tabs variant="enclosed" size="sm">
                     <TabList borderColor="whiteAlpha.300">
                       <Tab
@@ -564,7 +628,7 @@ function UserHome() {
               </Stack>
               <Stack align="flex-start" spacing={2}>
                 <Badge colorScheme="purple" borderRadius="full" px={3} py={1}>
-                  {profile.status}
+                  {profile.statusSummary}
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
@@ -584,7 +648,7 @@ function UserHome() {
                   <FiPlayCircle /> 面談スタート
                 </Heading>
                 <Text color="gray.600">
-                  初回面談と継続面談を選択できます。継続面談ではカルテの更新とフィードバックを行います。
+                  初回面談と継続面談を選択できます。未完了のセッションがある場合は、続きから再開できます。
                 </Text>
                 <Stack spacing={3}>
                   <Button colorScheme="blue" size="lg" onClick={handleStartInitial}>
@@ -593,6 +657,28 @@ function UserHome() {
                   <Button variant="outline" size="lg" colorScheme="teal" onClick={handleStartContinuous}>
                     継続面談を開始
                   </Button>
+                </Stack>
+                <Stack spacing={2}>
+                  {userState.draftSessions.initial && (
+                    <Box borderWidth="1px" borderRadius="md" p={3} bg="blue.50" borderColor="blue.100">
+                      <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+                        {getDraftMetaLabel('initial')}
+                      </Text>
+                      <Text fontSize="xs" color="blue.700">
+                        最終保存: {userState.draftSessions.initial.updatedAt || '未記録'}
+                      </Text>
+                    </Box>
+                  )}
+                  {userState.draftSessions.continuous && (
+                    <Box borderWidth="1px" borderRadius="md" p={3} bg="teal.50" borderColor="teal.100">
+                      <Text fontSize="sm" fontWeight="semibold" color="teal.700">
+                        {getDraftMetaLabel('continuous')}
+                      </Text>
+                      <Text fontSize="xs" color="teal.700">
+                        最終保存: {userState.draftSessions.continuous.updatedAt || '未記録'}
+                      </Text>
+                    </Box>
+                  )}
                 </Stack>
                 <SimpleGrid columns={2} spacing={3} w="full">
                   <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="blue.400">
@@ -660,7 +746,7 @@ function UserHome() {
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiBookOpen /> カルテ確認・出力
                 </Heading>
-                <Text color="gray.600">過去の面談記録を確認し、必要に応じてダウンロードします。</Text>
+                <Text color="gray.600">保存済みカルテの確認、会話ログの閲覧、出力を行います。</Text>
                 <Stack direction={{ base: 'column', sm: 'row' }} spacing={3}>
                   <Button onClick={karteModalDisclosure.onOpen} colorScheme="teal" size="md">
                     カルテを開く
@@ -668,6 +754,9 @@ function UserHome() {
                   <Button variant="outline" onClick={() => handleDownload('csv')}>CSV出力</Button>
                   <Button variant="outline" onClick={() => handleDownload('pdf')}>PDF出力</Button>
                 </Stack>
+                <Text fontSize="sm" color="gray.500">
+                  保存済み履歴: {userState.karteRecords.length}件 / 会話ログ: {profile.logs}件
+                </Text>
               </Stack>
             </Box>
 
@@ -746,9 +835,14 @@ function UserHome() {
                         </TabPanel>
                       </TabPanels>
                     </Tabs>
-                    <Button mt={4} colorScheme="red" variant="outline" onClick={resetModalDisclosure.onOpen}>
-                      パスワードを再設定する
-                    </Button>
+                    <Flex mt={4} gap={3} wrap="wrap">
+                      <Button colorScheme="orange" variant="outline" onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
+                        デモグラフィックを編集
+                      </Button>
+                      <Button colorScheme="red" variant="outline" onClick={resetModalDisclosure.onOpen}>
+                        パスワードを再設定する
+                      </Button>
+                    </Flex>
                   </Box>
                 </Collapse>
               </Stack>
@@ -757,135 +851,124 @@ function UserHome() {
         </Stack>
       </Container>
 
-      <Modal isOpen={karteModalDisclosure.isOpen} onClose={karteModalDisclosure.onClose} size="xl" scrollBehavior="inside">
+      <Modal isOpen={karteModalDisclosure.isOpen} onClose={karteModalDisclosure.onClose} size="4xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>カルテ確認</ModalHeader>
           <ModalCloseButton />
-          <ModalBody overflowY="auto" maxH="70dvh">
+          <ModalBody overflowY="auto" maxH="75dvh">
             <Stack spacing={4}>
-              {karteRecords.length > 0 ? (
-                <Box border="1px solid" borderColor="gray.100" borderRadius="md" p={4}>
-                  <Stack spacing={4}>
-                    <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
-                      <Stack spacing={1}>
-                        <Text fontSize="sm" color="gray.500">作成日: {karteRecords[0].atCreated}</Text>
-                        <Text fontSize="sm" color="gray.500">最終更新日: {karteRecords[0].atUpdated}</Text>
-                      </Stack>
-                      <Badge colorScheme="green">{karteRecords[0].statusLabel}</Badge>
-                    </Flex>
-                    <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
-                        デモグラフィック
-                      </Text>
-                      <Tabs variant="enclosed" size="sm">
-                        <TabList>
-                          <Tab>基本情報</Tab>
-                          <Tab>個人情報詳細</Tab>
-                        </TabList>
-                        <TabPanels>
-                          <TabPanel px={0} pt={3}>
-                            <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                              <Text fontSize="sm">氏名: {karteRecords[0].data.demographics.name ?? '未入力'}</Text>
-                              <Text fontSize="sm">年齢: {karteRecords[0].data.demographics.age ?? '未入力'}</Text>
-                              <Text fontSize="sm">所属企業: {karteRecords[0].data.demographics.company ?? '未入力'}</Text>
-                              <Text fontSize="sm">職種: {karteRecords[0].data.demographics.jobTitle ?? '未入力'}</Text>
-                            </SimpleGrid>
-                          </TabPanel>
-                          <TabPanel px={0} pt={3}>
-                            <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                              <Text fontSize="sm">勤務地(都道府県): {karteRecords[0].data.demographics.workLocationPrefecture ?? '未入力'}</Text>
-                              <Text fontSize="sm">転職歴(回数): {karteRecords[0].data.demographics.jobChangeCount ?? '未入力'}</Text>
-                              <Text fontSize="sm">勤続年数(年): {karteRecords[0].data.demographics.yearsOfService ?? '未入力'}</Text>
-                              <Text fontSize="sm">性別: {karteRecords[0].data.demographics.gender ?? '未入力'}</Text>
-                              <Text fontSize="sm">現在の婚姻関係: {karteRecords[0].data.demographics.maritalStatus ?? '未入力'}</Text>
-                              <Text fontSize="sm">子供の有無(人): {karteRecords[0].data.demographics.childrenCount ?? '未入力'}</Text>
-                              <Text fontSize="sm">末子の年齢(歳): {karteRecords[0].data.demographics.youngestChildAge ?? '未入力'}</Text>
-                            </SimpleGrid>
-                          </TabPanel>
-                        </TabPanels>
-                      </Tabs>
-                    </Box>
-                    <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
-                        ユーザーアンケート結果
-                      </Text>
-                      {Object.values(karteRecords[0].data.survey.factors).some((score) => (score ?? 0) > 0) ? (
-                        <SurveyRadar
-                          labels={Object.values(SURVEY_LABELS)}
-                          values={SURVEY_FACTOR_KEYS.map((key) => karteRecords[0].data.survey.factors[key] ?? 0)}
-                          size={200}
-                        />
-                      ) : (
-                        <Text fontSize="sm" color="gray.500">未回答</Text>
-                      )}
-                    </Box>
-                    {isEditingLatest ? (
-                      <Stack spacing={3}>
-                        {SHIRP_KEYS.map((key) => (
-                          <Box key={key}>
-                            <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
-                              {SHIRP_LABELS[key]}
-                            </Text>
-                            <Text fontSize="xs" color="gray.400" mb={1}>
-                              {SHIRP_HINTS[key]}
-                            </Text>
-                            <Textarea
-                              value={latestDraft[key] ?? ''}
-                              onChange={(event) =>
-                                setLatestDraft((prev) => ({
-                                  ...prev,
-                                  [key]: event.target.value,
-                                }))
-                              }
-                              rows={3}
-                              bg="white"
-                            />
-                          </Box>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <Stack spacing={3}>
-                        {SHIRP_KEYS.map((key) => (
-                          <Box key={key}>
-                            <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
-                              {SHIRP_LABELS[key]}
-                            </Text>
-                            <Text fontSize="xs" color="gray.400" mb={1}>
-                              {SHIRP_HINTS[key]}
-                            </Text>
-                            <Box borderWidth="1px" borderRadius="md" p={3} fontSize="sm" bg="gray.50">
-                              {karteRecords[0].data.shirp[key] || '未記入'}
-                            </Box>
-                          </Box>
-                        ))}
-                      </Stack>
-                    )}
-                    <Flex gap={3} wrap="wrap">
-                      {isEditingLatest ? (
-                        <>
-                          <Button colorScheme="blue" onClick={handleSaveEdit}>
-                            変更を保存
-                          </Button>
-                          <Button variant="outline" onClick={handleCancelEdit}>
-                            編集をキャンセル
-                          </Button>
-                        </>
-                      ) : (
-                        <Button variant="outline" onClick={handleStartEdit}>
-                          最新カルテを編集
-                        </Button>
-                      )}
-                    </Flex>
+              <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.50">
+                <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
+                  <Stack spacing={1}>
+                    <Text fontSize="sm" color="gray.500">作成日: {latestRecord?.atCreated ?? '未保存'}</Text>
+                    <Text fontSize="sm" color="gray.500">最終更新日: {latestRecord?.atUpdated ?? profile.updatedAt}</Text>
+                    <Text fontSize="sm" color="gray.500">面談種別: {latestRecord ? (latestRecord.meetingType === 'initial' ? '初回面談' : '継続面談') : '未開始'}</Text>
                   </Stack>
+                  <Badge colorScheme={latestRecord ? 'green' : 'gray'}>
+                    {latestRecord?.statusLabel ?? '下書き'}
+                  </Badge>
+                </Flex>
+              </Box>
+
+              {latestRecord?.feedback && (
+                <Box bg="teal.50" borderRadius="lg" borderWidth="1px" borderColor="teal.200" p={4}>
+                  <Text fontSize="sm" fontWeight="bold" color="teal.700" mb={2}>
+                    面談フィードバック
+                  </Text>
+                  <Text fontSize="sm" color="teal.800">
+                    {latestRecord.feedback}
+                  </Text>
                 </Box>
+              )}
+
+              {isEditingLatest ? (
+                <Stack spacing={3}>
+                  {SHIRP_KEYS.map((key) => (
+                    <Box key={key}>
+                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                        {SHIRP_LABELS[key]}
+                      </Text>
+                      <Text fontSize="xs" color="gray.400" mb={1}>
+                        {SHIRP_HINTS[key]}
+                      </Text>
+                      <Textarea
+                        value={latestDraft[key] ?? ''}
+                        onChange={(event) =>
+                          setLatestDraft((prev) => ({
+                            ...prev,
+                            [key]: event.target.value,
+                          }))
+                        }
+                        rows={3}
+                        bg="white"
+                      />
+                    </Box>
+                  ))}
+                </Stack>
               ) : (
-                <Text fontSize="sm" color="gray.500">カルテがまだ作成されていません。</Text>
+                <KartePanel data={latestKarte} />
+              )}
+            </Stack>
+          </ModalBody>
+          <ModalFooter gap={3} flexWrap="wrap">
+            {latestRecord?.conversationLog.length ? (
+              <Button variant="outline" colorScheme="purple" onClick={conversationLogDisclosure.onOpen}>
+                会話ログを見る
+              </Button>
+            ) : null}
+            {isEditingLatest ? (
+              <>
+                <Button colorScheme="blue" onClick={handleSaveEdit}>
+                  変更を保存
+                </Button>
+                <Button variant="outline" onClick={handleCancelEdit}>
+                  編集をキャンセル
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={handleStartEdit}>
+                最新カルテを編集
+              </Button>
+            )}
+            <Button onClick={karteModalDisclosure.onClose}>閉じる</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={conversationLogDisclosure.isOpen} onClose={conversationLogDisclosure.onClose} size="2xl" scrollBehavior="inside">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>保存済み会話ログ</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody maxH="70dvh" overflowY="auto">
+            <Stack spacing={3}>
+              {latestRecord?.conversationLog.length ? (
+                latestRecord.conversationLog.map((message, index) => (
+                  <Flex key={`${message.role}-${index}-${message.content.slice(0, 8)}`} justify={message.role === 'user' ? 'flex-end' : 'flex-start'}>
+                    <Box
+                      maxW="85%"
+                      borderRadius="2xl"
+                      borderTopLeftRadius={message.role === 'assistant' ? '0' : '2xl'}
+                      borderTopRightRadius={message.role === 'user' ? '0' : '2xl'}
+                      px={4}
+                      py={3}
+                      bg={message.role === 'user' ? 'blue.600' : 'gray.100'}
+                      color={message.role === 'user' ? 'white' : 'gray.800'}
+                      whiteSpace="pre-wrap"
+                      fontSize="sm"
+                    >
+                      {message.content}
+                    </Box>
+                  </Flex>
+                ))
+              ) : (
+                <Text fontSize="sm" color="gray.500">保存済みの会話ログはまだありません。</Text>
               )}
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button onClick={karteModalDisclosure.onClose}>閉じる</Button>
+            <Button onClick={conversationLogDisclosure.onClose}>閉じる</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -974,30 +1057,61 @@ function UserHome() {
               <Text fontSize="sm" color="gray.600">
                 継続面談では通信方式を選択できます。ターンテイキングモード（Realtime API）は現在未実装です。
               </Text>
-              <RadioGroup value={continuousMode} onChange={(value) => setContinuousMode(value as 'normal' | 'turn')}>
+              <RadioGroup value={continuousMode} onChange={(value) => setContinuousMode(value as ContinuousMode)}>
                 <Stack spacing={3}>
                   <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'normal' ? 'blue.300' : 'gray.200'}>
                     <Radio value="normal">通常モード (Whisper + GPT-4o + TTS-1)</Radio>
                   </Box>
                   <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'turn' ? 'purple.300' : 'gray.200'}>
-                    <Flex align="center" justify="space-between" gap={2}>
-                      <Radio value="turn">ターンテイキングモード (Realtime API・未実装)</Radio>
-                      <Badge colorScheme="purple">課金準備中</Badge>
-                    </Flex>
-                    <Text fontSize="xs" color="gray.500" mt={2}>
-                      無音や発話終了を検知して自然な相槌・割り込みを行います。
-                    </Text>
+                    <Radio value="turn">ターンテイキングモード (Realtime API想定)</Radio>
                   </Box>
                 </Stack>
               </RadioGroup>
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={continuousModeDisclosure.onClose}>
+            <Button variant="outline" onClick={continuousModeDisclosure.onClose}>
               キャンセル
             </Button>
             <Button colorScheme="teal" onClick={handleConfirmContinuous}>
-              継続面談へ進む
+              この設定で進む
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={resumeDraftDisclosure.isOpen} onClose={resumeDraftDisclosure.onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>未完了の面談があります</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={3}>
+              <Text fontSize="sm" color="gray.600">
+                前回保存した下書きが残っています。続きから再開するか、新規に開始するかを選んでください。
+              </Text>
+              {pendingStart && (
+                <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
+                  <Text fontSize="sm" fontWeight="semibold">
+                    {getDraftMetaLabel(pendingStart.meetingType)}
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    最終保存:
+                    {' '}
+                    {pendingStart.meetingType === 'initial'
+                      ? userState.draftSessions.initial?.updatedAt ?? '未記録'
+                      : userState.draftSessions.continuous?.updatedAt ?? '未記録'}
+                  </Text>
+                </Box>
+              )}
+            </Stack>
+          </ModalBody>
+          <ModalFooter gap={3}>
+            <Button variant="outline" onClick={handleStartFresh}>
+              新規開始
+            </Button>
+            <Button colorScheme="blue" onClick={handleResumeDraft}>
+              続きから再開
             </Button>
           </ModalFooter>
         </ModalContent>

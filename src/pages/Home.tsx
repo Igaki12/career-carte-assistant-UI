@@ -34,6 +34,17 @@ function Home() {
           >
             継続面談を始める
           </Button>
+          <Button
+            as={RouterLink}
+            to="/user/demographics"
+            variant="solid"
+            colorScheme="orange"
+            size="lg"
+            alignSelf="flex-start"
+            px={10}
+          >
+            デモグラフィックを設定
+          </Button>
           <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
             <Button as={RouterLink} to="/user" variant="outline" colorScheme="teal">
               ユーザーダッシュボード画面

@@ -20,24 +20,35 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { FaMicrophone, FaPaperPlane, FaUpDown, FaUserDoctor, FaWandMagicSparkles } from 'react-icons/fa6';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ApiKeyModal from './ApiKeyModal';
 import KartePanel from './KartePanel';
 import ProcessingIndicator from './ProcessingIndicator';
 import VrmStage, { type StageModelId } from './VrmStage';
+import {
+  applyDemographicsToKarte,
+  createEmptyKarte,
+  loadDemoUserState,
+  saveDemoUserState,
+} from '../lib/demoUserState';
 import { INITIAL_SHIRP_STEP_ORDER, SHIRP_KEYS } from '../types';
-import type { ConversationMessage, KarteData, LlmResponse, ShirpData, ShirpKey } from '../types';
-
-type MeetingType = 'initial' | 'continuous';
-
-type ContinuousMode = 'normal' | 'turn';
+import type {
+  ContinuousMode,
+  ConversationMessage,
+  DemoUserState,
+  KarteData,
+  LlmResponse,
+  MeetingType,
+  ShirpData,
+  ShirpKey,
+  StoredKarteRecord,
+} from '../types';
 
 type Props = {
   meetingType: MeetingType;
   continuousMode?: ContinuousMode;
 };
 
-const LOCAL_STORAGE_KARTE_KEY = 'cca-karte';
 const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
 const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
 const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
@@ -64,40 +75,6 @@ const INTERNAL_REPLY_PATTERNS = [
   /["“”']feedback["“”']\s*:/i,
   /[{\[]\s*["“”']reply["“”']\s*:/i,
 ];
-
-const createEmptyKarte = (): KarteData => ({
-  demographics: {
-    name: null,
-    age: null,
-    company: null,
-    jobTitle: null,
-    workLocationPrefecture: null,
-    jobChangeCount: null,
-    yearsOfService: null,
-    gender: null,
-    maritalStatus: null,
-    childrenCount: null,
-    youngestChildAge: null,
-  },
-  shirp: {
-    S: null,
-    H: null,
-    I: null,
-    R: null,
-    P: null,
-    '#': null,
-  },
-  survey: {
-    factors: {
-      growth_orientation: null,
-      problem_solving_orientation: null,
-      organization_contribution_orientation: null,
-      interpersonal_adaptation_orientation: null,
-      emotional_response_tendency: null,
-    },
-    lastUpdated: null,
-  },
-});
 
 const SHIRP_GUIDE = `
 S (Satisfaction/現状):
@@ -143,6 +120,40 @@ const AI_RESPONSE_GUIDELINES = `
   3) 会社批判への誘導をしない
 `;
 
+const formatDraftTimestamp = () =>
+  new Date().toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const buildDemographicPromptContext = (karte: KarteData) => {
+  const demographicPairs = [
+    ['氏名', karte.demographics.name],
+    ['年齢', karte.demographics.age],
+    ['所属企業', karte.demographics.company],
+    ['職種', karte.demographics.jobTitle],
+    ['勤務地', karte.demographics.workLocationPrefecture],
+    ['転職歴', karte.demographics.jobChangeCount],
+    ['勤続年数', karte.demographics.yearsOfService],
+    ['性別', karte.demographics.gender],
+    ['婚姻', karte.demographics.maritalStatus],
+    ['子供', karte.demographics.childrenCount],
+    ['末子年齢', karte.demographics.youngestChildAge],
+  ].filter(([, value]) => typeof value === 'string' && value.trim().length > 0);
+
+  if (demographicPairs.length === 0) {
+    return '';
+  }
+
+  return `
+# 事前設定されたデモグラフィック
+${demographicPairs.map(([label, value]) => `- ${label}: ${value}`).join('\n')}
+`;
+};
+
 const getInitialProgress = (shirp: ShirpData) => {
   const total = INITIAL_SHIRP_STEP_ORDER.length;
   const filled = INITIAL_SHIRP_STEP_ORDER.reduce((acc, key) => (shirp[key] ? acc + 1 : acc), 0);
@@ -152,7 +163,7 @@ const getInitialProgress = (shirp: ShirpData) => {
 const getNextInitialKey = (shirp: ShirpData): ShirpKey | null =>
   INITIAL_SHIRP_STEP_ORDER.find((key) => !shirp[key]) ?? null;
 
-const buildInitialPrompt = (shirp: ShirpData, nextKey: ShirpKey | null) => {
+const buildInitialPrompt = (karte: KarteData, nextKey: ShirpKey | null) => {
   const currentKey = nextKey ?? 'S';
   return `
 あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で情報を埋めます。
@@ -160,8 +171,10 @@ const buildInitialPrompt = (shirp: ShirpData, nextKey: ShirpKey | null) => {
 # SHIRPガイド
 ${SHIRP_GUIDE}
 
+${buildDemographicPromptContext(karte)}
+
 # 現在のカルテ(SHIRP)
-${JSON.stringify(shirp, null, 2)}
+${JSON.stringify(karte.shirp, null, 2)}
 
 # 今回フォーカスする項目
 ${currentKey}
@@ -177,17 +190,21 @@ ${AI_RESPONSE_GUIDELINES}
 6. response_format の JSON Schema に厳密に従って出力してください。
 7. reply にはユーザーに見せる自然な返答だけを書いてください。
 8. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+9. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。
+10. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 };
 
-const buildContinuousPrompt = (shirp: ShirpData) => `
+const buildContinuousPrompt = (karte: KarteData) => `
 あなたはキャリアメンターとして自由対話モードでユーザーに寄り添います。
 
 # SHIRPガイド
 ${SHIRP_GUIDE}
 
+${buildDemographicPromptContext(karte)}
+
 # 現在のカルテ(SHIRP)
-${JSON.stringify(shirp, null, 2)}
+${JSON.stringify(karte.shirp, null, 2)}
 
 ${AI_RESPONSE_GUIDELINES}
 
@@ -197,16 +214,20 @@ ${AI_RESPONSE_GUIDELINES}
 3. response_format の JSON Schema に厳密に従って出力してください。
 4. reply にはユーザーに見せる自然な返答だけを書いてください。
 5. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+6. デモグラフィックは既知情報として扱いますが、返答トーンは現状の自然さを維持してください。
+7. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 
-const buildContinuousFinalizePrompt = (shirp: ShirpData) => `
+const buildContinuousFinalizePrompt = (karte: KarteData) => `
 あなたは自由対話の内容を整理し、SHIRPカルテを更新して簡単なフィードバックを提示します。
 
 # SHIRPガイド
 ${SHIRP_GUIDE}
 
+${buildDemographicPromptContext(karte)}
+
 # 現在のカルテ(SHIRP)
-${JSON.stringify(shirp, null, 2)}
+${JSON.stringify(karte.shirp, null, 2)}
 
 ${AI_RESPONSE_GUIDELINES}
 
@@ -218,6 +239,8 @@ ${AI_RESPONSE_GUIDELINES}
 5. response_format の JSON Schema に厳密に従って出力してください。
 6. reply にはユーザーに見せる自然な返答だけを書いてください。
 7. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+8. デモグラフィックは整合性確認のために使い、返答のトーンや構成は大きく変えないでください。
+9. 既知のプロフィール情報と矛盾しない前提で整理し、不足分は会話履歴ベースで補ってください。
 `.trim();
 
 const createMeetingResponseSchema = (finalize: boolean) => ({
@@ -384,9 +407,11 @@ const buildWavBlobFromMonoPcm16 = (pcmBytes: Uint8Array, sampleRate = 24000) => 
 const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const toast = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [openAiApiKey, setOpenAiApiKey] = useState('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isApiModalOpen, setApiModalOpen] = useState(false);
+  const [, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
   const [karte, setKarte] = useState<KarteData>(createEmptyKarte);
   const [messages, setMessages] = useState<ConversationMessage[]>([
     { role: 'assistant', content: greetingForMeeting(meetingType) },
@@ -401,7 +426,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [apiUsageCount, setApiUsageCount] = useState(0);
   const [hasSessionStarted, setSessionStarted] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
-  const [hasLoadedStoredKarte, setLoadedStoredKarte] = useState(false);
+  const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
 
@@ -417,6 +442,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
   const isInitialMeeting = meetingType === 'initial';
   const isTurnTakingMode = !isInitialMeeting && continuousMode === 'turn';
+  const draftAction = searchParams.get('draft');
   const maxApiCalls = isInitialMeeting ? 10 : 7; // 初回面談は10回、継続面談は7回までAPI呼び出し可能（フィードバック生成を含む）
   const conversationQuotaLimit = Math.max(isInitialMeeting ? maxApiCalls : maxApiCalls - 1, 0);
   const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
@@ -424,7 +450,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const hasUsedApi = hasSessionStarted || apiUsageCount > 0;
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
   const isBusy = Boolean(processingText);
-
   const textareaPlaceholder = useMemo(() => {
     if (apiUsageCount === 0) {
       return 'テキスト入力はこちら...';
@@ -436,6 +461,11 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [apiUsageCount, remainingMessages]);
 
   const initialProgress = useMemo(() => getInitialProgress(karte.shirp), [karte.shirp]);
+
+  const saveUserState = useCallback((nextState: DemoUserState) => {
+    setUserState(nextState);
+    saveDemoUserState(nextState);
+  }, []);
 
   const disposeActiveAudio = useCallback(() => {
     const current = activeAudioRef.current;
@@ -500,42 +530,52 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [geminiApiKey]);
 
   useEffect(() => {
+    const nextUserState = loadDemoUserState();
+    const currentDraft = meetingType === 'initial' ? nextUserState.draftSessions.initial : nextUserState.draftSessions.continuous;
     const greeting = greetingForMeeting(meetingType);
     const initialHistory: ConversationMessage[] = [{ role: 'assistant', content: greeting }];
-    setMessages(initialHistory);
-    messagesRef.current = initialHistory;
+    const shouldResumeDraft = draftAction !== 'fresh' && currentDraft;
+    const baseKarte =
+      meetingType === 'continuous'
+        ? applyDemographicsToKarte(nextUserState.latestKarte ?? createEmptyKarte(), nextUserState.demographics)
+        : applyDemographicsToKarte(createEmptyKarte(), nextUserState.demographics);
+
+    setUserState(nextUserState);
     setProcessingText('');
-    setConversationStarted(false);
-    setApiUsageCount(0);
-    setSessionStarted(false);
-    setFeedbackText('');
-  }, [meetingType]);
+    setKarteModalOpen(false);
+    setTextValue('');
+    setTextareaExpanded(false);
+    setHasStoredKarte(Boolean(nextUserState.latestKarte));
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (meetingType !== 'continuous') return;
-    if (hasLoadedStoredKarte) return;
-
-    const stored = window.localStorage.getItem(LOCAL_STORAGE_KARTE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as KarteData;
-        setKarte(parsed);
-        setHasStoredKarte(true);
-      } catch {
-        setKarte(createEmptyKarte());
-      }
+    if (shouldResumeDraft) {
+      setMessages(currentDraft.messages);
+      messagesRef.current = currentDraft.messages;
+      setKarte(currentDraft.karte);
+      setApiUsageCount(currentDraft.apiUsageCount);
+      setConversationStarted(currentDraft.conversationStarted);
+      setSessionStarted(currentDraft.hasSessionStarted);
+      setFeedbackText(currentDraft.feedbackText);
     } else {
-      setKarte(createEmptyKarte());
+      if (draftAction === 'fresh' && currentDraft) {
+        saveUserState({
+          ...nextUserState,
+          draftSessions: {
+            ...nextUserState.draftSessions,
+            [meetingType]: null,
+          },
+        });
+      }
+      setMessages(initialHistory);
+      messagesRef.current = initialHistory;
+      setKarte(baseKarte);
+      setConversationStarted(false);
+      setApiUsageCount(0);
+      setSessionStarted(false);
+      setFeedbackText('');
     }
-    setLoadedStoredKarte(true);
-  }, [hasLoadedStoredKarte, meetingType]);
 
-  useEffect(() => {
-    if (meetingType === 'initial') {
-      setKarte(createEmptyKarte());
-    }
-  }, [meetingType]);
+    setHasInitializedState(true);
+  }, [draftAction, meetingType, saveUserState]);
 
   useEffect(() => {
     if (!openAiApiKey) {
@@ -582,6 +622,53 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       }
     }
   }, [disposeActiveAudio, isKarteModalOpen]);
+
+  useEffect(() => {
+    if (!hasInitializedState) return;
+
+    const shouldPersistDraft =
+      hasSessionStarted || conversationStarted || apiUsageCount > 0 || messages.length > 1 || Boolean(feedbackText);
+    const currentState = loadDemoUserState();
+
+    const nextState: DemoUserState = {
+      ...currentState,
+      demographics: karte.demographics,
+      latestKarte:
+        meetingType === 'continuous'
+          ? applyDemographicsToKarte(karte, karte.demographics)
+          : currentState.latestKarte,
+      draftSessions: {
+        ...currentState.draftSessions,
+        [meetingType]: shouldPersistDraft
+          ? {
+              meetingType,
+              continuousMode: isInitialMeeting ? null : continuousMode,
+              messages,
+              karte,
+              apiUsageCount,
+              feedbackText,
+              conversationStarted,
+              hasSessionStarted,
+              updatedAt: formatDraftTimestamp(),
+            }
+          : null,
+      },
+    };
+
+    saveUserState(nextState);
+  }, [
+    apiUsageCount,
+    continuousMode,
+    conversationStarted,
+    feedbackText,
+    hasInitializedState,
+    hasSessionStarted,
+    isInitialMeeting,
+    karte,
+    meetingType,
+    messages,
+    saveUserState,
+  ]);
 
   const toggleTextareaExpanded = useCallback(() => {
     setTextareaExpanded((prev) => !prev);
@@ -773,10 +860,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       if (!ensureApiKey()) return;
       const nextKey = isInitialMeeting ? getNextInitialKey(karte.shirp) : null;
       const systemPrompt = isInitialMeeting
-        ? buildInitialPrompt(karte.shirp, nextKey)
+        ? buildInitialPrompt(karte, nextKey)
         : finalize
-          ? buildContinuousFinalizePrompt(karte.shirp)
-          : buildContinuousPrompt(karte.shirp);
+          ? buildContinuousFinalizePrompt(karte)
+          : buildContinuousPrompt(karte);
 
       setProcessingText(finalize ? 'カルテとフィードバックを整理しています...' : 'AI思考中...');
       setApiUsageCount((prev) => Math.min(prev + 1, maxApiCalls));
@@ -1032,14 +1119,33 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     setKarteModalOpen(true);
   }, [ensureApiKey, getTurnTakingConversationHistory, hasApiBudget, isInitialMeeting, isTurnTakingMode, notifyApiLimit, runLLMProcess]);
 
-  const persistKarte = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(LOCAL_STORAGE_KARTE_KEY, JSON.stringify(karte));
-  }, [karte]);
-
   const handleSubmitKarte = useCallback(() => {
     disposeActiveAudio();
-    persistKarte();
+    const currentState = loadDemoUserState();
+    const timestamp = formatDraftTimestamp();
+    const nextKarte = applyDemographicsToKarte(karte, karte.demographics);
+    const nextRecord: StoredKarteRecord = {
+      id: `karte-${Date.now()}`,
+      atCreated: timestamp,
+      atUpdated: timestamp,
+      statusLabel: isInitialMeeting ? '初回面談保存済み' : '継続面談保存済み',
+      data: nextKarte,
+      meetingType,
+      continuousMode: isInitialMeeting ? null : continuousMode,
+      feedback: feedbackText || null,
+      conversationLog: messagesRef.current,
+    };
+
+    saveUserState({
+      ...currentState,
+      demographics: nextKarte.demographics,
+      latestKarte: nextKarte,
+      karteRecords: [nextRecord, ...currentState.karteRecords],
+      draftSessions: {
+        ...currentState.draftSessions,
+        [meetingType]: null,
+      },
+    });
     setKarteModalOpen(false);
     toast({
       title: 'カルテを保存しました',
@@ -1048,7 +1154,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       duration: 2500,
     });
     navigate('/user');
-  }, [disposeActiveAudio, navigate, persistKarte, toast]);
+  }, [continuousMode, disposeActiveAudio, feedbackText, isInitialMeeting, karte, meetingType, navigate, saveUserState, toast]);
 
   const apiStatusLabel = openAiApiKey
     ? geminiApiKey
@@ -1240,7 +1346,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                           flex="1"
                           pr="2"
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter' && e.shiftKey) {
+                            if (e.key === 'Enter' && (e.shiftKey || e.metaKey || e.ctrlKey)) {
                               e.preventDefault();
                               handleUserMessage(textValue);
                             }

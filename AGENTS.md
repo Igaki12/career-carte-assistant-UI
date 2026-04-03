@@ -13,19 +13,34 @@
 
 ### 2.2 役割別ページ構成とルーティング
 - Home (`/`): サービス紹介、各ロールへの遷移。
+- DemographicsSetup (`/user/demographics`): デモグラフィック初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。
 - UserHome (`/user`): 一般ユーザー用。初回/継続面談スタート、継続面談モード選択、カルテ閲覧・出力、アンケート。
 - ConsultantHome (`/consultant`): コンサルタント用。担当ユーザーのカルテ閲覧・修正、AI練習面談（ロードマップ）。
 - Admin (`/admin`): 管理者用。アカウント管理、利用回数（初回/継続を別カラム）設定。
 - InitialMeetingRoom (`/app/initial`): 初回面談（順次ヒアリング型）。
 - ContinuousMeetingRoom (`/app/continuous`): 継続面談（自由対話型）。
 
+### 2.3 フロント保存方針（GitHub Pages デモ版）
+- GitHub Pages デモ版ではバックエンドの代わりに `localStorage` を正とする。
+- 現在の共通保存キーは `cca-demo-user-state`。
+- 保存対象:
+  - `demographics`: デモグラフィック
+  - `latestKarte`: 最新カルテ
+  - `karteRecords`: 保存済みカルテ履歴
+  - `draftSessions.initial` / `draftSessions.continuous`: 未完了面談の下書き
+- 旧 `cca-karte` は読み込み互換のみ残す。
+
 ## 3. コア機能：AI面談フローの完全分離
 初回面談と継続面談を別ページ・別ロジックとして実装する。
 
 ### 3.1 初回面談ページ（`/app/initial`）
 - 目的: SHIRPベースのカルテを作成。
+- 事前条件: デモグラフィック未設定時は `/user/demographics?returnTo=/app/initial` へ誘導する。
 - 制御: S -> H -> I -> R の順にヒアリング。必要に応じて # を補記。
 - 通信: MediaRecorder -> Whisper(STT) -> GPT-4o -> TTS-1。
+- 事前読込: 保存済みデモグラフィックを `karte.demographics` に注入した状態で開始する。
+- 途中保存: 会話履歴、カルテ、API使用回数、進行状態を `draftSessions.initial` に自動保存する。
+- 再開: UserHome から初回面談開始時、下書きがあれば「続きから再開 / 新規開始」を選ばせる。
 - 完了動線: 面談中にカルテ確認・保存を行い、保存後はUserHomeへ遷移。
 
 ### 3.2 継続面談ページ（`/app/continuous`）
@@ -34,6 +49,8 @@
 - 通信方式選択（UserHome）:
   - 通常モード: Whisper + GPT-4o + TTS-1
   - ターンテイキングモード: Realtime API想定（現時点はUI表示のみ、課金表記拡張余地あり）
+- 途中保存: 会話履歴、カルテ、API使用回数、進行状態を `draftSessions.continuous` に自動保存する。
+- 再開: UserHome から継続面談開始時、下書きがあれば「続きから再開 / 新規開始」を選ばせる。
 - 完了動線: カルテ保存後はUserHomeへ遷移。
 
 #### 3.2.1 ターンテイキングモード実装方針
@@ -111,6 +128,11 @@
 - 子供の有無(人)
 - 末子の年齢(歳)
 - 表示UIは「基本情報」と「個人情報詳細」を切り替えられるタブ方式とする。
+- 入力UIは `src/pages/DemographicsSetup.tsx` で管理する。
+- 年齢、転職歴、勤続年数、子供人数、末子年齢は `type="number"` ベースで入力させる。
+- 性別は `男 / 女 / その他` の選択式とする。
+- 婚姻関係は `独身 / 既婚 / その他` の選択式とする。
+- 子供人数が `0` または未入力のとき、末子年齢は入力不可にし、保存値も `null` に正規化する。
 
 2. 電子カルテ（SHIRP形式）
     *   **S (Satisfaction/現状)**
@@ -139,6 +161,11 @@
         *   S〜Rの情報を元に、AIが解決に向けたプランを生成する。
     *   **# (その他)**
         *   S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄。
+
+4. 保存済み会話ログ
+- カルテ保存時点の `messages` 配列をそのまま `conversationLog` として履歴に保存する。
+- 保存単位は「カルテ保存時スナップショットごと」とする。
+- UserHome のカルテ確認モーダルから、別モーダルで raw transcript を閲覧できるようにする。
 
 3. ユーザーアンケート結果
 - 25問（5点満点）から5因子（成長志向、課題解決志向、組織貢献志向、対人適応志向、情動反応傾向）を算出し、レーダーチャートで表示。
@@ -209,7 +236,7 @@ const AI_RESPONSE_GUIDELINES = `
 ### 6.3 初回面談プロンプト（buildInitialPrompt 実文字列）
 
 ```ts
-const buildInitialPrompt = (shirp: ShirpData, nextKey: ShirpKey | null) => {
+const buildInitialPrompt = (karte: KarteData, nextKey: ShirpKey | null) => {
   const currentKey = nextKey ?? 'S';
   return `
 あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で情報を埋めます。
@@ -217,8 +244,10 @@ const buildInitialPrompt = (shirp: ShirpData, nextKey: ShirpKey | null) => {
 # SHIRPガイド
 ${SHIRP_GUIDE}
 
+${buildDemographicPromptContext(karte)}
+
 # 現在のカルテ(SHIRP)
-${JSON.stringify(shirp, null, 2)}
+${JSON.stringify(karte.shirp, null, 2)}
 
 # 今回フォーカスする項目
 ${currentKey}
@@ -231,13 +260,11 @@ ${AI_RESPONSE_GUIDELINES}
 3. S,H,I,Rが全て埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
 4. 3の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
 5. 余談やS〜Pに当てはまらない内容は#に記録してください。
-
-# 出力 (JSONのみ)
-{
-  "reply": "ユーザーへの返答",
-  "updated_shirp": { "S": "..." },
-  "is_complete": boolean
-}
+6. response_format の JSON Schema に厳密に従って出力してください。
+7. reply にはユーザーに見せる自然な返答だけを書いてください。
+8. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+9. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。
+10. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 };
 ```
@@ -245,41 +272,43 @@ ${AI_RESPONSE_GUIDELINES}
 ### 6.4 継続面談プロンプト（buildContinuousPrompt 実文字列）
 
 ```ts
-const buildContinuousPrompt = (shirp: ShirpData) => `
+const buildContinuousPrompt = (karte: KarteData) => `
 あなたはキャリアメンターとして自由対話モードでユーザーに寄り添います。
 
 # SHIRPガイド
 ${SHIRP_GUIDE}
 
+${buildDemographicPromptContext(karte)}
+
 # 現在のカルテ(SHIRP)
-${JSON.stringify(shirp, null, 2)}
+${JSON.stringify(karte.shirp, null, 2)}
 
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
 1. ユーザーが自由に話せるように傾聴し、深掘り質問やプロービングを行います。
 2. ユーザーの発話から得た情報で、SHIRPを部分的に更新してください。
-
-# 出力 (JSONのみ)
-{
-  "reply": "共感や深掘りの返答",
-  "updated_shirp": { "H": "..." },
-  "is_complete": false
-}
+3. response_format の JSON Schema に厳密に従って出力してください。
+4. reply にはユーザーに見せる自然な返答だけを書いてください。
+5. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+6. デモグラフィックは既知情報として扱いますが、返答トーンは現状の自然さを維持してください。
+7. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 ```
 
 ### 6.5 継続面談の最終整理プロンプト（buildContinuousFinalizePrompt 実文字列）
 
 ```ts
-const buildContinuousFinalizePrompt = (shirp: ShirpData) => `
+const buildContinuousFinalizePrompt = (karte: KarteData) => `
 あなたは自由対話の内容を整理し、SHIRPカルテを更新して簡単なフィードバックを提示します。
 
 # SHIRPガイド
 ${SHIRP_GUIDE}
 
+${buildDemographicPromptContext(karte)}
+
 # 現在のカルテ(SHIRP)
-${JSON.stringify(shirp, null, 2)}
+${JSON.stringify(karte.shirp, null, 2)}
 
 ${AI_RESPONSE_GUIDELINES}
 
@@ -288,16 +317,17 @@ ${AI_RESPONSE_GUIDELINES}
 2. 足りない項目は補足し、P(プラン)を生成してください。
 3. 面談後のキャリアに関する簡単なフィードバックを80~120文字で作成してください。
 4. reply の最後に、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を含めてください。
-
-# 出力 (JSONのみ)
-{
-  "reply": "まとめ・補足質問",
-  "updated_shirp": { "P": "..." },
-  "feedback": "フィードバック内容",
-  "is_complete": true
-}
+5. response_format の JSON Schema に厳密に従って出力してください。
+6. reply にはユーザーに見せる自然な返答だけを書いてください。
+7. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+8. デモグラフィックは整合性確認のために使い、返答のトーンや構成は大きく変えないでください。
+9. 既知のプロフィール情報と矛盾しない前提で整理し、不足分は会話履歴ベースで補ってください。
 `.trim();
 ```
+
+### 6.6 現在の入力ショートカット
+- テキスト送信は `Shift + Enter` に加えて、`Cmd + Enter` と `Ctrl + Enter` でも送信可能。
+- 通常の Enter 単独では送信しない。
 
 ## 7. 管理・バックエンド仕様と将来展望
 - 利用回数管理UI: Admin画面で「初回面談残り回数」「継続面談残り回数」を別列で表示・編集。

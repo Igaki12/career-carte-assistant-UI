@@ -5,6 +5,10 @@ export type ConversationMessage = {
   content: string;
 };
 
+export type MeetingType = 'initial' | 'continuous';
+
+export type ContinuousMode = 'normal' | 'turn';
+
 export type ShirpKey = 'S' | 'H' | 'I' | 'R' | 'P' | '#';
 
 export type ShirpData = Record<ShirpKey, string | null>;
@@ -46,6 +50,37 @@ export type LlmResponse = {
   updated_shirp?: Partial<Record<ShirpKey, string>>;
   is_complete?: boolean;
   feedback?: string;
+};
+
+export type StoredKarteRecord = {
+  id: string;
+  atCreated: string;
+  atUpdated: string;
+  statusLabel: string;
+  data: KarteData;
+  meetingType: MeetingType;
+  continuousMode: ContinuousMode | null;
+  feedback: string | null;
+  conversationLog: ConversationMessage[];
+};
+
+export type DraftSession = {
+  meetingType: MeetingType;
+  continuousMode: ContinuousMode | null;
+  messages: ConversationMessage[];
+  karte: KarteData;
+  apiUsageCount: number;
+  feedbackText: string;
+  conversationStarted: boolean;
+  hasSessionStarted: boolean;
+  updatedAt: string;
+};
+
+export type DemoUserState = {
+  demographics: DemographicData;
+  latestKarte: KarteData | null;
+  karteRecords: StoredKarteRecord[];
+  draftSessions: Record<MeetingType, DraftSession | null>;
 };
 
 export const SHIRP_KEYS: readonly ShirpKey[] = Object.freeze(['S', 'H', 'I', 'R', 'P', '#']);
