@@ -13,12 +13,14 @@
 
 ### 2.2 役割別ページ構成とルーティング
 - Home (`/`): サービス紹介、各ロールへの遷移。デモ版では「初回面談を始める」「継続面談を始める」を横並びで表示し、別導線で「プロフィールを設定」を配置する。
-- DemographicsSetup (`/user/demographics`): プロフィール初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。
-- UserHome (`/user`): 一般ユーザー用。初回/継続面談スタート、継続面談モード選択、カルテ閲覧・出力、アンケート、プロフィール編集。ステータスは summary に加えて「プロフィール設定完了」「初回面談完了」「継続面談完了」「面談下書きあり」などの詳細 badge を併記する。
+- DemographicsSetup (`/user/demographics`): プロフィール初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。デモ検証用に「デモ用にスキップして進む」を持つ。
+- UserHome (`/user`): 一般ユーザー用。初回/継続面談スタート、継続面談モード選択、カルテ閲覧・出力、アンケート、プロフィール編集、面談前コンディションチェック導線を配置する。ステータスは summary 表示を基本とし、詳細 badge の羅列は表示しない。
 - ConsultantHome (`/consultant`): コンサルタント用。担当ユーザーのカルテ閲覧・修正、AI練習面談（ロードマップ）。
-- Admin (`/admin`): 管理者用。アカウント管理、利用回数（初回/継続を別カラム）設定。
+- Admin (`/admin`): 管理者用。アカウント管理、利用回数（初回/継続を別カラム）設定、企業別オプション管理。
+- CompanyAdminHome (`/company-admin`): 企業管理者用。自社テナントのユーザー管理デモ、緊張度スコア表示オプションのON/OFF、コンディション測定件数の集計表示。
 - InitialMeetingRoom (`/app/initial`): 初回面談（順次ヒアリング型）。
 - ContinuousMeetingRoom (`/app/continuous`): 継続面談（自由対話型）。
+- ConditionCheck (`/user/condition-check`): 面談前コンディションチェック。現時点では顔分析ロジック未接続のため、同意文付きのダミースコア保存画面として扱う。
 
 ### 2.3 フロント保存方針（GitHub Pages デモ版）
 - GitHub Pages デモ版ではバックエンドの代わりに `localStorage` を正とする。
@@ -28,6 +30,11 @@
   - `latestKarte`: 最新カルテ
   - `karteRecords`: 保存済みカルテ履歴
   - `draftSessions.initial` / `draftSessions.continuous`: 未完了面談の下書き
+  - `demographicsSkipped`: デモ用プロフィールスキップ状態
+  - `tenantId`: 現在ユーザーのデモ用テナントID
+  - `tenants`: 企業テナント一覧
+  - `featureFlags`: 企業別機能フラグ
+  - `conditionRecords`: 面談前コンディションチェックの保存済み測定結果
 - 旧 `cca-karte` は読み込み互換のみ残す。
 
 ## 3. コア機能：AI面談フローの完全分離
@@ -35,13 +42,14 @@
 
 ### 3.1 初回面談ページ（`/app/initial`）
 - 目的: SHIRPベースのカルテを作成。
-- 事前条件: プロフィール未設定時は `/user/demographics?returnTo=/app/initial` へ誘導する。
+- 事前条件: プロフィール未設定かつ `demographicsSkipped` が false の場合は `/user/demographics?returnTo=/app/initial` へ誘導する。デモ用スキップ済みの場合は初回面談へ進める。
 - 制御: S -> H -> I -> R の順にヒアリング。必要に応じて # を補記。
 - 通信: MediaRecorder -> Whisper(STT) -> GPT-4o -> TTS-1。
 - 事前読込: 保存済みプロフィール情報を `karte.demographics` に注入した状態で開始する。
 - 途中保存: 会話履歴、カルテ、API使用回数、進行状態を `draftSessions.initial` に自動保存する。
 - 再開: UserHome から初回面談開始時、下書きがあれば「続きから再開 / 新規開始」を選ばせる。
 - 完了動線: 面談中にカルテ確認・保存を行い、保存後はUserHomeへ遷移。
+- 表示: 企業別 `featureFlags.stressAnalysisEnabled` が true の場合、ルーム概要付近に面談前コンディション（緊張度スコア）を表示する。未測定時は「未測定」とチェック導線を表示する。
 
 ### 3.2 継続面談ページ（`/app/continuous`）
 - 目的: 自由対話で既存カルテを更新し、面談後フィードバックを提示。
@@ -52,6 +60,7 @@
 - 途中保存: 会話履歴、カルテ、API使用回数、進行状態を `draftSessions.continuous` に自動保存する。
 - 再開: UserHome から継続面談開始時、下書きがあれば「続きから再開 / 新規開始」を選ばせる。
 - 完了動線: カルテ保存後はUserHomeへ遷移。
+- 表示: 企業別 `featureFlags.stressAnalysisEnabled` が true の場合、ルーム概要付近に面談前コンディション（緊張度スコア）を表示する。未測定時は「未測定」とチェック導線を表示する。
 
 #### 3.2.1 ターンテイキングモード実装方針
 - 方針: 「会話しながら常時カルテ更新」は行わず、終了時に1回だけカルテを要約更新する。
@@ -170,6 +179,15 @@
 4. ユーザーアンケート結果
 - 25問（5点満点）から5因子（成長志向、課題解決志向、組織貢献志向、対人適応志向、情動反応傾向）を算出し、レーダーチャートで表示。
 - 正式アルゴリズム受領まで、フロント側で差し替えやすいダミー算出ロジックを使用。
+
+5. 面談時コンディション
+- 現時点では顔分析アプリ本体は未統合とし、`/user/condition-check` でダミーの緊張度スコアを保存する。
+- 保存データは `conditionRecords` に履歴として保持し、最新値を `latestKarte.conditionSummary` に反映する。
+- `conditionSummary` は `score`, `level`, `measuredAt`, `source: 'demo'`, `consentVersion` を持つ。
+- 生の顔画像・動画は保存しない。
+- 表示は企業別 `featureFlags.stressAnalysisEnabled` が true の場合だけ行う。
+- 表示対象は `UserHome`、`MeetingRoom`、`KartePanel` の主要3画面。
+- ユーザー向け説明では「表情から面談前後の緊張傾向を参考値として表示するもので、医療・心理診断ではない」ことを明示する。
 
 ## 5. AI応答・対話ガイドライン（チャットAIルール）
 AIのシステムプロンプトおよび面談制御で、以下を厳密適用する。
@@ -331,5 +349,9 @@ ${AI_RESPONSE_GUIDELINES}
 
 ## 7. 管理・バックエンド仕様と将来展望
 - 利用回数管理UI: Admin画面で「初回面談残り回数」「継続面談残り回数」を別列で表示・編集。
+- テナント管理: デモ版では企業を `tenants` として扱い、現在ユーザーは `tenantId` で所属企業に紐づく。既存データに `tenantId` がない場合はデフォルトテナントへ正規化する。
+- 企業別機能フラグ: `featureFlags` で `stressAnalysisEnabled`, `turnTakingEnabled`, `lightThemeEnabled` を保持する。現時点でUI切替対象は `stressAnalysisEnabled`。
+- 管理者画面: `/admin` では企業別オプション管理から、各テナントの `stressAnalysisEnabled` を切り替えられる。
+- 企業管理者画面: `/company-admin` では自社テナントの `stressAnalysisEnabled` を切り替えられる。個人別の顔分析・緊張度詳細は表示せず、測定件数などの集計値に留める。
 - SSO・ディープリンク: VPS環境下で `/#/user/:userId?token=...` によるSSOログインを実装予定。
 - コンサルタント向けシミュレータ: 一般ユーザー向け機能の後続で追加開発予定。
