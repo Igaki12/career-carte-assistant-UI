@@ -78,6 +78,7 @@ export type DraftSession = {
 
 export type DemoUserState = {
   demographics: DemographicData;
+  demographicsSavedAt: string | null;
   latestKarte: KarteData | null;
   karteRecords: StoredKarteRecord[];
   draftSessions: Record<MeetingType, DraftSession | null>;

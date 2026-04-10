@@ -50,6 +50,7 @@ export const createEmptyKarte = (): KarteData => ({
 
 export const createEmptyDemoUserState = (): DemoUserState => ({
   demographics: createEmptyDemographics(),
+  demographicsSavedAt: null,
   latestKarte: null,
   karteRecords: [],
   draftSessions: {
@@ -63,6 +64,9 @@ export const hasConfiguredDemographics = (demographics: DemographicData | null |
     demographics &&
       Object.values(demographics).some((value) => typeof value === 'string' && value.trim().length > 0),
   );
+
+export const hasSavedDemographics = (state: Pick<DemoUserState, 'demographics' | 'demographicsSavedAt'> | null | undefined) =>
+  Boolean(state?.demographicsSavedAt || hasConfiguredDemographics(state?.demographics));
 
 export const mergeDemographics = (
   base: DemographicData | null | undefined,
@@ -99,7 +103,8 @@ const normalizeDraftSession = (meetingType: MeetingType, draft: DraftSession | n
 const normalizeState = (value: Partial<DemoUserState> | null | undefined): DemoUserState => {
   const empty = createEmptyDemoUserState();
   const latestKarte = value?.latestKarte ? applyDemographicsToKarte(value.latestKarte, value.latestKarte.demographics) : null;
-  const demographics = hasConfiguredDemographics(value?.demographics)
+  const demographicsSavedAt = typeof value?.demographicsSavedAt === 'string' ? value.demographicsSavedAt : null;
+  const demographics = demographicsSavedAt || hasConfiguredDemographics(value?.demographics)
     ? mergeDemographics(empty.demographics, value?.demographics)
     : latestKarte?.demographics
       ? mergeDemographics(empty.demographics, latestKarte.demographics)
@@ -107,6 +112,7 @@ const normalizeState = (value: Partial<DemoUserState> | null | undefined): DemoU
 
   return {
     demographics,
+    demographicsSavedAt,
     latestKarte,
     karteRecords: Array.isArray(value?.karteRecords) ? value!.karteRecords : [],
     draftSessions: {

@@ -125,6 +125,7 @@ function DemographicsSetup() {
     const nextState = {
       ...currentState,
       demographics: { ...normalizedValues },
+      demographicsSavedAt: new Date().toISOString(),
       latestKarte: currentState.latestKarte ? applyDemographicsToKarte(currentState.latestKarte, normalizedValues) : null,
       draftSessions: {
         initial: currentState.draftSessions.initial
@@ -213,7 +214,7 @@ function DemographicsSetup() {
                 プロフィール初期設定
               </Heading>
               <Text color="whiteAlpha.900" fontWeight="medium" textShadow="0 1px 3px rgba(0,0,0,0.2)">
-                まだプロフィールが設定されていないため、初回面談とユーザーホームで使う基本情報を先に登録します。
+                初回面談とユーザーホームで使う基本情報を登録します。未入力の項目があっても保存して進めます。
               </Text>
             </Stack>
 

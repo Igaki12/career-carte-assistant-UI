@@ -41,7 +41,7 @@ import {
   applyDemographicsToKarte,
   createEmptyKarte,
   createEmptySurvey,
-  hasConfiguredDemographics,
+  hasSavedDemographics,
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
@@ -91,7 +91,10 @@ const SURVEY_FACTOR_KEYS: SurveyFactorKey[] = [
 ];
 
 const LIKERT_OPTIONS = ['全くそう思わない', 'そう思わない', 'どちらでもない', 'そう思う', 'とてもそう思う'];
-const USER_HOME_HERO_BACKGROUNDS = ['/hero/user-home-hero-a.jpg', '/hero/user-home-hero-b.jpg'];
+const USER_HOME_HERO_BACKGROUNDS = [
+  `${import.meta.env.BASE_URL}hero/user-home-hero-a.jpg`,
+  `${import.meta.env.BASE_URL}hero/user-home-hero-b.jpg`,
+];
 
 const heroReveal = keyframes`
   from {
@@ -236,10 +239,11 @@ const resolveProfile = (userState: DemoUserState): ProfileView => {
   const demographics = userState.demographics;
   const hasInitialCompleted = userState.karteRecords.some((record) => record.meetingType === 'initial');
   const hasContinuousCompleted = userState.karteRecords.some((record) => record.meetingType === 'continuous');
+  const hasProfileSaved = hasSavedDemographics(userState);
   const statusDetails: ProfileView['statusDetails'] = [];
 
-  if (hasConfiguredDemographics(demographics)) {
-    statusDetails.push({ label: 'プロフィール設定完了', colorScheme: 'orange' });
+  if (hasProfileSaved) {
+    statusDetails.push({ label: 'プロフィール保存済み', colorScheme: 'orange' });
   }
   if (hasInitialCompleted) {
     statusDetails.push({ label: '初回面談完了', colorScheme: 'blue' });
@@ -257,8 +261,8 @@ const resolveProfile = (userState: DemoUserState): ProfileView => {
       ? '継続面談まで完了'
       : hasInitialCompleted
         ? '初回面談まで完了'
-        : hasConfiguredDemographics(demographics)
-          ? 'プロフィール設定完了'
+        : hasProfileSaved
+          ? 'プロフィール保存済み'
           : '面談準備中';
 
   return {
@@ -334,7 +338,7 @@ function UserHome() {
   const surveyScores = SURVEY_FACTOR_KEYS.map((key) => latestKarte.survey.factors[key] ?? 0);
   const hasSurvey = surveyScores.some((score) => score > 0);
 
-  if (!hasConfiguredDemographics(userState.demographics)) {
+  if (!hasSavedDemographics(userState)) {
     return <Navigate to="/user/demographics?returnTo=%2Fuser" replace />;
   }
 

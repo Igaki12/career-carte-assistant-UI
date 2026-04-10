@@ -86,7 +86,7 @@ const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   emotional_response_tendency: '情動反応傾向',
 };
 
-const CONSULTANT_HERO_BACKGROUND = '/hero/consultant-home-hero.jpg';
+const CONSULTANT_HERO_BACKGROUND = `${import.meta.env.BASE_URL}hero/consultant-home-hero.jpg`;
 const heroReveal = keyframes`
   from {
     opacity: 0;
