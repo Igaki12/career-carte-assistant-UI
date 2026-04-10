@@ -1,11 +1,11 @@
 import { Navigate } from 'react-router-dom';
 import MeetingRoom from '../components/MeetingRoom';
-import { hasSavedDemographics, loadDemoUserState } from '../lib/demoUserState';
+import { canEnterWithDemographics, loadDemoUserState } from '../lib/demoUserState';
 
 const InitialMeetingRoom = () => {
   const userState = loadDemoUserState();
 
-  if (!hasSavedDemographics(userState)) {
+  if (!canEnterWithDemographics(userState)) {
     return <Navigate to="/user/demographics?returnTo=%2Fapp%2Finitial" replace />;
   }
 

@@ -39,10 +39,43 @@ export type SurveyResult = {
   lastUpdated: string | null;
 };
 
+export type ConditionLevel = '低め' | '標準' | '高め';
+
+export type ConditionSummary = {
+  score: number;
+  level: ConditionLevel;
+  measuredAt: string;
+  source: 'demo';
+  consentVersion: string;
+};
+
 export type KarteData = {
   demographics: DemographicData;
   shirp: ShirpData;
   survey: SurveyResult;
+  conditionSummary: ConditionSummary | null;
+};
+
+export type Tenant = {
+  id: string;
+  name: string;
+  status: 'active' | 'inactive';
+  plan: string;
+  enabledFeatures: string[];
+  createdAt: string;
+};
+
+export type TenantFeatureFlags = {
+  tenantId: string;
+  stressAnalysisEnabled: boolean;
+  turnTakingEnabled: boolean;
+  lightThemeEnabled: boolean;
+};
+
+export type ConditionRecord = ConditionSummary & {
+  id: string;
+  tenantId: string;
+  userId: string;
 };
 
 export type LlmResponse = {
@@ -77,6 +110,11 @@ export type DraftSession = {
 };
 
 export type DemoUserState = {
+  tenantId: string;
+  tenants: Tenant[];
+  featureFlags: TenantFeatureFlags[];
+  conditionRecords: ConditionRecord[];
+  demographicsSkipped: boolean;
   demographics: DemographicData;
   demographicsSavedAt: string | null;
   latestKarte: KarteData | null;

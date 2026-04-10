@@ -58,6 +58,9 @@ function Home() {
             <Button as={RouterLink} to="/admin" variant="outline" colorScheme="orange">
               管理者画面
             </Button>
+            <Button as={RouterLink} to="/company-admin" variant="outline" colorScheme="pink">
+              企業管理者画面
+            </Button>
           </Stack>
         </Stack>
       </Container>

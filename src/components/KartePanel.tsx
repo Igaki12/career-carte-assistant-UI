@@ -31,11 +31,13 @@ const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
 
 type Props = {
   data: KarteData;
+  showCondition?: boolean;
 };
 
-const KartePanel = ({ data }: Props) => {
+const KartePanel = ({ data, showCondition = false }: Props) => {
   const surveyScores = Object.keys(SURVEY_LABELS).map((key) => data.survey.factors[key as SurveyFactorKey] ?? 0);
   const hasSurvey = surveyScores.some((score) => score > 0);
+  const conditionSummary = data.conditionSummary;
 
   return (
     <Box bg="white" borderRadius="2xl" pt={6} pb={6} w="full">
@@ -164,6 +166,42 @@ const KartePanel = ({ data }: Props) => {
             会話から自動で抽出・更新されます
           </Text>
         </Box>
+
+        {showCondition && (
+          <Box>
+            <Text fontSize="sm" fontWeight="bold" color="gray.500" mb={3}>
+              面談時コンディション
+            </Text>
+            <Box borderWidth="1px" borderRadius="xl" p={4} bg={conditionSummary ? 'orange.50' : 'gray.50'}>
+              {conditionSummary ? (
+                <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">緊張度スコア</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {conditionSummary.score} / 100
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">レベル</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {conditionSummary.level}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="xs" color="gray.500">測定日時</Text>
+                    <Text fontWeight="semibold" fontSize="sm">
+                      {new Date(conditionSummary.measuredAt).toLocaleString('ja-JP')}
+                    </Text>
+                  </Box>
+                </SimpleGrid>
+              ) : (
+                <Text fontSize="sm" color="gray.500">
+                  面談前コンディションチェックは未測定です。
+                </Text>
+              )}
+            </Box>
+          </Box>
+        )}
 
         <Box>
           <Text fontSize="sm" fontWeight="bold" color="gray.500" mb={3}>

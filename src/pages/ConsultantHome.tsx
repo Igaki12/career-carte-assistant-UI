@@ -142,6 +142,7 @@ const createEmptyKarte = (): KarteData => ({
     },
     lastUpdated: null,
   },
+  conditionSummary: null,
 });
 
 function ConsultantHome() {
@@ -227,6 +228,7 @@ function ConsultantHome() {
           '#': '次回に転職判断軸を深掘り。',
         },
         survey: createEmptyKarte().survey,
+        conditionSummary: null,
       },
     },
   ]);

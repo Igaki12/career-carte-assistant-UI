@@ -1,6 +1,8 @@
 import { Box } from '@chakra-ui/react';
 import { Route, Routes } from 'react-router-dom';
 import Admin from './pages/Admin';
+import CompanyAdminHome from './pages/CompanyAdminHome';
+import ConditionCheck from './pages/ConditionCheck';
 import ContinuousMeetingRoom from './pages/ContinuousMeetingRoom';
 import ConsultantHome from './pages/ConsultantHome';
 import DemographicsSetup from './pages/DemographicsSetup';
@@ -14,9 +16,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/user" element={<UserHome />} />
+        <Route path="/user/condition-check" element={<ConditionCheck />} />
         <Route path="/user/demographics" element={<DemographicsSetup />} />
         <Route path="/consultant" element={<ConsultantHome />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/company-admin" element={<CompanyAdminHome />} />
         <Route path="/app/initial" element={<InitialMeetingRoom />} />
         <Route path="/app/continuous" element={<ContinuousMeetingRoom />} />
       </Routes>

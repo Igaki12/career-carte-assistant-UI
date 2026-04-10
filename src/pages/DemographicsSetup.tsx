@@ -124,6 +124,7 @@ function DemographicsSetup() {
     const normalizedValues = normalizeFormValues(formValues);
     const nextState = {
       ...currentState,
+      demographicsSkipped: false,
       demographics: { ...normalizedValues },
       demographicsSavedAt: new Date().toISOString(),
       latestKarte: currentState.latestKarte ? applyDemographicsToKarte(currentState.latestKarte, normalizedValues) : null,
@@ -149,6 +150,22 @@ function DemographicsSetup() {
       description: 'プロフィール設定を反映しました。',
       status: 'success',
       duration: 2400,
+      isClosable: true,
+    });
+    navigate(returnTo);
+  };
+
+  const handleSkipForDemo = () => {
+    const currentState = loadDemoUserState();
+    saveDemoUserState({
+      ...currentState,
+      demographicsSkipped: true,
+    });
+    toast({
+      title: 'デモ用にスキップしました',
+      description: 'あとからユーザーホームでプロフィールを入力できます。',
+      status: 'info',
+      duration: 2600,
       isClosable: true,
     });
     navigate(returnTo);
@@ -280,6 +297,9 @@ function DemographicsSetup() {
                 <Stack direction={{ base: 'column', sm: 'row' }} justify="flex-end" spacing={3}>
                   <Button variant="outline" bg="white" onClick={() => navigate(returnTo)}>
                     キャンセル
+                  </Button>
+                  <Button variant="ghost" bg="whiteAlpha.800" onClick={handleSkipForDemo}>
+                    デモ用にスキップして進む
                   </Button>
                   <Button colorScheme="orange" boxShadow="md" onClick={handleSave}>
                     保存して進む

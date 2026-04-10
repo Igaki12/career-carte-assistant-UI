@@ -29,12 +29,18 @@ const ApiKeyModal = ({ isOpen, openAiApiKey = '', geminiApiKey = '', onSave }: A
   const [geminiError, setGeminiError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return undefined;
+    let canceled = false;
+    queueMicrotask(() => {
+      if (canceled) return;
       setOpenAiValue(openAiApiKey);
       setGeminiValue(geminiApiKey);
       setOpenAiError('');
       setGeminiError('');
-    }
+    });
+    return () => {
+      canceled = true;
+    };
   }, [geminiApiKey, isOpen, openAiApiKey]);
 
   const handleSave = () => {

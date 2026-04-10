@@ -1,5 +1,5 @@
 
-調査結果として、企業導入向けの権限管理は「企業管理者」というロール名だけを増やすよりも、企業をテナントとして扱い、`tenantId` / `organizationId` によって参照可能なユーザー・カルテ・オプション機能を必ず絞り込む形が適している。一般的にも、マルチテナントSaaSではテナント境界を認証済みセッションに紐づけ、全データアクセスでテナント所有権を検証することが重要とされている。単純なRBACだけでは企業ごとの機能差や対象ユーザー範囲を表現しづらいため、本プロジェクトでは「基本ロール + 企業属性 + 機能フラグ」の組み合わせを採用する。
+調査結果として、企業導入向けの権限管理は「企業管理者」というロール名だけを増やすよりも、企業をテナントとして扱い、`tenantId` によって参照可能なユーザー・カルテ・オプション機能を必ず絞り込む形が適している。一般的にも、マルチテナントSaaSではテナント境界を認証済みセッションに紐づけ、全データアクセスでテナント所有権を検証することが重要とされている。単純なRBACだけでは企業ごとの機能差や対象ユーザー範囲を表現しづらいため、本プロジェクトでは「基本ロール + 企業属性 + 機能フラグ」の組み合わせを採用する。
 
 参考:
 - OWASP Authorization Cheat Sheet: RBACだけでなく、属性ベース・関係ベースの制御を検討すること、最小権限・デフォルト拒否・リクエストごとの権限検証を推奨。
@@ -39,16 +39,16 @@
     *   `consultant`: 担当ユーザーのカルテ閲覧・修正、AI練習面談を利用できる。
     *   `user`: 自分の面談、プロフィール、カルテ、アンケートを利用できる。
 *   **推奨データモデル**:
-    *   `organizations`: `id`, `name`, `status`, `plan`, `enabledFeatures`, `createdAt`
-    *   `users`: `id`, `organizationId`, `role`, `name`, `email`, `status`, `initialInterviewLimit`, `continuousInterviewLimit`
-    *   `karteRecords`: `id`, `organizationId`, `userId`, `data`, `createdAt`
-    *   `featureFlags`: `organizationId`, `stressAnalysisEnabled`, `turnTakingEnabled`, `lightThemeEnabled`
-    *   `auditLogs`: `organizationId`, `actorUserId`, `action`, `targetType`, `targetId`, `createdAt`
+    *   `tenants`: `id`, `name`, `status`, `plan`, `enabledFeatures`, `createdAt`
+    *   `users`: `id`, `tenantId`, `role`, `name`, `email`, `status`, `initialInterviewLimit`, `continuousInterviewLimit`
+    *   `karteRecords`: `id`, `tenantId`, `userId`, `data`, `createdAt`
+    *   `featureFlags`: `tenantId`, `stressAnalysisEnabled`, `turnTakingEnabled`, `lightThemeEnabled`
+    *   `auditLogs`: `tenantId`, `actorUserId`, `action`, `targetType`, `targetId`, `createdAt`
 *   **実装順序**:
     *   1. フロントデモ段階では `src/lib/demoUserState.ts` とは別に、企業・ロール・機能フラグ用のデモ状態を追加する。
     *   2. `Admin` はシステム管理者用として維持し、企業一覧と企業別オプション管理を追加する。
     *   3. `/company-admin` を新設し、`Admin` のユーザー管理UIを再利用しつつ、対象を自社ユーザーだけに限定する。
-    *   4. バックエンド移行時に、全APIで `organizationId` をサーバー側セッションから導出し、リクエストパラメータの企業IDを信用しない。
+    *   4. バックエンド移行時に、全APIで `tenantId` をサーバー側セッションから導出し、リクエストパラメータの企業IDを信用しない。
     *   5. 企業管理者の操作は `auditLogs` に必ず残す。
 
 #### 3. ストレス度合いスコアのカルテ反映と企業ごとのオプション化
@@ -66,7 +66,7 @@
     *   `ConsultantHome`: 担当者が閲覧するカルテ詳細に、ユーザー本人の同意がある場合のみスコアを表示する。
     *   `CompanyAdminHome`: 個人別の細かい顔分析結果は原則表示しない。企業管理者には利用状況や測定完了率などの集計値に留める。
 *   **保存方針**:
-    *   `conditionRecords`: `id`, `organizationId`, `userId`, `score`, `level`, `measuredAt`, `source`, `consentVersion`
+    *   `conditionRecords`: `id`, `tenantId`, `userId`, `score`, `level`, `measuredAt`, `source`, `consentVersion`
     *   `latestKarte.conditionSummary`: 最新スコア、レベル、測定日時だけを保持する。
     *   生の顔画像・動画は保存しない。デモ段階ではスコアのみ `localStorage` に保存する。
 *   **同意・説明**:
@@ -99,11 +99,11 @@
 *   [ ] UIテーマにおいて、既存のダークトーンに加え、ライトトーンの表示対応を検討する。
 
 **■ バックエンド / 権限管理・カルテ改修**
-*   [ ] 企業テナントを表す `organizations` と、企業別機能フラグ `featureFlags` の仕様を定義する。
+*   [ ] 企業テナントを表す `tenants` と、企業別機能フラグ `featureFlags` の仕様を定義する。
 *   [ ] 既存 `/admin` はシステム管理者用として維持し、企業一覧・企業別オプション管理を追加する。
 *   [ ] `/company-admin` を新設し、企業管理者が自社ユーザーだけを追加・停止・CSV登録・利用回数変更できるUIを追加する。
-*   [ ] 企業管理者の権限は `role=company_admin` だけでなく `organizationId` で必ずスコープする。
-*   [ ] バックエンド化時は、すべてのユーザー・カルテ・監査ログ・ストレス測定結果に `organizationId` を持たせる。
+*   [ ] 企業管理者の権限は `role=company_admin` だけでなく `tenantId` で必ずスコープする。
+*   [ ] バックエンド化時は、すべてのユーザー・カルテ・監査ログ・ストレス測定結果に `tenantId` を持たせる。
 *   [ ] 企業管理者の操作ログを `auditLogs` として保存する。
 *   [ ] 電子カルテの画面UIに「面談時コンディション」欄を追加し、最新の緊張度スコア・レベル・測定日時を表示する。
 *   [ ] ストレス・緊張度機能を企業単位でON/OFFできるようにする。

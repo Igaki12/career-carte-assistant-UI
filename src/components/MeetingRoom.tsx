@@ -27,7 +27,10 @@ import ProcessingIndicator from './ProcessingIndicator';
 import VrmStage, { type StageModelId } from './VrmStage';
 import {
   applyDemographicsToKarte,
+  applyConditionToKarte,
   createEmptyKarte,
+  getLatestConditionRecord,
+  isStressAnalysisEnabled,
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
@@ -73,7 +76,7 @@ const INTERNAL_REPLY_PATTERNS = [
   /["“”']updated_shirp["“”']\s*:/i,
   /["“”']is_complete["“”']\s*:/i,
   /["“”']feedback["“”']\s*:/i,
-  /[{\[]\s*["“”']reply["“”']\s*:/i,
+  /(?:\{|\[)\s*["“”']reply["“”']\s*:/i,
 ];
 
 const SHIRP_GUIDE = `
@@ -411,7 +414,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [openAiApiKey, setOpenAiApiKey] = useState('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isApiModalOpen, setApiModalOpen] = useState(false);
-  const [, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
+  const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
   const [karte, setKarte] = useState<KarteData>(createEmptyKarte);
   const [messages, setMessages] = useState<ConversationMessage[]>([
     { role: 'assistant', content: greetingForMeeting(meetingType) },
@@ -450,6 +453,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const hasUsedApi = hasSessionStarted || apiUsageCount > 0;
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
   const isBusy = Boolean(processingText);
+  const stressAnalysisEnabled = isStressAnalysisEnabled(userState);
+  const latestCondition = useMemo(() => getLatestConditionRecord(userState), [userState]);
   const textareaPlaceholder = useMemo(() => {
     if (apiUsageCount === 0) {
       return 'テキスト入力はこちら...';
@@ -535,10 +540,13 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     const greeting = greetingForMeeting(meetingType);
     const initialHistory: ConversationMessage[] = [{ role: 'assistant', content: greeting }];
     const shouldResumeDraft = draftAction !== 'fresh' && currentDraft;
-    const baseKarte =
+    const latestConditionRecord = getLatestConditionRecord(nextUserState);
+    const baseKarte = applyConditionToKarte(
       meetingType === 'continuous'
         ? applyDemographicsToKarte(nextUserState.latestKarte ?? createEmptyKarte(), nextUserState.demographics)
-        : applyDemographicsToKarte(createEmptyKarte(), nextUserState.demographics);
+        : applyDemographicsToKarte(createEmptyKarte(), nextUserState.demographics),
+      latestConditionRecord ?? nextUserState.latestKarte?.conditionSummary ?? null,
+    );
 
     setUserState(nextUserState);
     setProcessingText('');
@@ -930,7 +938,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [ensureApiKey, isInitialMeeting, karte.shirp, maxApiCalls, openAiApiKey, playTextToSpeech, toast],
+    [ensureApiKey, isInitialMeeting, karte, maxApiCalls, openAiApiKey, playTextToSpeech, toast],
   );
 
   const handleUserMessage = useCallback(
@@ -1123,7 +1131,11 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     disposeActiveAudio();
     const currentState = loadDemoUserState();
     const timestamp = formatDraftTimestamp();
-    const nextKarte = applyDemographicsToKarte(karte, karte.demographics);
+    const latestConditionRecord = getLatestConditionRecord(currentState);
+    const nextKarte = applyConditionToKarte(
+      applyDemographicsToKarte(karte, karte.demographics),
+      latestConditionRecord ?? karte.conditionSummary ?? null,
+    );
     const nextRecord: StoredKarteRecord = {
       id: `karte-${Date.now()}`,
       atCreated: timestamp,
@@ -1223,6 +1235,25 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                     API設定
                   </Button>
                 </Flex>
+                {stressAnalysisEnabled && (
+                  <Box w="full" bg="orange.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="orange.200">
+                    <Flex justify="space-between" align={{ base: 'flex-start', sm: 'center' }} gap={3} direction={{ base: 'column', sm: 'row' }}>
+                      <Stack spacing={0}>
+                        <Text fontSize="xs" color="orange.700" fontWeight="bold">
+                          面談前コンディション
+                        </Text>
+                        <Text fontSize="xs" color="orange.700">
+                          {latestCondition
+                            ? `緊張度スコア ${latestCondition.score} / 100 (${latestCondition.level})`
+                            : '緊張度スコア 未測定'}
+                        </Text>
+                      </Stack>
+                      <Button size="xs" variant="outline" colorScheme="orange" onClick={() => navigate('/user/condition-check')}>
+                        チェックへ
+                      </Button>
+                    </Flex>
+                  </Box>
+                )}
                 {!isInitialMeeting && !hasStoredKarte && (
                   <Box bg="orange.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="orange.200">
                     <Text fontSize="xs" color="orange.700">
@@ -1272,7 +1303,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                         Realtime APIは未実装です。現在は音声入力ベースで会話し、終了時に会話履歴とカルテを使って1回だけ更新します。
                       </Text>
                     </Box>
-                    <KartePanel data={karte} />
+                    <KartePanel data={karte} showCondition={stressAnalysisEnabled} />
                   </Stack>
                 </Box>
               ) : (
@@ -1430,7 +1461,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Text>
                 </Box>
               )}
-              <KartePanel data={karte} />
+              <KartePanel data={karte} showCondition={stressAnalysisEnabled} />
             </Stack>
           </ModalBody>
           <ModalFooter flexDir={{ base: 'column', sm: 'row' }} gap={3}>

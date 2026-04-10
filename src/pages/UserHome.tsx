@@ -33,15 +33,19 @@ import {
 import { keyframes } from '@emotion/react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
-import { FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiActivity, FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { Navigate, useNavigate } from 'react-router-dom';
 import KartePanel from '../components/KartePanel';
 import SurveyRadar from '../components/SurveyRadar';
 import {
   applyDemographicsToKarte,
+  applyConditionToKarte,
+  canEnterWithDemographics,
   createEmptyKarte,
   createEmptySurvey,
+  getLatestConditionRecord,
   hasSavedDemographics,
+  isStressAnalysisEnabled,
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
@@ -244,6 +248,8 @@ const resolveProfile = (userState: DemoUserState): ProfileView => {
 
   if (hasProfileSaved) {
     statusDetails.push({ label: 'プロフィール保存済み', colorScheme: 'orange' });
+  } else if (userState.demographicsSkipped) {
+    statusDetails.push({ label: 'プロフィール未設定（デモスキップ中）', colorScheme: 'gray' });
   }
   if (hasInitialCompleted) {
     statusDetails.push({ label: '初回面談完了', colorScheme: 'blue' });
@@ -263,6 +269,8 @@ const resolveProfile = (userState: DemoUserState): ProfileView => {
         ? '初回面談まで完了'
         : hasProfileSaved
           ? 'プロフィール保存済み'
+          : userState.demographicsSkipped
+            ? 'デモスキップ中'
           : '面談準備中';
 
   return {
@@ -330,15 +338,21 @@ function UserHome() {
   const [lastSurveyAnswers, setLastSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
 
   const profile = useMemo(() => resolveProfile(userState), [userState]);
+  const stressAnalysisEnabled = isStressAnalysisEnabled(userState);
+  const latestCondition = useMemo(() => getLatestConditionRecord(userState), [userState]);
   const latestKarte = useMemo(
-    () => applyDemographicsToKarte(userState.latestKarte ?? createEmptyKarte(), userState.demographics),
-    [userState.demographics, userState.latestKarte],
+    () =>
+      applyConditionToKarte(
+        applyDemographicsToKarte(userState.latestKarte ?? createEmptyKarte(), userState.demographics),
+        latestCondition ?? userState.latestKarte?.conditionSummary ?? null,
+      ),
+    [latestCondition, userState.demographics, userState.latestKarte],
   );
   const latestRecord = userState.karteRecords[0] ?? null;
   const surveyScores = SURVEY_FACTOR_KEYS.map((key) => latestKarte.survey.factors[key] ?? 0);
   const hasSurvey = surveyScores.some((score) => score > 0);
 
-  if (!hasSavedDemographics(userState)) {
+  if (!canEnterWithDemographics(userState)) {
     return <Navigate to="/user/demographics?returnTo=%2Fuser" replace />;
   }
 
@@ -635,6 +649,13 @@ function UserHome() {
                   {profile.statusSummary}
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
+                  {profile.statusDetails.map((detail) => (
+                    <Badge key={detail.label} colorScheme={detail.colorScheme} borderRadius="full">
+                      {detail.label}
+                    </Badge>
+                  ))}
+                </Flex>
+                <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
                     <Badge key={tag} bg="whiteAlpha.240" color="white" borderRadius="full" variant="solid">
                       {tag}
@@ -742,6 +763,55 @@ function UserHome() {
                     )}
                   </Stack>
                 </Box>
+              </Stack>
+            </Box>
+
+            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+              <Stack spacing={3}>
+                <Heading size="md" display="flex" alignItems="center" gap={2}>
+                  <FiActivity /> 面談前コンディションチェック
+                </Heading>
+                {stressAnalysisEnabled ? (
+                  <>
+                    <Text color="gray.600">
+                      面談前の緊張傾向を参考値として保存します。現時点ではダミースコアのみを扱います。
+                    </Text>
+                    <Box border="1px solid" borderColor="orange.100" bg="orange.50" borderRadius="md" p={4} borderLeft="4px solid" borderLeftColor="orange.400">
+                      {latestCondition ? (
+                        <Stack spacing={1}>
+                          <Text fontSize="sm" color="gray.600" fontWeight="bold">
+                            直近の緊張度スコア
+                          </Text>
+                          <Text fontSize="xl" color="gray.800" fontWeight="bold">
+                            {latestCondition.score} / 100
+                            <Text as="span" ml={2} fontSize="sm" color="gray.600">
+                              {latestCondition.level}
+                            </Text>
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            測定日時: {new Date(latestCondition.measuredAt).toLocaleString('ja-JP')}
+                          </Text>
+                        </Stack>
+                      ) : (
+                        <Text fontSize="sm" color="gray.500">
+                          まだ測定されていません。
+                        </Text>
+                      )}
+                    </Box>
+                    <Button colorScheme="orange" variant="solid" onClick={() => navigate('/user/condition-check')}>
+                      チェックを開く
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Text color="gray.600">
+                      現在の企業では契約オプションが未有効です。企業管理者画面で有効化できます。
+                    </Text>
+                    <Button variant="outline" colorScheme="pink" onClick={() => navigate('/company-admin')}>
+                      企業管理者画面へ
+                    </Button>
+                  </>
+                )}
               </Stack>
             </Box>
 
@@ -911,7 +981,7 @@ function UserHome() {
                   ))}
                 </Stack>
               ) : (
-                <KartePanel data={latestKarte} />
+                <KartePanel data={latestKarte} showCondition={stressAnalysisEnabled} />
               )}
             </Stack>
           </ModalBody>

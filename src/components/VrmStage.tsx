@@ -533,7 +533,12 @@ const VrmStage = ({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    setIsReady(false);
+    let canceled = false;
+    queueMicrotask(() => {
+      if (!canceled) {
+        setIsReady(false);
+      }
+    });
     motionBoneRef.current = null;
     baseMotionRotationRef.current = null;
     directMorphTargetsRef.current = {
@@ -648,6 +653,7 @@ const VrmStage = ({
     window.addEventListener('resize', handleResize);
 
     return () => {
+      canceled = true;
       window.removeEventListener('resize', handleResize);
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);

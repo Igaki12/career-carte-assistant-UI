@@ -34,6 +34,13 @@ import {
 } from '@chakra-ui/react';
 import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 import { FiFileText, FiPlus, FiUpload } from 'react-icons/fi';
+import {
+  getTenantFeatureFlags,
+  loadDemoUserState,
+  saveDemoUserState,
+  updateTenantFeatureFlags,
+} from '../lib/demoUserState';
+import type { DemoUserState } from '../types';
 
 type AccountRecord = {
   id: string;
@@ -86,6 +93,26 @@ type BulkEditForm = {
   continuousInterviewRemaining: string;
   llmCallsPerInterview: string;
 };
+
+type AccountTarget = 'user' | 'consultant';
+
+type SortButtonProps = {
+  label: string;
+  target: AccountTarget;
+  column: keyof AccountRecord;
+  onSort: (target: AccountTarget, column: keyof AccountRecord) => void;
+};
+
+const SortButton = ({ label, target, column, onSort }: SortButtonProps) => (
+  <Button
+    size="sm"
+    variant="ghost"
+    rightIcon={<ChevronDownIcon fontSize="1rem" />}
+    onClick={() => onSort(target, column)}
+  >
+    {label}
+  </Button>
+);
 
 function Admin() {
   const toast = useToast();
@@ -251,7 +278,8 @@ function Admin() {
   });
   const [csvModalType, setCsvModalType] = useState<'user' | 'consultant'>('user');
 
-  const [activeSection, setActiveSection] = useState<'user' | 'consultant'>('user');
+  const [activeSection, setActiveSection] = useState<'user' | 'consultant' | 'tenant'>('user');
+  const [demoState, setDemoState] = useState<DemoUserState>(() => loadDemoUserState());
 
   const buildTimestamp = () => {
     const now = new Date();
@@ -481,25 +509,6 @@ function Admin() {
 
   const activeCsvState = csvModalType === 'user' ? userCsvState : consultantCsvState;
 
-  const SortButton = ({
-    label,
-    target,
-    column,
-  }: {
-    label: string;
-    target: 'user' | 'consultant';
-    column: keyof AccountRecord;
-  }) => (
-    <Button
-      size="sm"
-      variant="ghost"
-      rightIcon={<ChevronDownIcon fontSize="1rem" />}
-      onClick={() => handleSort(target, column)}
-    >
-      {label}
-    </Button>
-  );
-
   const toggleSelection = (
     target: 'user' | 'consultant',
     accountId: string,
@@ -711,6 +720,18 @@ function Admin() {
     });
   };
 
+  const handleTenantStressToggle = (tenantId: string, isChecked: boolean) => {
+    const nextState = updateTenantFeatureFlags(demoState, tenantId, { stressAnalysisEnabled: isChecked });
+    setDemoState(nextState);
+    saveDemoUserState(nextState);
+    toast({
+      title: isChecked ? '緊張度スコア表示を有効にしました' : '緊張度スコア表示を無効にしました',
+      status: 'success',
+      duration: 2200,
+      isClosable: true,
+    });
+  };
+
   return (
     <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
       <Container maxW="7xl">
@@ -739,6 +760,13 @@ function Admin() {
                 onClick={() => setActiveSection('consultant')}
               >
                 コンサルアカウント管理
+              </Button>
+              <Button
+                variant={activeSection === 'tenant' ? 'solid' : 'outline'}
+                colorScheme="orange"
+                onClick={() => setActiveSection('tenant')}
+              >
+                企業別オプション管理
               </Button>
             </Flex>
           </Box>
@@ -821,29 +849,30 @@ function Admin() {
                     <Tr>
                       <Th>選択</Th>
                       <Th>
-                        <SortButton label="ID" target="user" column="id" />
+                        <SortButton onSort={handleSort} label="ID" target="user" column="id" />
                       </Th>
                       <Th>
-                        <SortButton label="氏名" target="user" column="name" />
+                        <SortButton onSort={handleSort} label="氏名" target="user" column="name" />
                       </Th>
                       <Th>
-                        <SortButton label="会社" target="user" column="company" />
+                        <SortButton onSort={handleSort} label="会社" target="user" column="company" />
                       </Th>
                       <Th>メール</Th>
                       <Th>
-                        <SortButton label="ステータス" target="user" column="status" />
+                        <SortButton onSort={handleSort} label="ステータス" target="user" column="status" />
                       </Th>
                       <Th>
-                        <SortButton label="作成日時" target="user" column="createdAt" />
+                        <SortButton onSort={handleSort} label="作成日時" target="user" column="createdAt" />
                       </Th>
                       <Th>
-                        <SortButton label="更新日時" target="user" column="updatedAt" />
+                        <SortButton onSort={handleSort} label="更新日時" target="user" column="updatedAt" />
                       </Th>
                       <Th>
-                        <SortButton label="初回面談残り" target="user" column="initialInterviewRemaining" />
+                        <SortButton onSort={handleSort} label="初回面談残り" target="user" column="initialInterviewRemaining" />
                       </Th>
                       <Th>
                         <SortButton
+                          onSort={handleSort}
                           label="継続面談残り"
                           target="user"
                           column="continuousInterviewRemaining"
@@ -851,13 +880,14 @@ function Admin() {
                       </Th>
                       <Th>
                         <SortButton
+                          onSort={handleSort}
                           label="AI回数/面談"
                           target="user"
                           column="llmCallsPerInterview"
                         />
                       </Th>
                       <Th>
-                        <SortButton label="操作ログ" target="user" column="logs" />
+                        <SortButton onSort={handleSort} label="操作ログ" target="user" column="logs" />
                       </Th>
                       <Th>アクション</Th>
                     </Tr>
@@ -1130,26 +1160,27 @@ function Admin() {
                     <Tr>
                       <Th>選択</Th>
                       <Th>
-                        <SortButton label="ID" target="consultant" column="id" />
+                        <SortButton onSort={handleSort} label="ID" target="consultant" column="id" />
                       </Th>
                       <Th>
-                        <SortButton label="氏名" target="consultant" column="name" />
+                        <SortButton onSort={handleSort} label="氏名" target="consultant" column="name" />
                       </Th>
                       <Th>
-                        <SortButton label="会社" target="consultant" column="company" />
+                        <SortButton onSort={handleSort} label="会社" target="consultant" column="company" />
                       </Th>
                       <Th>メール</Th>
                       <Th>
-                        <SortButton label="ステータス" target="consultant" column="status" />
+                        <SortButton onSort={handleSort} label="ステータス" target="consultant" column="status" />
                       </Th>
                       <Th>
-                        <SortButton label="作成日時" target="consultant" column="createdAt" />
+                        <SortButton onSort={handleSort} label="作成日時" target="consultant" column="createdAt" />
                       </Th>
                       <Th>
-                        <SortButton label="更新日時" target="consultant" column="updatedAt" />
+                        <SortButton onSort={handleSort} label="更新日時" target="consultant" column="updatedAt" />
                       </Th>
                       <Th>
                         <SortButton
+                          onSort={handleSort}
                           label="初回面談残り"
                           target="consultant"
                           column="initialInterviewRemaining"
@@ -1157,6 +1188,7 @@ function Admin() {
                       </Th>
                       <Th>
                         <SortButton
+                          onSort={handleSort}
                           label="継続面談残り"
                           target="consultant"
                           column="continuousInterviewRemaining"
@@ -1164,13 +1196,14 @@ function Admin() {
                       </Th>
                       <Th>
                         <SortButton
+                          onSort={handleSort}
                           label="AI回数/面談"
                           target="consultant"
                           column="llmCallsPerInterview"
                         />
                       </Th>
                       <Th>
-                        <SortButton label="操作ログ" target="consultant" column="logs" />
+                        <SortButton onSort={handleSort} label="操作ログ" target="consultant" column="logs" />
                       </Th>
                       <Th>アクション</Th>
                     </Tr>
@@ -1351,6 +1384,79 @@ function Admin() {
                   </Box>
                 </Collapse>
               </Box>
+            </Stack>
+          </Box>
+
+          <Box
+            bg="white"
+            borderRadius="xl"
+            boxShadow="sm"
+            p={{ base: 6, lg: 8 }}
+            display={activeSection === 'tenant' ? 'block' : 'none'}
+          >
+            <Stack spacing={6}>
+              <Stack spacing={3}>
+                <Heading size="md">企業別オプション管理</Heading>
+                <Text color="gray.600">
+                  企業テナントごとに、面談前コンディションチェックと緊張度スコア表示の有効/無効を切り替えます。
+                </Text>
+              </Stack>
+              <Box border="1px solid" borderColor="gray.100" borderRadius="lg" overflowX="auto">
+                <Table size="sm" variant="simple">
+                  <Thead bg="gray.50">
+                    <Tr>
+                      <Th>tenantId</Th>
+                      <Th>企業名</Th>
+                      <Th>プラン</Th>
+                      <Th>ステータス</Th>
+                      <Th>緊張度スコア表示</Th>
+                      <Th>ターンテイキング</Th>
+                      <Th>ライトテーマ</Th>
+                      <Th>測定件数</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {demoState.tenants.map((tenant) => {
+                      const flags = getTenantFeatureFlags(demoState, tenant.id);
+                      const conditionCount = demoState.conditionRecords.filter((record) => record.tenantId === tenant.id).length;
+                      return (
+                        <Tr key={tenant.id}>
+                          <Td fontWeight="medium">{tenant.id}</Td>
+                          <Td>{tenant.name}</Td>
+                          <Td>{tenant.plan}</Td>
+                          <Td>
+                            <Badge colorScheme={tenant.status === 'active' ? 'green' : 'gray'}>
+                              {tenant.status}
+                            </Badge>
+                          </Td>
+                          <Td>
+                            <Checkbox
+                              isChecked={flags.stressAnalysisEnabled}
+                              onChange={(event) => handleTenantStressToggle(tenant.id, event.target.checked)}
+                            >
+                              {flags.stressAnalysisEnabled ? 'ON' : 'OFF'}
+                            </Checkbox>
+                          </Td>
+                          <Td>
+                            <Badge colorScheme={flags.turnTakingEnabled ? 'purple' : 'gray'}>
+                              {flags.turnTakingEnabled ? 'ON' : 'OFF'}
+                            </Badge>
+                          </Td>
+                          <Td>
+                            <Badge colorScheme={flags.lightThemeEnabled ? 'blue' : 'gray'}>
+                              {flags.lightThemeEnabled ? 'ON' : 'OFF'}
+                            </Badge>
+                          </Td>
+                          <Td>{conditionCount}件</Td>
+                        </Tr>
+                      );
+                    })}
+                  </Tbody>
+                </Table>
+              </Box>
+              <Text fontSize="sm" color="gray.500">
+                デモ版では localStorage の featureFlags を更新します。本番ではサーバー側セッションの tenantId と契約情報から判定します。
+              </Text>
             </Stack>
           </Box>
 
