@@ -649,13 +649,6 @@ function UserHome() {
                   {profile.statusSummary}
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
-                  {profile.statusDetails.map((detail) => (
-                    <Badge key={detail.label} colorScheme={detail.colorScheme} borderRadius="full">
-                      {detail.label}
-                    </Badge>
-                  ))}
-                </Flex>
-                <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
                     <Badge key={tag} bg="whiteAlpha.240" color="white" borderRadius="full" variant="solid">
                       {tag}
