@@ -63,7 +63,12 @@ function CompanyAdminHome() {
   };
 
   return (
-    <Box minH="100dvh" bgGradient="linear(to-br, gray.50, pink.50, gray.100)" py={{ base: 8, md: 12 }}>
+    <Box
+      bgGradient="linear(to-br, gray.50, pink.50, gray.100)"
+      height="100dvh"
+      overflowY="scroll"
+      py={{ base: 8, md: 12 }}
+    >
       <Container maxW="6xl">
         <Stack spacing={8}>
           <Box bg="white" borderRadius="xl" borderWidth="1px" borderColor="pink.100" boxShadow="sm" p={{ base: 5, md: 8 }}>
