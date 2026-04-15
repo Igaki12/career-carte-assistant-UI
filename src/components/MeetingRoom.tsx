@@ -90,6 +90,7 @@ const SHIRP_DETAIL_SCHEMA_PROPERTIES = {
       relationshipQuality: { type: ['string', 'null'] },
       otherCurrent: { type: ['string', 'null'] },
     },
+    required: ['organizationFit', 'selfEvaluation', 'relationshipQuality', 'otherCurrent'],
   },
   H: {
     type: 'object',
@@ -100,6 +101,7 @@ const SHIRP_DETAIL_SCHEMA_PROPERTIES = {
       desiredWorkStyle: { type: ['string', 'null'] },
       otherHope: { type: ['string', 'null'] },
     },
+    required: ['desiredIncome', 'desiredWork', 'desiredWorkStyle', 'otherHope'],
   },
   I: {
     type: 'object',
@@ -111,6 +113,7 @@ const SHIRP_DETAIL_SCHEMA_PROPERTIES = {
       familyIssue: { type: ['string', 'null'] },
       otherIssue: { type: ['string', 'null'] },
     },
+    required: ['skillIssue', 'healthIssue', 'ageIssue', 'familyIssue', 'otherIssue'],
   },
   R: {
     type: 'object',
@@ -122,6 +125,7 @@ const SHIRP_DETAIL_SCHEMA_PROPERTIES = {
       timeOrMoney: { type: ['string', 'null'] },
       otherResource: { type: ['string', 'null'] },
     },
+    required: ['strengthQualification', 'strengthExperience', 'supporters', 'timeOrMoney', 'otherResource'],
   },
 } as const;
 const INTERNAL_REPLY_PATTERNS = [
@@ -349,6 +353,7 @@ const createMeetingResponseSchema = (finalize: boolean) => ({
         type: 'object',
         additionalProperties: false,
         properties: SHIRP_DETAIL_SCHEMA_PROPERTIES,
+        required: ['S', 'H', 'I', 'R'],
       },
       is_complete: {
         type: 'boolean',
