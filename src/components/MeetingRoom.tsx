@@ -234,15 +234,27 @@ const getNextInitialDetailStep = (shirpDetails: ShirpDetailsData): InitialDetail
     return !categoryDetails[step.field];
   }) ?? null;
 
+const getFollowingInitialDetailStep = (step: InitialDetailStep | null): InitialDetailStep | null => {
+  if (!step) return null;
+  const currentIndex = INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.findIndex(
+    (candidate) => candidate.category === step.category && candidate.field === step.field,
+  );
+  if (currentIndex < 0) return null;
+  return INITIAL_REQUIRED_SHIRP_DETAIL_STEPS[currentIndex + 1] ?? null;
+};
+
 const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null) => {
   const currentCategory = nextStep?.category ?? 'S';
   const currentField = nextStep?.field;
+  const followingStep = getFollowingInitialDetailStep(nextStep);
   const currentStepLabel = currentField
     ? getInitialDetailStepLabel(currentCategory, currentField)
     : 'P. プラン生成と全体整理';
   const currentPromptHint = currentField
     ? (SHIRP_DETAIL_PROMPT_HINTS[currentCategory] as Record<string, string>)[currentField]
     : '全体要約とプラン生成';
+  const followingStepLabel =
+    followingStep ? getInitialDetailStepLabel(followingStep.category, followingStep.field) : 'P. プラン生成と全体整理';
   return `
 あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で詳細項目を1つずつ埋めます。
 
@@ -261,21 +273,26 @@ ${JSON.stringify(karte.shirpDetails, null, 2)}
 - 項目: ${currentStepLabel}
 - 確認したい内容: ${currentPromptHint}
 
+# この項目が十分に埋まった場合に次に聞く候補
+- ${followingStepLabel}
+
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
 1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で詳細項目を更新してください。
-2. 今回は「${currentStepLabel}」だけを深掘りする質問を1つだけ行ってください。
-3. otherCurrent / otherHope / otherIssue / otherResource は、会話中の補足があれば必要に応じて更新して構いません。
-4. 必須詳細項目がすべて埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
-5. 4の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
-6. トップレベルの S/H/I/R は、詳細項目を踏まえた要約文にしてください。
-7. 余談やS〜Pに当てはまらない内容は#に記録してください。
-8. response_format の JSON Schema に厳密に従って出力してください。
-9. reply にはユーザーに見せる自然な返答だけを書いてください。
-10. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
-11. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。
-12. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
+2. 以前のテンポの良い面談のように、reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
+3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
+4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
+5. is_complete は、必須詳細項目がすべて埋まり、P(プラン)を生成した時だけ true にしてください。それまでは false にしてください。
+6. 必須詳細項目がすべて埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
+7. 6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
+8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
+9. otherCurrent / otherHope / otherIssue / otherResource は、会話中の補足があれば必要に応じて更新して構いません。余談やS〜Pに当てはまらない内容は#に記録してください。
+10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
+11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
+12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
+13. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+14. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 };
 
