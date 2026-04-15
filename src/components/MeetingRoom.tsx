@@ -34,7 +34,13 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
-import { INITIAL_SHIRP_STEP_ORDER, SHIRP_KEYS } from '../types';
+import {
+  getInitialDetailStepLabel,
+  INITIAL_REQUIRED_SHIRP_DETAIL_STEPS,
+  SHIRP_DETAIL_FIELDS,
+  SHIRP_DETAIL_PROMPT_HINTS,
+} from '../lib/shirp';
+import { SHIRP_KEYS } from '../types';
 import type {
   ContinuousMode,
   ConversationMessage,
@@ -42,7 +48,9 @@ import type {
   KarteData,
   LlmResponse,
   MeetingType,
-  ShirpData,
+  ShirpDetailCategoryKey,
+  ShirpDetailUpdates,
+  ShirpDetailsData,
   ShirpKey,
   StoredKarteRecord,
 } from '../types';
@@ -72,8 +80,53 @@ const SHIRP_SCHEMA_PROPERTIES = {
   P: { type: ['string', 'null'] },
   '#': { type: ['string', 'null'] },
 } as const;
+const SHIRP_DETAIL_SCHEMA_PROPERTIES = {
+  S: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      organizationFit: { type: ['string', 'null'] },
+      selfEvaluation: { type: ['string', 'null'] },
+      relationshipQuality: { type: ['string', 'null'] },
+      otherCurrent: { type: ['string', 'null'] },
+    },
+  },
+  H: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      desiredIncome: { type: ['string', 'null'] },
+      desiredWork: { type: ['string', 'null'] },
+      desiredWorkStyle: { type: ['string', 'null'] },
+      otherHope: { type: ['string', 'null'] },
+    },
+  },
+  I: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      skillIssue: { type: ['string', 'null'] },
+      healthIssue: { type: ['string', 'null'] },
+      ageIssue: { type: ['string', 'null'] },
+      familyIssue: { type: ['string', 'null'] },
+      otherIssue: { type: ['string', 'null'] },
+    },
+  },
+  R: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      strengthQualification: { type: ['string', 'null'] },
+      strengthExperience: { type: ['string', 'null'] },
+      supporters: { type: ['string', 'null'] },
+      timeOrMoney: { type: ['string', 'null'] },
+      otherResource: { type: ['string', 'null'] },
+    },
+  },
+} as const;
 const INTERNAL_REPLY_PATTERNS = [
   /["“”']updated_shirp["“”']\s*:/i,
+  /["“”']updated_shirp_details["“”']\s*:/i,
   /["“”']is_complete["“”']\s*:/i,
   /["“”']feedback["“”']\s*:/i,
   /(?:\{|\[)\s*["“”']reply["“”']\s*:/i,
@@ -108,9 +161,11 @@ P (Plan/プラン):
 - S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄。
 `;
 
+type InitialDetailStep = (typeof INITIAL_REQUIRED_SHIRP_DETAIL_STEPS)[number];
+
 const greetingForMeeting = (meetingType: MeetingType) =>
   meetingType === 'initial'
-    ? 'こんにちは。キャリアメンターです。まずは現状について伺います。今の仕事で満足している点や、気になっている点を教えてください。なお、この対話は事前準備であり、実際の面談が本番です。'
+    ? 'こんにちは。キャリアメンターです。まずは組織適応から伺います。今の職場や組織の雰囲気、働きやすさについて、どのように感じていますか。なお、この対話は事前準備であり、実際の面談が本番です。'
     : 'こんにちは。キャリアメンターです。今日は自由にお話しください。必要に応じて、前回のカルテ内容を更新していきます。なお、この対話は事前準備であり、実際の面談が本番です。';
 
 const AI_RESPONSE_GUIDELINES = `
@@ -157,19 +212,35 @@ ${demographicPairs.map(([label, value]) => `- ${label}: ${value}`).join('\n')}
 `;
 };
 
-const getInitialProgress = (shirp: ShirpData) => {
-  const total = INITIAL_SHIRP_STEP_ORDER.length;
-  const filled = INITIAL_SHIRP_STEP_ORDER.reduce((acc, key) => (shirp[key] ? acc + 1 : acc), 0);
+const getInitialProgress = (shirpDetails: ShirpDetailsData) => {
+  const total = INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length;
+  const filled = INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.reduce(
+    (acc, step) => {
+      const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
+      return categoryDetails[step.field] ? acc + 1 : acc;
+    },
+    0,
+  );
   return Math.round((filled / total) * 100);
 };
 
-const getNextInitialKey = (shirp: ShirpData): ShirpKey | null =>
-  INITIAL_SHIRP_STEP_ORDER.find((key) => !shirp[key]) ?? null;
+const getNextInitialDetailStep = (shirpDetails: ShirpDetailsData): InitialDetailStep | null =>
+  INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.find((step) => {
+    const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
+    return !categoryDetails[step.field];
+  }) ?? null;
 
-const buildInitialPrompt = (karte: KarteData, nextKey: ShirpKey | null) => {
-  const currentKey = nextKey ?? 'S';
+const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null) => {
+  const currentCategory = nextStep?.category ?? 'S';
+  const currentField = nextStep?.field;
+  const currentStepLabel = currentField
+    ? getInitialDetailStepLabel(currentCategory, currentField)
+    : 'P. プラン生成と全体整理';
+  const currentPromptHint = currentField
+    ? (SHIRP_DETAIL_PROMPT_HINTS[currentCategory] as Record<string, string>)[currentField]
+    : '全体要約とプラン生成';
   return `
-あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で情報を埋めます。
+あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で詳細項目を1つずつ埋めます。
 
 # SHIRPガイド
 ${SHIRP_GUIDE}
@@ -179,22 +250,28 @@ ${buildDemographicPromptContext(karte)}
 # 現在のカルテ(SHIRP)
 ${JSON.stringify(karte.shirp, null, 2)}
 
-# 今回フォーカスする項目
-${currentKey}
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
+# 今回フォーカスする詳細項目
+- 項目: ${currentStepLabel}
+- 確認したい内容: ${currentPromptHint}
 
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
-1. ユーザーの発話から情報を抽出し、該当項目を更新してください。
-2. 今回は「${currentKey}」の内容を深掘りする質問を1つだけ行ってください。
-3. S,H,I,Rが全て埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
-4. 3の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
-5. 余談やS〜Pに当てはまらない内容は#に記録してください。
-6. response_format の JSON Schema に厳密に従って出力してください。
-7. reply にはユーザーに見せる自然な返答だけを書いてください。
-8. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
-9. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。
-10. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
+1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で詳細項目を更新してください。
+2. 今回は「${currentStepLabel}」だけを深掘りする質問を1つだけ行ってください。
+3. otherCurrent / otherHope / otherIssue / otherResource は、会話中の補足があれば必要に応じて更新して構いません。
+4. 必須詳細項目がすべて埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
+5. 4の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
+6. トップレベルの S/H/I/R は、詳細項目を踏まえた要約文にしてください。
+7. 余談やS〜Pに当てはまらない内容は#に記録してください。
+8. response_format の JSON Schema に厳密に従って出力してください。
+9. reply にはユーザーに見せる自然な返答だけを書いてください。
+10. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+11. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。
+12. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 };
 
@@ -209,14 +286,17 @@ ${buildDemographicPromptContext(karte)}
 # 現在のカルテ(SHIRP)
 ${JSON.stringify(karte.shirp, null, 2)}
 
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
 1. ユーザーが自由に話せるように傾聴し、深掘り質問やプロービングを行います。
-2. ユーザーの発話から得た情報で、SHIRPを部分的に更新してください。
+2. ユーザーの発話から得た情報で、トップレベル要約と必要な詳細項目の両方を部分更新してください。
 3. response_format の JSON Schema に厳密に従って出力してください。
 4. reply にはユーザーに見せる自然な返答だけを書いてください。
-5. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+5. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
 6. デモグラフィックは既知情報として扱いますが、返答トーンは現状の自然さを維持してください。
 7. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
@@ -232,16 +312,19 @@ ${buildDemographicPromptContext(karte)}
 # 現在のカルテ(SHIRP)
 ${JSON.stringify(karte.shirp, null, 2)}
 
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
-1. 会話履歴から情報を抽出し、SHIRP項目を可能な限り埋めてください。
+1. 会話履歴から情報を抽出し、SHIRPのトップレベル要約と詳細項目を可能な限り埋めてください。
 2. 足りない項目は補足し、P(プラン)を生成してください。
 3. 面談後のキャリアに関する簡単なフィードバックを80~120文字で作成してください。
 4. reply の最後に、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を含めてください。
 5. response_format の JSON Schema に厳密に従って出力してください。
 6. reply にはユーザーに見せる自然な返答だけを書いてください。
-7. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
+7. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
 8. デモグラフィックは整合性確認のために使い、返答のトーンや構成は大きく変えないでください。
 9. 既知のプロフィール情報と矛盾しない前提で整理し、不足分は会話履歴ベースで補ってください。
 `.trim();
@@ -262,6 +345,11 @@ const createMeetingResponseSchema = (finalize: boolean) => ({
         properties: SHIRP_SCHEMA_PROPERTIES,
         required: SHIRP_KEYS,
       },
+      updated_shirp_details: {
+        type: 'object',
+        additionalProperties: false,
+        properties: SHIRP_DETAIL_SCHEMA_PROPERTIES,
+      },
       is_complete: {
         type: 'boolean',
       },
@@ -274,8 +362,8 @@ const createMeetingResponseSchema = (finalize: boolean) => ({
         : {}),
     },
     required: finalize
-      ? ['reply', 'updated_shirp', 'feedback', 'is_complete']
-      : ['reply', 'updated_shirp', 'is_complete'],
+      ? ['reply', 'updated_shirp', 'updated_shirp_details', 'feedback', 'is_complete']
+      : ['reply', 'updated_shirp', 'updated_shirp_details', 'is_complete'],
   },
 });
 
@@ -299,8 +387,8 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
   }
 
   const allowedTopLevelKeys = finalize
-    ? new Set(['reply', 'updated_shirp', 'feedback', 'is_complete'])
-    : new Set(['reply', 'updated_shirp', 'is_complete']);
+    ? new Set(['reply', 'updated_shirp', 'updated_shirp_details', 'feedback', 'is_complete'])
+    : new Set(['reply', 'updated_shirp', 'updated_shirp_details', 'is_complete']);
 
   Object.keys(parsed).forEach((key) => {
     if (!allowedTopLevelKeys.has(key)) {
@@ -339,6 +427,38 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
     throw new Error('AI応答のis_completeが不正です。');
   }
 
+  const updatedShirpDetails = parsed.updated_shirp_details;
+  if (!isRecord(updatedShirpDetails)) {
+    throw new Error('AI応答のupdated_shirp_detailsが不正です。');
+  }
+
+  const validatedDetailUpdates: ShirpDetailUpdates = {};
+  Object.entries(updatedShirpDetails).forEach(([categoryKey, detailValue]) => {
+    if (!Object.keys(SHIRP_DETAIL_FIELDS).includes(categoryKey)) {
+      throw new Error('AI応答のupdated_shirp_detailsに許可されていないカテゴリがあります。');
+    }
+    if (!isRecord(detailValue)) {
+      throw new Error('AI応答のupdated_shirp_detailsの形式が不正です。');
+    }
+    const category = categoryKey as ShirpDetailCategoryKey;
+    const allowedFields = SHIRP_DETAIL_FIELDS[category] as readonly string[];
+    const nextCategoryUpdates: Record<string, string> = {};
+
+    Object.entries(detailValue).forEach(([fieldKey, fieldContent]) => {
+      if (!allowedFields.includes(fieldKey)) {
+        throw new Error('AI応答のupdated_shirp_detailsに許可されていない詳細キーがあります。');
+      }
+      if (fieldContent !== null && typeof fieldContent !== 'string') {
+        throw new Error('AI応答のupdated_shirp_detailsの値が不正です。');
+      }
+      if (typeof fieldContent === 'string') {
+        nextCategoryUpdates[fieldKey] = fieldContent;
+      }
+    });
+
+    validatedDetailUpdates[category] = nextCategoryUpdates as ShirpDetailUpdates[typeof category];
+  });
+
   if (finalize) {
     const feedback = parsed.feedback;
     if (typeof feedback !== 'string' || !feedback.trim()) {
@@ -347,6 +467,7 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
     return {
       reply: reply.trim(),
       updated_shirp: validatedUpdates,
+      updated_shirp_details: validatedDetailUpdates,
       feedback: feedback.trim(),
       is_complete: isComplete,
     };
@@ -355,6 +476,7 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
   return {
     reply: reply.trim(),
     updated_shirp: validatedUpdates,
+    updated_shirp_details: validatedDetailUpdates,
     is_complete: isComplete,
   };
 };
@@ -369,6 +491,29 @@ const updateShirp = (prev: KarteData, updates?: Partial<Record<ShirpKey, string>
     }
   });
   return { ...prev, shirp: nextShirp };
+};
+
+const updateShirpDetails = (prev: KarteData, updates?: ShirpDetailUpdates) => {
+  if (!updates) return prev;
+  const nextShirpDetails: ShirpDetailsData = {
+    S: { ...prev.shirpDetails.S },
+    H: { ...prev.shirpDetails.H },
+    I: { ...prev.shirpDetails.I },
+    R: { ...prev.shirpDetails.R },
+  };
+
+  Object.entries(updates).forEach(([categoryKey, categoryUpdates]) => {
+    if (!categoryUpdates) return;
+    const category = categoryKey as ShirpDetailCategoryKey;
+    const categoryDetails = nextShirpDetails[category] as Record<string, string | null>;
+    Object.entries(categoryUpdates).forEach(([detailKey, detailValue]) => {
+      if (typeof detailValue === 'string' && detailValue.trim()) {
+        categoryDetails[detailKey] = detailValue;
+      }
+    });
+  });
+
+  return { ...prev, shirpDetails: nextShirpDetails };
 };
 
 const decodeBase64ToUint8Array = (base64: string) => {
@@ -465,7 +610,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     return `あと${remainingMessages}回メッセージを送信できます`;
   }, [apiUsageCount, remainingMessages]);
 
-  const initialProgress = useMemo(() => getInitialProgress(karte.shirp), [karte.shirp]);
+  const initialProgress = useMemo(() => getInitialProgress(karte.shirpDetails), [karte.shirpDetails]);
 
   const saveUserState = useCallback((nextState: DemoUserState) => {
     setUserState(nextState);
@@ -866,9 +1011,9 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const runLLMProcess = useCallback(
     async (history: ConversationMessage[], finalize = false) => {
       if (!ensureApiKey()) return;
-      const nextKey = isInitialMeeting ? getNextInitialKey(karte.shirp) : null;
+      const nextStep = isInitialMeeting ? getNextInitialDetailStep(karte.shirpDetails) : null;
       const systemPrompt = isInitialMeeting
-        ? buildInitialPrompt(karte, nextKey)
+        ? buildInitialPrompt(karte, nextStep)
         : finalize
           ? buildContinuousFinalizePrompt(karte)
           : buildContinuousPrompt(karte);
@@ -908,7 +1053,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
         const parsed = parseStructuredLlmResponse(content, finalize);
 
-        setKarte((prev) => updateShirp(prev, parsed.updated_shirp));
+        setKarte((prev) => updateShirpDetails(updateShirp(prev, parsed.updated_shirp), parsed.updated_shirp_details));
 
         const assistantMessage: ConversationMessage = {
           role: 'assistant',

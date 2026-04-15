@@ -1,25 +1,29 @@
-import { Box, SimpleGrid, Stack, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from '@chakra-ui/react';
+import {
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Box,
+  SimpleGrid,
+  Stack,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  Text,
+} from '@chakra-ui/react';
 import SurveyRadar from './SurveyRadar';
+import {
+  isShirpDetailCategoryKey,
+  SHIRP_DETAIL_FIELDS,
+  SHIRP_DETAIL_LABELS,
+  SHIRP_HINTS,
+  SHIRP_LABELS,
+} from '../lib/shirp';
 import { SHIRP_KEYS } from '../types';
-import type { KarteData, ShirpKey, SurveyFactorKey } from '../types';
-
-const SHIRP_LABELS: Record<ShirpKey, string> = {
-  S: 'S. 現状 (Satisfaction/現状)',
-  H: 'H. 希望 (Hope/希望)',
-  I: 'I. 課題 (Issue/課題)',
-  R: 'R. 資源 (Resource/資源)',
-  P: 'P. プラン (Plan/プラン)',
-  '#': '# その他 (自由記述)',
-};
-
-const SHIRP_HINTS: Record<ShirpKey, string> = {
-  S: '組織適応 / 自身への評価 / 良好な人間関係 / #そのほかの現状',
-  H: '希望する収入 / 希望する仕事内容 / 希望する勤務形態 / #そのほかの希望',
-  I: 'スキルの課題 / 健康上の課題 / 年齢の課題 / 家庭の課題 / #そのほかの課題',
-  R: '強みとなる資格 / 強みとなる経験 / 強みとなる協力者 / 強みとなる時間や資金 / #そのほかの強み',
-  P: 'S〜Rの情報を元に、AIが解決に向けたプランを生成する',
-  '#': 'S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄',
-};
+import type { KarteData, SurveyFactorKey } from '../types';
 
 const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   growth_orientation: '成長志向',
@@ -158,6 +162,53 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                   >
                     {value || '未聴取'}
                   </Box>
+                  {isShirpDetailCategoryKey(key) && (
+                    <Accordion allowToggle mt={2}>
+                      <AccordionItem borderWidth="1px" borderColor="gray.200" borderRadius="lg">
+                        <AccordionButton px={3} py={2}>
+                          <Box flex="1" textAlign="left">
+                            <Text fontSize="xs" fontWeight="bold" color="gray.600">
+                              詳細を確認
+                            </Text>
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                        <AccordionPanel pt={2}>
+                          {(() => {
+                            const detailLabels = SHIRP_DETAIL_LABELS[key] as Record<string, string>;
+                            const detailValues = data.shirpDetails[key] as Record<string, string | null>;
+                            return (
+                          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
+                            {SHIRP_DETAIL_FIELDS[key].map((field) => {
+                              const detailValue = detailValues[field];
+                              return (
+                                <Box key={`${key}-${field}`}>
+                                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                                    {detailLabels[field]}
+                                  </Text>
+                                  <Box
+                                    borderWidth="1px"
+                                    borderRadius="md"
+                                    p={3}
+                                    bg={detailValue ? 'gray.50' : 'white'}
+                                    color={detailValue ? 'gray.800' : 'gray.400'}
+                                    fontSize="sm"
+                                    fontStyle={detailValue ? 'normal' : 'italic'}
+                                    minH="56px"
+                                    whiteSpace="pre-wrap"
+                                  >
+                                    {detailValue || '未聴取'}
+                                  </Box>
+                                </Box>
+                              );
+                            })}
+                          </SimpleGrid>
+                            );
+                          })()}
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                  )}
                 </Box>
               );
             })}

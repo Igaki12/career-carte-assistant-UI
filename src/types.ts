@@ -13,6 +13,28 @@ export type ShirpKey = 'S' | 'H' | 'I' | 'R' | 'P' | '#';
 
 export type ShirpData = Record<ShirpKey, string | null>;
 
+export type ShirpDetailCategoryKey = 'S' | 'H' | 'I' | 'R';
+
+export type ShirpSDetailKey = 'organizationFit' | 'selfEvaluation' | 'relationshipQuality' | 'otherCurrent';
+export type ShirpHDetailKey = 'desiredIncome' | 'desiredWork' | 'desiredWorkStyle' | 'otherHope';
+export type ShirpIDetailKey = 'skillIssue' | 'healthIssue' | 'ageIssue' | 'familyIssue' | 'otherIssue';
+export type ShirpRDetailKey = 'strengthQualification' | 'strengthExperience' | 'supporters' | 'timeOrMoney' | 'otherResource';
+
+export type ShirpDetailKeyMap = {
+  S: ShirpSDetailKey;
+  H: ShirpHDetailKey;
+  I: ShirpIDetailKey;
+  R: ShirpRDetailKey;
+};
+
+export type ShirpDetailsData = {
+  [K in ShirpDetailCategoryKey]: Record<ShirpDetailKeyMap[K], string | null>;
+};
+
+export type ShirpDetailUpdates = {
+  [K in ShirpDetailCategoryKey]?: Partial<Record<ShirpDetailKeyMap[K], string | null>>;
+};
+
 export type DemographicData = {
   name: string | null;
   age: string | null;
@@ -52,6 +74,7 @@ export type ConditionSummary = {
 export type KarteData = {
   demographics: DemographicData;
   shirp: ShirpData;
+  shirpDetails: ShirpDetailsData;
   survey: SurveyResult;
   conditionSummary: ConditionSummary | null;
 };
@@ -81,6 +104,7 @@ export type ConditionRecord = ConditionSummary & {
 export type LlmResponse = {
   reply: string;
   updated_shirp?: Partial<Record<ShirpKey, string>>;
+  updated_shirp_details?: ShirpDetailUpdates;
   is_complete?: boolean;
   feedback?: string;
 };

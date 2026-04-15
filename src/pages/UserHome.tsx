@@ -49,34 +49,25 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
+import {
+  cloneShirpDetails,
+  createEmptyShirpDetails,
+  isShirpDetailCategoryKey,
+  SHIRP_DETAIL_FIELDS,
+  SHIRP_DETAIL_LABELS,
+  SHIRP_HINTS,
+  SHIRP_LABELS,
+} from '../lib/shirp';
 import { SHIRP_KEYS } from '../types';
 import type {
   ContinuousMode,
   DemoUserState,
   MeetingType,
+  ShirpDetailsData,
   ShirpData,
-  ShirpKey,
   SurveyFactorKey,
   SurveyResult,
 } from '../types';
-
-const SHIRP_LABELS: Record<ShirpKey, string> = {
-  S: 'S. 現状 (Satisfaction/現状)',
-  H: 'H. 希望 (Hope/希望)',
-  I: 'I. 課題 (Issue/課題)',
-  R: 'R. 資源 (Resource/資源)',
-  P: 'P. プラン (Plan/プラン)',
-  '#': '# その他 (自由記述)',
-};
-
-const SHIRP_HINTS: Record<ShirpKey, string> = {
-  S: '組織適応 / 自身への評価 / 良好な人間関係 / #そのほかの現状',
-  H: '希望する収入 / 希望する仕事内容 / 希望する勤務形態 / #そのほかの希望',
-  I: 'スキルの課題 / 健康上の課題 / 年齢の課題 / 家庭の課題 / #そのほかの課題',
-  R: '強みとなる資格 / 強みとなる経験 / 強みとなる協力者 / 強みとなる時間や資金 / #そのほかの強み',
-  P: 'S〜Rの情報を元に、AIが解決に向けたプランを生成する',
-  '#': 'S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄',
-};
 
 const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   growth_orientation: '成長志向',
@@ -333,6 +324,7 @@ function UserHome() {
     P: '',
     '#': '',
   });
+  const [latestDetailDraft, setLatestDetailDraft] = useState<ShirpDetailsData>(() => createEmptyShirpDetails());
   const defaultSurveyAnswers = useMemo(() => createDefaultSurveyAnswers(), []);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
   const [lastSurveyAnswers, setLastSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
@@ -497,6 +489,7 @@ function UserHome() {
       P: latestKarte.shirp.P ?? '',
       '#': latestKarte.shirp['#'] ?? '',
     });
+    setLatestDetailDraft(cloneShirpDetails(latestKarte.shirpDetails));
     setIsEditingLatest(true);
   };
 
@@ -505,6 +498,7 @@ function UserHome() {
     const nextLatestKarte = {
       ...latestKarte,
       shirp: { ...latestKarte.shirp, ...latestDraft },
+      shirpDetails: cloneShirpDetails(latestDetailDraft),
     };
 
     const nextRecords =
@@ -517,6 +511,7 @@ function UserHome() {
               data: {
                 ...userState.karteRecords[0].data,
                 shirp: { ...userState.karteRecords[0].data.shirp, ...latestDraft },
+                shirpDetails: cloneShirpDetails(latestDetailDraft),
               },
             },
             ...userState.karteRecords.slice(1),
@@ -952,25 +947,63 @@ function UserHome() {
               {isEditingLatest ? (
                 <Stack spacing={3}>
                   {SHIRP_KEYS.map((key) => (
-                    <Box key={key}>
-                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
-                        {SHIRP_LABELS[key]}
-                      </Text>
-                      <Text fontSize="xs" color="gray.400" mb={1}>
-                        {SHIRP_HINTS[key]}
-                      </Text>
-                      <Textarea
-                        value={latestDraft[key] ?? ''}
-                        onChange={(event) =>
-                          setLatestDraft((prev) => ({
-                            ...prev,
-                            [key]: event.target.value,
-                          }))
-                        }
-                        rows={3}
-                        bg="white"
-                      />
-                    </Box>
+                    <Stack key={key} spacing={3}>
+                      <Box>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                          {SHIRP_LABELS[key]}
+                        </Text>
+                        <Text fontSize="xs" color="gray.400" mb={1}>
+                          {SHIRP_HINTS[key]}
+                        </Text>
+                        <Textarea
+                          value={latestDraft[key] ?? ''}
+                          onChange={(event) =>
+                            setLatestDraft((prev) => ({
+                              ...prev,
+                              [key]: event.target.value,
+                            }))
+                          }
+                          rows={3}
+                          bg="white"
+                        />
+                      </Box>
+                      {isShirpDetailCategoryKey(key) && (
+                        <Box pl={{ base: 0, md: 4 }}>
+                          <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
+                            {SHIRP_LABELS[key]} の詳細
+                          </Text>
+                          {(() => {
+                            const detailLabels = SHIRP_DETAIL_LABELS[key] as Record<string, string>;
+                            const detailValues = latestDetailDraft[key] as Record<string, string | null>;
+                            return (
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                            {SHIRP_DETAIL_FIELDS[key].map((field) => (
+                              <Box key={`${key}-${field}`}>
+                                <Text fontSize="xs" color="gray.500" mb={1}>
+                                  {detailLabels[field]}
+                                </Text>
+                                <Textarea
+                                  value={detailValues[field] ?? ''}
+                                  onChange={(event) =>
+                                    setLatestDetailDraft((prev) => ({
+                                      ...prev,
+                                      [key]: {
+                                        ...prev[key],
+                                        [field]: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  rows={3}
+                                  bg="white"
+                                />
+                              </Box>
+                            ))}
+                          </SimpleGrid>
+                            );
+                          })()}
+                        </Box>
+                      )}
+                    </Stack>
                   ))}
                 </Stack>
               ) : (

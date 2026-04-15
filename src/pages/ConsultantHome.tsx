@@ -27,9 +27,18 @@ import {
 import { keyframes } from '@emotion/react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
+import { createEmptyKarte } from '../lib/demoUserState';
+import {
+  cloneShirpDetails,
+  isShirpDetailCategoryKey,
+  SHIRP_DETAIL_FIELDS,
+  SHIRP_DETAIL_LABELS,
+  SHIRP_HINTS,
+  SHIRP_LABELS,
+} from '../lib/shirp';
 import SurveyRadar from '../components/SurveyRadar';
 import { SHIRP_KEYS } from '../types';
-import type { KarteData, ShirpKey, SurveyFactorKey } from '../types';
+import type { KarteData, SurveyFactorKey } from '../types';
 
 type ConsultantProfile = {
   id: string;
@@ -58,24 +67,6 @@ type KarteRecord = {
   atUpdated: string;
   statusLabel: string;
   data: KarteData;
-};
-
-const SHIRP_LABELS: Record<ShirpKey, string> = {
-  S: 'S. 現状 (Satisfaction/現状)',
-  H: 'H. 希望 (Hope/希望)',
-  I: 'I. 課題 (Issue/課題)',
-  R: 'R. 資源 (Resource/資源)',
-  P: 'P. プラン (Plan/プラン)',
-  '#': '# その他 (自由記述)',
-};
-
-const SHIRP_HINTS: Record<ShirpKey, string> = {
-  S: '組織適応 / 自身への評価 / 良好な人間関係 / #そのほかの現状',
-  H: '希望する収入 / 希望する仕事内容 / 希望する勤務形態 / #そのほかの希望',
-  I: 'スキルの課題 / 健康上の課題 / 年齢の課題 / 家庭の課題 / #そのほかの課題',
-  R: '強みとなる資格 / 強みとなる経験 / 強みとなる協力者 / 強みとなる時間や資金 / #そのほかの強み',
-  P: 'S〜Rの情報を元に、AIが解決に向けたプランを生成する',
-  '#': 'S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄',
 };
 
 const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
@@ -109,41 +100,6 @@ const heroContentSlide = keyframes`
     transform: translate3d(0, 0, 0);
   }
 `;
-
-const createEmptyKarte = (): KarteData => ({
-  demographics: {
-    name: null,
-    age: null,
-    company: null,
-    jobTitle: null,
-    workLocationPrefecture: null,
-    jobChangeCount: null,
-    yearsOfService: null,
-    gender: null,
-    maritalStatus: null,
-    childrenCount: null,
-    youngestChildAge: null,
-  },
-  shirp: {
-    S: null,
-    H: null,
-    I: null,
-    R: null,
-    P: null,
-    '#': null,
-  },
-  survey: {
-    factors: {
-      growth_orientation: null,
-      problem_solving_orientation: null,
-      organization_contribution_orientation: null,
-      interpersonal_adaptation_orientation: null,
-      emotional_response_tendency: null,
-    },
-    lastUpdated: null,
-  },
-  conditionSummary: null,
-});
 
 function ConsultantHome() {
   const toast = useToast();
@@ -227,6 +183,34 @@ function ConsultantHome() {
           P: 'マネジメント研修と英語ピッチ練習を計画。',
           '#': '次回に転職判断軸を深掘り。',
         },
+        shirpDetails: {
+          S: {
+            organizationFit: '裁量は大きいが、最近は組織の方向性とのずれを感じている。',
+            selfEvaluation: '事業推進力には自信がある一方、今の環境では成長実感が薄い。',
+            relationshipQuality: '社内メンターとの関係は良好で、相談先はある。',
+            otherCurrent: null,
+          },
+          H: {
+            desiredIncome: '現年収を維持しつつ、成果が報酬に反映される環境を望んでいる。',
+            desiredWork: '事業開発や新規事業に近い役割を希望。',
+            desiredWorkStyle: '裁量を持って動ける働き方を重視。',
+            otherHope: null,
+          },
+          I: {
+            skillIssue: '英語でのプレゼンに不安がある。',
+            healthIssue: null,
+            ageIssue: null,
+            familyIssue: '子育てとの両立を踏まえて検討したい。',
+            otherIssue: null,
+          },
+          R: {
+            strengthQualification: null,
+            strengthExperience: '新規事業立ち上げ経験がある。',
+            supporters: '社内メンターが相談相手になっている。',
+            timeOrMoney: null,
+            otherResource: null,
+          },
+        },
         survey: createEmptyKarte().survey,
         conditionSummary: null,
       },
@@ -238,7 +222,11 @@ function ConsultantHome() {
 
   const handleOpenKarte = (record: KarteRecord) => {
     setSelectedRecord(record);
-    setKarteDraft({ ...record.data, shirp: { ...record.data.shirp } });
+    setKarteDraft({
+      ...record.data,
+      shirp: { ...record.data.shirp },
+      shirpDetails: cloneShirpDetails(record.data.shirpDetails),
+    });
     karteDisclosure.onOpen();
   };
 
@@ -253,7 +241,11 @@ function ConsultantHome() {
       ...selectedRecord,
       statusLabel: 'コンサル編集済み',
       atUpdated: formattedDate,
-      data: { ...karteDraft },
+      data: {
+        ...karteDraft,
+        shirp: { ...karteDraft.shirp },
+        shirpDetails: cloneShirpDetails(karteDraft.shirpDetails),
+      },
     };
     setKarteRecords((prev) => [nextRecord, ...prev.filter((record) => record.id !== selectedRecord.id)]);
     setSelectedRecord(nextRecord);
@@ -484,28 +476,69 @@ function ConsultantHome() {
                   )}
                 </Box>
                 {SHIRP_KEYS.map((key) => (
-                  <Box key={key}>
-                    <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
-                      {SHIRP_LABELS[key]}
-                    </Text>
-                    <Text fontSize="xs" color="gray.400" mb={1}>
-                      {SHIRP_HINTS[key]}
-                    </Text>
-                    <Textarea
-                      value={karteDraft.shirp[key] ?? ''}
-                      onChange={(event) =>
-                        setKarteDraft((prev) => ({
-                          ...prev,
-                          shirp: {
-                            ...prev.shirp,
-                            [key]: event.target.value,
-                          },
-                        }))
-                      }
-                      rows={3}
-                      bg="white"
-                    />
-                  </Box>
+                  <Stack key={key} spacing={3}>
+                    <Box>
+                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                        {SHIRP_LABELS[key]}
+                      </Text>
+                      <Text fontSize="xs" color="gray.400" mb={1}>
+                        {SHIRP_HINTS[key]}
+                      </Text>
+                      <Textarea
+                        value={karteDraft.shirp[key] ?? ''}
+                        onChange={(event) =>
+                          setKarteDraft((prev) => ({
+                            ...prev,
+                            shirp: {
+                              ...prev.shirp,
+                              [key]: event.target.value,
+                            },
+                          }))
+                        }
+                        rows={3}
+                        bg="white"
+                      />
+                    </Box>
+                    {isShirpDetailCategoryKey(key) && (
+                      <Box pl={{ base: 0, md: 4 }}>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
+                          {SHIRP_LABELS[key]} の詳細
+                        </Text>
+                        {(() => {
+                          const detailLabels = SHIRP_DETAIL_LABELS[key] as Record<string, string>;
+                          const detailValues = karteDraft.shirpDetails[key] as Record<string, string | null>;
+                          return (
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                          {SHIRP_DETAIL_FIELDS[key].map((field) => (
+                            <Box key={`${key}-${field}`}>
+                              <Text fontSize="xs" color="gray.500" mb={1}>
+                                {detailLabels[field]}
+                              </Text>
+                              <Textarea
+                                value={detailValues[field] ?? ''}
+                                onChange={(event) =>
+                                  setKarteDraft((prev) => ({
+                                    ...prev,
+                                    shirpDetails: {
+                                      ...prev.shirpDetails,
+                                      [key]: {
+                                        ...prev.shirpDetails[key],
+                                        [field]: event.target.value,
+                                      },
+                                    },
+                                  }))
+                                }
+                                rows={3}
+                                bg="white"
+                              />
+                            </Box>
+                          ))}
+                        </SimpleGrid>
+                          );
+                        })()}
+                      </Box>
+                    )}
+                  </Stack>
                 ))}
               </Stack>
             ) : (

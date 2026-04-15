@@ -10,6 +10,7 @@ import type {
   Tenant,
   TenantFeatureFlags,
 } from '../types';
+import { cloneShirpDetails, createEmptyShirpDetails } from './shirp';
 
 export const LOCAL_STORAGE_DEMO_USER_KEY = 'cca-demo-user-state';
 export const LEGACY_LOCAL_STORAGE_KARTE_KEY = 'cca-karte';
@@ -86,6 +87,7 @@ export const createEmptyKarte = (): KarteData => ({
     P: null,
     '#': null,
   },
+  shirpDetails: createEmptyShirpDetails(),
   survey: createEmptySurvey(),
   conditionSummary: null,
 });
@@ -138,6 +140,7 @@ export const applyDemographicsToKarte = (
   return {
     ...nextKarte,
     demographics: mergeDemographics(nextKarte.demographics, demographics),
+    shirpDetails: nextKarte.shirpDetails ? cloneShirpDetails(nextKarte.shirpDetails) : createEmptyShirpDetails(),
     survey: nextKarte.survey ?? createEmptySurvey(),
     conditionSummary: nextKarte.conditionSummary ?? null,
   };
