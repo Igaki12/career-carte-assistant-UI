@@ -49,6 +49,7 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
+import { downloadKarteCsv, downloadKartePdf } from '../lib/karteExport';
 import {
   cloneShirpDetails,
   createEmptyShirpDetails,
@@ -415,14 +416,49 @@ function UserHome() {
     startMeeting(pendingStart.meetingType, mode, 'fresh');
   };
 
-  const handleDownload = (type: 'csv' | 'pdf') => {
-    toast({
-      title: type === 'csv' ? 'CSVダウンロード' : 'PDFダウンロード',
-      description: 'サンプルファイルを準備中です。',
-      status: 'info',
-      duration: 2400,
-      isClosable: true,
-    });
+  const handleDownload = async (type: 'csv' | 'pdf') => {
+    if (!latestRecord) {
+      toast({
+        title: type === 'csv' ? 'CSV出力できません' : 'PDF出力できません',
+        description: '保存済みの最新カルテがありません。カルテを保存してから再度お試しください。',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const payload = {
+      karte: latestKarte,
+      meta: {
+        meetingType: latestRecord.meetingType,
+        createdAt: latestRecord.atCreated,
+        updatedAt: latestRecord.atUpdated,
+        feedback: latestRecord.feedback,
+      },
+    };
+
+    try {
+      if (type === 'csv') {
+        downloadKarteCsv(payload);
+      } else {
+        await downloadKartePdf(payload);
+      }
+      toast({
+        title: type === 'csv' ? 'CSVをダウンロードしました' : 'PDFをダウンロードしました',
+        status: 'success',
+        duration: 2400,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: type === 'csv' ? 'CSV出力に失敗しました' : 'PDF出力に失敗しました',
+        description: (error as Error).message,
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleSurveySubmit = (event: FormEvent<HTMLFormElement>) => {

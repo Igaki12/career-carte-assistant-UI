@@ -1,7 +1,6 @@
 import { Box } from '@chakra-ui/react';
 import { useId } from 'react';
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+import { createSurveyRadarModel } from '../lib/surveyRadar';
 
 type Props = {
   labels: string[];
@@ -12,39 +11,12 @@ type Props = {
 
 const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
   const gradientId = useId();
-  const count = Math.min(labels.length, values.length);
-  const padding = 50;
-  const chartSize = size * 0.9;
-  const canvasSize = chartSize + padding * 2;
-  const center = canvasSize / 2;
-  const radius = chartSize * 0.32;
-  const labelRadius = chartSize * 0.42;
-  const angleStep = (Math.PI * 2) / count;
-
-  const points = Array.from({ length: count }).map((_, index) => {
-    const value = clamp(values[index] ?? 0, 0, max) / max;
-    const angle = -Math.PI / 2 + angleStep * index;
-    const x = center + Math.cos(angle) * radius * value;
-    const y = center + Math.sin(angle) * radius * value;
-    return `${x},${y}`;
-  });
-
-  const gridPolygons = [0.25, 0.5, 0.75, 1].map((ratio) => {
-    const polygonPoints = Array.from({ length: count }).map((_, index) => {
-      const angle = -Math.PI / 2 + angleStep * index;
-      const x = center + Math.cos(angle) * radius * ratio;
-      const y = center + Math.sin(angle) * radius * ratio;
-      return `${x},${y}`;
-    });
-    return polygonPoints.join(' ');
-  });
-
-  const axisLines = Array.from({ length: count }).map((_, index) => {
-    const angle = -Math.PI / 2 + angleStep * index;
-    const x = center + Math.cos(angle) * radius;
-    const y = center + Math.sin(angle) * radius;
-    return { x, y };
-  });
+  const { canvasSize, center, points, gridPolygons, axisLines, labels: positionedLabels } = createSurveyRadarModel(
+    labels,
+    values,
+    max,
+    size,
+  );
 
   return (
     <Box w={`${canvasSize}px`} h={`${canvasSize}px`} mx="auto">
@@ -58,7 +30,7 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
         {gridPolygons.map((polygon, index) => (
           <polygon
             key={`grid-${index}`}
-            points={polygon}
+            points={polygon.map((point) => `${point.x},${point.y}`).join(' ')}
             fill="none"
             stroke="#cbd5f5"
             strokeDasharray={index === gridPolygons.length - 1 ? undefined : '2 4'}
@@ -77,29 +49,25 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
           />
         ))}
         <polygon
-          points={points.join(' ')}
+          points={points.map((point) => `${point.x},${point.y}`).join(' ')}
           fill={`url(#${gradientId})`}
           stroke="#0ea5e9"
           strokeWidth={2}
         />
-        {axisLines.map((_, index) => {
-          const angle = -Math.PI / 2 + angleStep * index;
-          const labelX = center + Math.cos(angle) * labelRadius;
-          const labelY = center + Math.sin(angle) * labelRadius;
-          const anchor = labelX > center + 4 ? 'start' : labelX < center - 4 ? 'end' : 'middle';
-          const dy = labelY > center + 4 ? 12 : labelY < center - 4 ? -4 : 4;
+        {positionedLabels.map((label, index) => {
+          const anchor = label.anchor === 'left' ? 'start' : label.anchor === 'right' ? 'end' : 'middle';
           return (
             <text
               key={`label-${index}`}
-              x={labelX}
-              y={labelY}
+              x={label.x}
+              y={label.y}
               textAnchor={anchor}
               fontSize="11"
               fontFamily="'Helvetica Neue', Arial, sans-serif"
               fill="#475569"
-              dy={dy}
+              dy={label.dy}
             >
-              {labels[index]}
+              {label.text}
             </text>
           );
         })}
