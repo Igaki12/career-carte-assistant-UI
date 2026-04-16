@@ -228,6 +228,12 @@ const getInitialProgress = (shirpDetails: ShirpDetailsData) => {
   return Math.round((filled / total) * 100);
 };
 
+const getInitialProgressCount = (shirpDetails: ShirpDetailsData) =>
+  INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.reduce((acc, step) => {
+    const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
+    return categoryDetails[step.field] ? acc + 1 : acc;
+  }, 0);
+
 const getNextInitialDetailStep = (shirpDetails: ShirpDetailsData): InitialDetailStep | null =>
   INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.find((step) => {
     const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
@@ -633,6 +639,16 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [apiUsageCount, remainingMessages]);
 
   const initialProgress = useMemo(() => getInitialProgress(karte.shirpDetails), [karte.shirpDetails]);
+  const initialProgressCount = useMemo(() => getInitialProgressCount(karte.shirpDetails), [karte.shirpDetails]);
+  const nextInitialStep = useMemo(() => getNextInitialDetailStep(karte.shirpDetails), [karte.shirpDetails]);
+  const initialProgressLabel = useMemo(
+    () =>
+      nextInitialStep
+        ? getInitialDetailStepLabel(nextInitialStep.category, nextInitialStep.field)
+        : 'P. プラン生成と全体整理',
+    [nextInitialStep],
+  );
+  const initialProgressCountLabel = `${initialProgressCount} / ${INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length} 項目完了`;
 
   const saveUserState = useCallback((nextState: DemoUserState) => {
     setUserState(nextState);
@@ -1438,6 +1454,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               isSpeaking={isSpeaking}
               conversationStarted={conversationStarted}
               progress={initialProgress}
+              progressLabel={initialProgressLabel}
+              progressCountLabel={initialProgressCountLabel}
               onModelChange={setSelectedModelId}
               showProgress={isInitialMeeting}
             />

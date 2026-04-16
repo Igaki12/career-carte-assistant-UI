@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, IconButton, Text } from '@chakra-ui/react';
+import { Box, Collapse, Flex, Icon, IconButton, Text } from '@chakra-ui/react';
 import { RepeatIcon, ViewIcon } from '@chakra-ui/icons';
+import { FiChevronUp } from 'react-icons/fi';
 import {
   AmbientLight,
   Clock,
@@ -67,6 +68,8 @@ type StageProps = {
   isSpeaking: boolean;
   conversationStarted: boolean;
   progress: number;
+  progressLabel?: string;
+  progressCountLabel?: string;
   showProgress?: boolean;
   onModelChange?: (modelId: StageModelId) => void;
 };
@@ -179,6 +182,8 @@ const VrmStage = ({
   isSpeaking,
   conversationStarted,
   progress,
+  progressLabel,
+  progressCountLabel,
   showProgress = true,
   onModelChange,
 }: StageProps) => {
@@ -216,6 +221,7 @@ const VrmStage = ({
   const [isReady, setIsReady] = useState(false);
   const [modelIndex, setModelIndex] = useState(0);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [isProgressExpanded, setIsProgressExpanded] = useState(false);
 
   // isSpeakingの変更でupdateIdleMotionが再生成され、メインのuseEffectが走ってモデルがリロードされるのを防ぐためRefで管理
   const isSpeakingRef = useRef(isSpeaking);
@@ -795,16 +801,53 @@ const VrmStage = ({
           borderWidth="1px"
           borderColor="whiteAlpha.300"
           color="white"
-          pointerEvents="none"
           backdropFilter="blur(4px)"
           boxShadow="md"
+          cursor="pointer"
+          userSelect="none"
+          onClick={() => setIsProgressExpanded((prev) => !prev)}
+          role="button"
+          tabIndex={0}
+          aria-expanded={isProgressExpanded}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setIsProgressExpanded((prev) => !prev);
+            }
+          }}
         >
-          <Text fontSize="xs" color="whiteAlpha.700" letterSpacing="0.08em" textTransform="uppercase">
-            カルテ進行度
-          </Text>
-          <Text fontSize="lg" fontWeight="bold" lineHeight="shorter">
-            {progress}% 完成
-          </Text>
+          <Flex align="center" justify="space-between" gap={3}>
+            <Box>
+              <Text fontSize="xs" color="whiteAlpha.700" letterSpacing="0.08em" textTransform="uppercase">
+                カルテ進行度
+              </Text>
+              <Text fontSize="lg" fontWeight="bold" lineHeight="shorter">
+                {progress}% 完成
+              </Text>
+            </Box>
+            <Icon
+              as={FiChevronUp}
+              boxSize={4}
+              color="whiteAlpha.800"
+              transform={isProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)'}
+              transition="transform 0.2s ease"
+              flexShrink={0}
+            />
+          </Flex>
+          <Collapse in={isProgressExpanded} animateOpacity>
+            <Box mt={2}>
+              {progressCountLabel ? (
+                <Text fontSize="xs" color="whiteAlpha.800">
+                  {progressCountLabel}
+                </Text>
+              ) : null}
+              {progressLabel ? (
+                <Text fontSize="xs" color="whiteAlpha.800" mt={1} maxW="220px">
+                  現在: {progressLabel}
+                </Text>
+              ) : null}
+            </Box>
+          </Collapse>
         </Box>
       )}
       {!isReady && (
