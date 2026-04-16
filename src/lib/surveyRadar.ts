@@ -99,6 +99,7 @@ export const drawSurveyRadarOnCanvas = (
   offsetX = 0,
   offsetY = 0,
 ) => {
+  context.save();
   const { canvasSize, center, points, gridPolygons, axisLines, labels } = model;
   const gradient = context.createLinearGradient(offsetX, offsetY, offsetX + canvasSize, offsetY + canvasSize);
   gradient.addColorStop(0, SURVEY_RADAR_COLORS.fillStart);
@@ -165,4 +166,5 @@ export const drawSurveyRadarOnCanvas = (
     context.textBaseline = 'alphabetic';
     context.fillText(label.text, offsetX + label.x, offsetY + label.y + label.dy);
   });
+  context.restore();
 };
