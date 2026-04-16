@@ -43,13 +43,14 @@
 ### 3.1 初回面談ページ（`/app/initial`）
 - 目的: SHIRPベースのカルテを作成。
 - 事前条件: プロフィール未設定かつ `demographicsSkipped` が false の場合は `/user/demographics?returnTo=/app/initial` へ誘導する。デモ用スキップ済みの場合は初回面談へ進める。
-- 制御: S -> H -> I -> R の順にヒアリング。必要に応じて # を補記。
+- 制御: 大分類は `S -> H -> I -> R` の順を維持するが、実際の進行単位は詳細項目ごとの固定順とする。初回の必須ステップは `S.organizationFit -> S.selfEvaluation -> S.relationshipQuality -> H.desiredIncome -> H.desiredWork -> H.desiredWorkStyle -> I.skillIssue -> I.healthIssue -> I.ageIssue -> I.familyIssue -> R.strengthQualification -> R.strengthExperience -> R.supporters -> R.timeOrMoney`。必要に応じて `otherCurrent` / `otherHope` / `otherIssue` / `otherResource` と `#` を補記する。
 - 通信: MediaRecorder -> Whisper(STT) -> GPT-4o -> TTS-1。
 - 事前読込: 保存済みプロフィール情報を `karte.demographics` に注入した状態で開始する。
 - 途中保存: 会話履歴、カルテ、API使用回数、進行状態を `draftSessions.initial` に自動保存する。
 - 再開: UserHome から初回面談開始時、下書きがあれば「続きから再開 / 新規開始」を選ばせる。
 - 完了動線: 面談中にカルテ確認・保存を行い、保存後はUserHomeへ遷移。
 - 表示: 企業別 `featureFlags.stressAnalysisEnabled` が true の場合、ルーム概要付近に面談前コンディション（緊張度スコア）を表示する。未測定時は「未測定」とチェック導線を表示する。
+- 進行度表示: VRMステージ上の「カルテ進行度」は初回面談の必須詳細14項目を母数として `%` を算出する。デフォルトでは `% 完成` のみ表示し、親Boxをクリックまたはタップした時だけ `x / 14 項目完了` と現在の詳細項目ラベルを展開表示する。
 
 ### 3.2 継続面談ページ（`/app/continuous`）
 - 目的: 自由対話で既存カルテを更新し、面談後フィードバックを提示。
@@ -78,9 +79,10 @@
 - 会話応答モデルは `gpt-4o-2024-11-20` に固定する。
 - OpenAI 応答の `response_format` は `json_object` ではなく、`json_schema` + `strict: true` の Structured Outputs を使う。
 - schema は通常応答用と finalize 用で分け、最低限以下を返させる。
-  - 通常応答: `reply`, `updated_shirp`, `is_complete`
-  - finalize 応答: `reply`, `updated_shirp`, `feedback`, `is_complete`
+  - 通常応答: `reply`, `updated_shirp`, `updated_shirp_details`, `is_complete`
+  - finalize 応答: `reply`, `updated_shirp`, `updated_shirp_details`, `feedback`, `is_complete`
 - `updated_shirp` の許可キーは `S`, `H`, `I`, `R`, `P`, `#` のみとし、ランタイム検証でも同じ制約をかける。
+- `updated_shirp_details` は `S`, `H`, `I`, `R` の詳細オブジェクトのみを許可し、各カテゴリ object は `strict: true` の schema 制約に合わせて全詳細キーを `required` に含めた上で値は `string | null` とする。未更新項目は `null` を返させる。
 - Structured Outputs を使っていても `reply` に内部 JSON 断片が混ざる可能性はゼロではないため、`updated_shirp` / `is_complete` / `feedback` などの内部キーが混ざる応答は不正として破棄する。
 - 不正応答や refusal 時は assistant メッセージを追加せず、TTS にも流さない。
 - OpenAI API の失敗時は `error.message` を優先して表示し、400系エラーの原因が追えるようにする。
@@ -144,6 +146,9 @@
 - 子供人数が `0` または未入力のとき、末子年齢は入力不可にし、保存値も `null` に正規化する。
 
 2. 電子カルテ（SHIRP形式）
+    *   トップレベルには従来どおり `S / H / I / R / P / #` の要約文を保持する。
+    *   `S / H / I / R` については、別途 `shirpDetails` に詳細項目を保持する。
+    *   `P` とトップレベル `#` は詳細オブジェクトを持たず、文字列のまま扱う。
     *   **S (Satisfaction/現状)**
         *   組織適応
         *   自身への評価
@@ -170,6 +175,8 @@
         *   S〜Rの情報を元に、AIが解決に向けたプランを生成する。
     *   **# (その他)**
         *   S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄。
+    *   表示UIは、最初にトップレベル `#SHIRP` の要約を見せ、`S / H / I / R` だけは折りたたみを開くと詳細項目が確認できる構成とする。
+    *   UserHome / ConsultantHome のカルテ編集UIでは、トップレベル要約に加えて `S / H / I / R` 詳細も編集可能とする。
 
 3. 保存済み会話ログ
 - カルテ保存時点の `messages` 配列をそのまま `conversationLog` として履歴に保存する。
@@ -254,10 +261,20 @@ const AI_RESPONSE_GUIDELINES = `
 ### 6.3 初回面談プロンプト（buildInitialPrompt 実文字列）
 
 ```ts
-const buildInitialPrompt = (karte: KarteData, nextKey: ShirpKey | null) => {
-  const currentKey = nextKey ?? 'S';
+const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null) => {
+  const currentCategory = nextStep?.category ?? 'S';
+  const currentField = nextStep?.field;
+  const followingStep = getFollowingInitialDetailStep(nextStep);
+  const currentStepLabel = currentField
+    ? getInitialDetailStepLabel(currentCategory, currentField)
+    : 'P. プラン生成と全体整理';
+  const currentPromptHint = currentField
+    ? (SHIRP_DETAIL_PROMPT_HINTS[currentCategory] as Record<string, string>)[currentField]
+    : '全体要約とプラン生成';
+  const followingStepLabel =
+    followingStep ? getInitialDetailStepLabel(followingStep.category, followingStep.field) : 'P. プラン生成と全体整理';
   return `
-あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で情報を埋めます。
+あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で詳細項目を1つずつ埋めます。
 
 # SHIRPガイド
 ${SHIRP_GUIDE}
@@ -267,22 +284,33 @@ ${buildDemographicPromptContext(karte)}
 # 現在のカルテ(SHIRP)
 ${JSON.stringify(karte.shirp, null, 2)}
 
-# 今回フォーカスする項目
-${currentKey}
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
+# 今回フォーカスする詳細項目
+- 項目: ${currentStepLabel}
+- 確認したい内容: ${currentPromptHint}
+
+# この項目が十分に埋まった場合に次に聞く候補
+- ${followingStepLabel}
 
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
-1. ユーザーの発話から情報を抽出し、該当項目を更新してください。
-2. 今回は「${currentKey}」の内容を深掘りする質問を1つだけ行ってください。
-3. S,H,I,Rが全て埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
-4. 3の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
-5. 余談やS〜Pに当てはまらない内容は#に記録してください。
-6. response_format の JSON Schema に厳密に従って出力してください。
-7. reply にはユーザーに見せる自然な返答だけを書いてください。
-8. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
-9. プロフィール情報は既知情報として理解しつつ、断定や過剰な言及は避けてください。
-10. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
+1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で詳細項目を更新してください。
+2. 以前のテンポの良い面談のように、reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
+3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
+4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
+5. is_complete は、必須詳細項目がすべて埋まり、P(プラン)を生成した時だけ true にしてください。それまでは false にしてください。
+6. 必須詳細項目がすべて埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
+7. 6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
+8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
+9. otherCurrent / otherHope / otherIssue / otherResource は、会話中の補足があれば必要に応じて更新して構いません。余談やS〜Pに当てはまらない内容は#に記録してください。
+10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
+11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
+12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
+13. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+14. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 };
 ```
@@ -301,15 +329,18 @@ ${buildDemographicPromptContext(karte)}
 # 現在のカルテ(SHIRP)
 ${JSON.stringify(karte.shirp, null, 2)}
 
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
 1. ユーザーが自由に話せるように傾聴し、深掘り質問やプロービングを行います。
-2. ユーザーの発話から得た情報で、SHIRPを部分的に更新してください。
+2. ユーザーの発話から得た情報で、トップレベル要約と必要な詳細項目の両方を部分更新してください。
 3. response_format の JSON Schema に厳密に従って出力してください。
 4. reply にはユーザーに見せる自然な返答だけを書いてください。
-5. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
-6. プロフィール情報は既知情報として扱いますが、返答トーンは現状の自然さを維持してください。
+5. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+6. デモグラフィックは既知情報として扱いますが、返答トーンは現状の自然さを維持してください。
 7. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 ```
@@ -328,17 +359,20 @@ ${buildDemographicPromptContext(karte)}
 # 現在のカルテ(SHIRP)
 ${JSON.stringify(karte.shirp, null, 2)}
 
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
-1. 会話履歴から情報を抽出し、SHIRP項目を可能な限り埋めてください。
+1. 会話履歴から情報を抽出し、SHIRPのトップレベル要約と詳細項目を可能な限り埋めてください。
 2. 足りない項目は補足し、P(プラン)を生成してください。
 3. 面談後のキャリアに関する簡単なフィードバックを80~120文字で作成してください。
 4. reply の最後に、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を含めてください。
 5. response_format の JSON Schema に厳密に従って出力してください。
 6. reply にはユーザーに見せる自然な返答だけを書いてください。
-7. reply に JSON 断片、キー名(updated_shirp / is_complete / feedback)、補足説明は含めないでください。
-8. プロフィール情報は整合性確認のために使い、返答のトーンや構成は大きく変えないでください。
+7. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+8. デモグラフィックは整合性確認のために使い、返答のトーンや構成は大きく変えないでください。
 9. 既知のプロフィール情報と矛盾しない前提で整理し、不足分は会話履歴ベースで補ってください。
 `.trim();
 ```
