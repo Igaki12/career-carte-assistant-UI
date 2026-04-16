@@ -46,6 +46,24 @@ const STAGE_MODELS = [
 
 export type StageModelId = (typeof STAGE_MODELS)[number]['id'];
 
+export type SpeechMotionFrame = {
+  speaking: boolean;
+  rms: number;
+  low: number;
+  mid: number;
+  high: number;
+  updatedAt: number;
+};
+
+const SILENT_SPEECH_MOTION: SpeechMotionFrame = {
+  speaking: false,
+  rms: 0,
+  low: 0,
+  mid: 0,
+  high: 0,
+  updatedAt: 0,
+};
+
 const STAGE_BACKGROUNDS = [
   {
     id: 'relax-room',
@@ -66,6 +84,7 @@ const STAGE_BACKGROUNDS = [
 
 type StageProps = {
   isSpeaking: boolean;
+  speechMotion?: SpeechMotionFrame;
   conversationStarted: boolean;
   progress: number;
   progressLabel?: string;
@@ -78,6 +97,7 @@ type BlinkState = {
   lastBlink: number;
   blinkStart: number;
   blinking: boolean;
+  nextBlinkDelay: number;
 };
 
 type NodState = {
@@ -86,6 +106,16 @@ type NodState = {
   nextChange: number;
   target: number;
   current: number;
+};
+
+type GesturePreset = 'rightBeat' | 'openArms' | 'leftLift';
+
+type GestureState = {
+  active: boolean;
+  preset: GesturePreset;
+  startedAt: number;
+  duration: number;
+  cooldownUntil: number;
 };
 
 type MorphTargetBinding = {
@@ -104,6 +134,10 @@ type ExpressionSupport = {
   relaxed: boolean;
   surprised: boolean;
   aa: boolean;
+  ih: boolean;
+  ou: boolean;
+  ee: boolean;
+  oh: boolean;
   blink: boolean;
   blinkLeft: boolean;
   blinkRight: boolean;
@@ -133,6 +167,27 @@ type StagePose = {
   };
 };
 
+type MouthExpressionKey = 'aa' | 'ih' | 'ou' | 'ee' | 'oh';
+type MouthWeightMap = Record<MouthExpressionKey, number>;
+
+const TRACKED_BONES = [
+  VRMHumanBoneName.LeftUpperArm,
+  VRMHumanBoneName.LeftLowerArm,
+  VRMHumanBoneName.RightUpperArm,
+  VRMHumanBoneName.RightLowerArm,
+  VRMHumanBoneName.UpperChest,
+  VRMHumanBoneName.Chest,
+  VRMHumanBoneName.Spine,
+] as const;
+
+const ZERO_MOUTH_WEIGHTS: MouthWeightMap = {
+  aa: 0,
+  ih: 0,
+  ou: 0,
+  ee: 0,
+  oh: 0,
+};
+
 const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
   sample: {
     armRotations: {
@@ -155,7 +210,7 @@ const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
       [VRMHumanBoneName.RightUpperArm]: { x: -12, y: -10, z: 75 },
       [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
     },
-    headTiltDeg: -0,
+    headTiltDeg: 0,
     defaultHappyWeight: 0.3,
     lipSyncExpression: 'aa',
     lipSyncWeightMultiplier: 5.2,
@@ -178,8 +233,38 @@ const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
   },
 };
 
+const createNextBlinkDelay = (modelId: StageModelId) =>
+  modelId === 'sample' ? 3000 : 2400 + Math.random() * 2600;
+
+const createNextGestureCooldown = () => 4000 + Math.random() * 5000;
+
+const clamp01 = (value: number) => MathUtils.clamp(value, 0, 1);
+
+const buildEnhancedMouthWeights = (speechMotion: SpeechMotionFrame): MouthWeightMap => {
+  if (!speechMotion.speaking && speechMotion.rms < 0.01) {
+    return ZERO_MOUTH_WEIGHTS;
+  }
+
+  const total = speechMotion.low + speechMotion.mid + speechMotion.high;
+  const lowRatio = total > 0 ? speechMotion.low / total : 0.34;
+  const midRatio = total > 0 ? speechMotion.mid / total : 0.33;
+  const highRatio = total > 0 ? speechMotion.high / total : 0.33;
+  const intensity = clamp01(speechMotion.rms * 4.6) * (speechMotion.speaking ? 1 : 0.25);
+
+  return {
+    aa: clamp01(intensity * (0.38 + lowRatio * 0.28 + midRatio * 0.06)),
+    ih: clamp01(intensity * (0.12 + midRatio * 0.22 + highRatio * 0.08)),
+    ou: clamp01(intensity * (0.10 + lowRatio * 0.12 + highRatio * 0.18)),
+    ee: clamp01(intensity * (0.08 + highRatio * 0.26)),
+    oh: clamp01(intensity * (0.18 + lowRatio * 0.20 + midRatio * 0.08)),
+  };
+};
+
+const easeInOut = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
+
 const VrmStage = ({
   isSpeaking,
+  speechMotion = SILENT_SPEECH_MOTION,
   conversationStarted,
   progress,
   progressLabel,
@@ -191,10 +276,16 @@ const VrmStage = ({
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const cameraRef = useRef<PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
   const vrmRef = useRef<VRM | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const poseAnimationRef = useRef<number | null>(null);
-  const blinkStateRef = useRef<BlinkState>({ lastBlink: 0, blinkStart: 0, blinking: false });
+  const blinkStateRef = useRef<BlinkState>({
+    lastBlink: 0,
+    blinkStart: 0,
+    blinking: false,
+    nextBlinkDelay: createNextBlinkDelay('sample'),
+  });
   const nodStateRef = useRef<NodState>({
     lastUpdate: 0,
     elapsed: 0,
@@ -202,8 +293,18 @@ const VrmStage = ({
     target: 0,
     current: 0,
   });
+  const gestureStateRef = useRef<GestureState>({
+    active: false,
+    preset: 'rightBeat',
+    startedAt: 0,
+    duration: 0,
+    cooldownUntil: 0,
+  });
   const motionBoneRef = useRef<Object3D | null>(null);
   const baseMotionRotationRef = useRef<Euler | null>(null);
+  const trackedBoneNodesRef = useRef<Partial<Record<(typeof TRACKED_BONES)[number], Object3D>>>({});
+  const trackedBoneRotationsRef = useRef<Partial<Record<(typeof TRACKED_BONES)[number], Euler>>>({});
+  const lookAtTargetRef = useRef<Object3D | null>(null);
   const directMorphTargetsRef = useRef<DirectMorphTargetMap>({
     mouthOpen: [],
     blinkLeft: [],
@@ -214,26 +315,39 @@ const VrmStage = ({
     relaxed: false,
     surprised: false,
     aa: false,
+    ih: false,
+    ou: false,
+    ee: false,
+    oh: false,
     blink: false,
     blinkLeft: false,
     blinkRight: false,
   });
+  const smoothedSpeechMotionRef = useRef<SpeechMotionFrame>(SILENT_SPEECH_MOTION);
   const [isReady, setIsReady] = useState(false);
   const [modelIndex, setModelIndex] = useState(0);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
   const [isProgressExpanded, setIsProgressExpanded] = useState(false);
 
-  // isSpeakingの変更でupdateIdleMotionが再生成され、メインのuseEffectが走ってモデルがリロードされるのを防ぐためRefで管理
   const isSpeakingRef = useRef(isSpeaking);
+  const speechMotionRef = useRef(speechMotion);
+
   useEffect(() => {
     isSpeakingRef.current = isSpeaking;
   }, [isSpeaking]);
 
+  useEffect(() => {
+    speechMotionRef.current = speechMotion;
+  }, [speechMotion]);
+
   const currentModel = STAGE_MODELS[modelIndex];
   const currentBackground = STAGE_BACKGROUNDS[backgroundIndex];
+  const isEnhancedModel = currentModel.id !== 'sample';
+
   const handleNextModel = useCallback(() => {
     setModelIndex((prev) => (prev + 1) % STAGE_MODELS.length);
   }, []);
+
   const handleNextBackground = useCallback(() => {
     setBackgroundIndex((prev) => (prev + 1) % STAGE_BACKGROUNDS.length);
   }, []);
@@ -243,7 +357,7 @@ const VrmStage = ({
   }, [currentModel.id, onModelChange]);
 
   const setDirectMorphWeight = useCallback((bindings: MorphTargetBinding[], weight: number) => {
-    const clamped = MathUtils.clamp(weight, 0, 1);
+    const clamped = clamp01(weight);
     bindings.forEach(({ mesh, index }) => {
       if (!mesh.morphTargetInfluences || mesh.morphTargetInfluences[index] == null) return;
       mesh.morphTargetInfluences[index] = clamped;
@@ -302,11 +416,13 @@ const VrmStage = ({
       happyWeight,
       relaxedWeight,
       lipSyncWeight,
+      mouthWeights,
     }: {
       blinkWeight?: number;
       happyWeight?: number;
       relaxedWeight?: number;
       lipSyncWeight?: number;
+      mouthWeights?: MouthWeightMap;
     }) => {
       const manager = vrmRef.current?.expressionManager;
       const support = expressionSupportRef.current;
@@ -324,12 +440,33 @@ const VrmStage = ({
         shouldUpdateManager = true;
       }
 
-      if (lipSyncWeight != null) {
-        const scaledLipSyncWeight = MathUtils.clamp(
-          lipSyncWeight * stagePose.lipSyncWeightMultiplier,
-          0,
-          1,
-        );
+      if (mouthWeights) {
+        const weightedMouths = [
+          { key: 'aa' as const, preset: VRMExpressionPresetName.Aa, supported: support.aa, weight: mouthWeights.aa },
+          { key: 'ih' as const, preset: VRMExpressionPresetName.Ih, supported: support.ih, weight: mouthWeights.ih },
+          { key: 'ou' as const, preset: VRMExpressionPresetName.Ou, supported: support.ou, weight: mouthWeights.ou },
+          { key: 'ee' as const, preset: VRMExpressionPresetName.Ee, supported: support.ee, weight: mouthWeights.ee },
+          { key: 'oh' as const, preset: VRMExpressionPresetName.Oh, supported: support.oh, weight: mouthWeights.oh },
+        ];
+        let hasManagedMouth = false;
+
+        weightedMouths.forEach(({ preset, supported, weight }) => {
+          if (!manager || !supported) return;
+          manager.setValue(preset, clamp01(weight * stagePose.lipSyncWeightMultiplier));
+          shouldUpdateManager = true;
+          hasManagedMouth = true;
+        });
+
+        if (hasManagedMouth) {
+          setDirectMorphWeight(directMorphTargetsRef.current.mouthOpen, 0);
+        } else {
+          setDirectMorphWeight(
+            directMorphTargetsRef.current.mouthOpen,
+            Math.max(mouthWeights.aa, mouthWeights.ih, mouthWeights.ou, mouthWeights.ee, mouthWeights.oh),
+          );
+        }
+      } else if (lipSyncWeight != null) {
+        const scaledLipSyncWeight = clamp01(lipSyncWeight * stagePose.lipSyncWeightMultiplier);
         const hasLipSyncExpression = lipSyncPresetName === VRMExpressionPresetName.Aa
           ? support.aa
           : support.surprised;
@@ -337,6 +474,7 @@ const VrmStage = ({
         if (manager && hasLipSyncExpression) {
           manager.setValue(lipSyncPresetName, scaledLipSyncWeight);
           shouldUpdateManager = true;
+          setDirectMorphWeight(directMorphTargetsRef.current.mouthOpen, 0);
         } else {
           setDirectMorphWeight(directMorphTargetsRef.current.mouthOpen, scaledLipSyncWeight);
         }
@@ -378,22 +516,36 @@ const VrmStage = ({
     applyFacialState({
       happyWeight: stagePose.defaultHappyWeight,
       relaxedWeight: 0.6,
-      lipSyncWeight: 0,
+      lipSyncWeight: isEnhancedModel ? undefined : 0,
+      mouthWeights: isEnhancedModel ? ZERO_MOUTH_WEIGHTS : undefined,
       blinkWeight: 0,
     });
-  }, [applyFacialState, currentModel.id]);
+  }, [applyFacialState, currentModel.id, isEnhancedModel]);
 
-  const resetIdleMotionState = useCallback(() => {
+  const resetMotionState = useCallback(() => {
     const now = performance.now();
-    blinkStateRef.current = { lastBlink: now, blinkStart: 0, blinking: false };
+    blinkStateRef.current = {
+      lastBlink: now,
+      blinkStart: 0,
+      blinking: false,
+      nextBlinkDelay: createNextBlinkDelay(currentModel.id),
+    };
     nodStateRef.current = {
       lastUpdate: now,
       elapsed: 0,
-      nextChange: 3 + Math.random() * 1.5,
+      nextChange: currentModel.id === 'sample' ? 3 + Math.random() * 1.5 : 2.6 + Math.random() * 1.8,
       target: 0,
       current: 0,
     };
-  }, []);
+    gestureStateRef.current = {
+      active: false,
+      preset: 'rightBeat',
+      startedAt: 0,
+      duration: 0,
+      cooldownUntil: now + createNextGestureCooldown(),
+    };
+    smoothedSpeechMotionRef.current = SILENT_SPEECH_MOTION;
+  }, [currentModel.id]);
 
   const applyFrontPose = useCallback(() => {
     const vrm = vrmRef.current;
@@ -411,16 +563,19 @@ const VrmStage = ({
     vrm.scene.rotation.y = 0;
 
     if (humanoid) {
+      const trackedNodes: Partial<Record<(typeof TRACKED_BONES)[number], Object3D>> = {};
+      const trackedRotations: Partial<Record<(typeof TRACKED_BONES)[number], Euler>> = {};
+
       const setBoneEuler = (bone: VRMHumanBoneName, rotation: { x?: number; y?: number; z?: number }) => {
         const node = humanoid.getNormalizedBoneNode(bone);
-        if (node) {
-          node.rotation.set(
-            rotation.x ?? node.rotation.x,
-            rotation.y ?? node.rotation.y,
-            rotation.z ?? node.rotation.z,
-          );
-        }
+        if (!node) return;
+        node.rotation.set(
+          rotation.x ?? node.rotation.x,
+          rotation.y ?? node.rotation.y,
+          rotation.z ?? node.rotation.z,
+        );
       };
+
       Object.entries(stagePose.armRotations).forEach(([boneName, rotation]) => {
         setBoneEuler(boneName as VRMHumanBoneName, {
           x: rotation.x == null ? undefined : MathUtils.degToRad(rotation.x),
@@ -428,12 +583,28 @@ const VrmStage = ({
           z: rotation.z == null ? undefined : MathUtils.degToRad(rotation.z),
         });
       });
+
+      TRACKED_BONES.forEach((bone) => {
+        const node = humanoid.getNormalizedBoneNode(bone);
+        if (!node) return;
+        trackedNodes[bone] = node;
+        trackedRotations[bone] = node.rotation.clone();
+      });
+      trackedBoneNodesRef.current = trackedNodes;
+      trackedBoneRotationsRef.current = trackedRotations;
+
       const motionBone = getMotionBone(vrm);
       motionBoneRef.current = motionBone;
       if (motionBone) {
         motionBone.rotation.set(MathUtils.degToRad(stagePose.headTiltDeg), 0, 0);
         baseMotionRotationRef.current = motionBone.rotation.clone();
       }
+
+      const lookAtTarget = lookAtTargetRef.current;
+      if (lookAtTarget) {
+        lookAtTarget.position.set(stagePose.lookAt.x, stagePose.lookAt.y, stagePose.lookAt.z + 1.35);
+      }
+
       humanoid.update();
     }
 
@@ -451,12 +622,10 @@ const VrmStage = ({
     const startTarget = controls ? controls.target.clone() : targetLookAt.clone();
     const tempTarget = new Vector3();
 
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const ratio = Math.min(elapsed / duration, 1);
-      const eased = ease(ratio);
+      const eased = 1 - Math.pow(1 - ratio, 3);
       camera.position.lerpVectors(startCameraPos, targetCameraPos, eased);
       if (controls) {
         tempTarget.copy(startTarget).lerp(targetLookAt, eased);
@@ -482,16 +651,41 @@ const VrmStage = ({
     poseAnimationRef.current = requestAnimationFrame(animate);
   }, [currentModel.id, getMotionBone]);
 
-  const updateIdleMotion = useCallback(
+  const getBlinkWeight = useCallback((timestamp: number) => {
+    const blinkState = blinkStateRef.current;
+    if (!blinkState.blinking && timestamp - blinkState.lastBlink >= blinkState.nextBlinkDelay) {
+      blinkState.blinking = true;
+      blinkState.blinkStart = timestamp;
+    }
+
+    let blinkWeight = 0;
+    if (blinkState.blinking) {
+      const duration = currentModel.id === 'sample' ? 160 : 135;
+      const progress = Math.min((timestamp - blinkState.blinkStart) / duration, 1);
+      blinkWeight = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+      if (progress >= 1) {
+        blinkState.blinking = false;
+        blinkState.lastBlink = timestamp;
+        blinkState.nextBlinkDelay = createNextBlinkDelay(currentModel.id);
+        blinkWeight = 0;
+      }
+    }
+
+    return blinkWeight;
+  }, [currentModel.id]);
+
+  const updateStageMotion = useCallback(
     (timestamp: number) => {
       const vrm = vrmRef.current;
       if (!vrm) return;
 
       const humanoid = vrm.humanoid;
       const motionBone = motionBoneRef.current ?? getMotionBone(vrm);
-      if (humanoid && motionBone && baseMotionRotationRef.current) {
-        motionBoneRef.current = motionBone;
-        if (motionBone) {
+      const blinkWeight = getBlinkWeight(timestamp);
+
+      if (currentModel.id === 'sample') {
+        if (humanoid && motionBone && baseMotionRotationRef.current) {
+          motionBoneRef.current = motionBone;
           const nodState = nodStateRef.current;
           const deltaSeconds = nodState.lastUpdate ? (timestamp - nodState.lastUpdate) / 1000 : 0;
           nodState.lastUpdate = timestamp;
@@ -509,31 +703,173 @@ const VrmStage = ({
           motionBone.rotation.set(baseRotation.x + nodState.current, baseRotation.y, baseRotation.z);
           humanoid.update();
         }
+
+        applyFacialState({
+          blinkWeight,
+          relaxedWeight: isSpeakingRef.current ? undefined : 0.6,
+        });
+        return;
       }
 
-      const blinkState = blinkStateRef.current;
-      if (!blinkState.blinking && timestamp - blinkState.lastBlink >= 3000) {
-        blinkState.blinking = true;
-        blinkState.blinkStart = timestamp;
+      const nodState = nodStateRef.current;
+      const deltaSeconds = nodState.lastUpdate ? (timestamp - nodState.lastUpdate) / 1000 : 0;
+      nodState.lastUpdate = timestamp;
+
+      const incomingSpeech = speechMotionRef.current;
+      const smoothedSpeech = smoothedSpeechMotionRef.current;
+      const speechSmoothing = Math.min(Math.max(deltaSeconds * 10, 0.08), 1);
+      smoothedSpeech.rms += (incomingSpeech.rms - smoothedSpeech.rms) * speechSmoothing;
+      smoothedSpeech.low += (incomingSpeech.low - smoothedSpeech.low) * speechSmoothing;
+      smoothedSpeech.mid += (incomingSpeech.mid - smoothedSpeech.mid) * speechSmoothing;
+      smoothedSpeech.high += (incomingSpeech.high - smoothedSpeech.high) * speechSmoothing;
+      smoothedSpeech.speaking = incomingSpeech.speaking;
+      smoothedSpeech.updatedAt = incomingSpeech.updatedAt;
+
+      const speakingStrength = clamp01(smoothedSpeech.rms * 4.8) * (incomingSpeech.speaking ? 1 : 0.35);
+      const idleWave = Math.sin(timestamp * 0.0018);
+      const speakingWave = Math.sin(timestamp * 0.023);
+
+      if (humanoid && motionBone && baseMotionRotationRef.current) {
+        motionBoneRef.current = motionBone;
+        const baseRotation = baseMotionRotationRef.current;
+        const headPitch = idleWave * 0.018 + speakingStrength * 0.055;
+        const headYaw = Math.sin(timestamp * 0.0011) * 0.012 + speakingStrength * speakingWave * 0.015;
+        const headRoll = Math.sin(timestamp * 0.0014) * 0.008;
+        motionBone.rotation.set(
+          baseRotation.x + headPitch,
+          baseRotation.y + headYaw,
+          baseRotation.z + headRoll,
+        );
       }
-      let blinkWeight = 0;
-      if (blinkState.blinking) {
-        const duration = 160;
-        const progress = Math.min((timestamp - blinkState.blinkStart) / duration, 1);
-        blinkWeight = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
-        if (progress >= 1) {
-          blinkState.blinking = false;
-          blinkState.lastBlink = timestamp;
-          blinkWeight = 0;
+
+      const lookAtTarget = lookAtTargetRef.current;
+      if (lookAtTarget) {
+        const lookAtBase = STAGE_MODEL_POSES[currentModel.id].lookAt;
+        const driftScale = incomingSpeech.speaking ? 0.65 : 1;
+        lookAtTarget.position.set(
+          lookAtBase.x + Math.sin(timestamp * 0.0009) * 0.028 * driftScale,
+          lookAtBase.y + 0.02 + Math.sin(timestamp * 0.0012) * 0.014 * driftScale + speakingStrength * 0.008,
+          lookAtBase.z + 1.35,
+        );
+      }
+
+      const gestureState = gestureStateRef.current;
+      if (
+        !gestureState.active
+        && incomingSpeech.speaking
+        && speakingStrength > 0.08
+        && timestamp >= gestureState.cooldownUntil
+      ) {
+        const presets: GesturePreset[] = ['rightBeat', 'openArms', 'leftLift'];
+        gestureState.active = true;
+        gestureState.preset = presets[Math.floor(Math.random() * presets.length)] ?? 'rightBeat';
+        gestureState.startedAt = timestamp;
+        gestureState.duration = 780 + Math.random() * 620;
+      }
+
+      let gestureAmount = 0;
+      if (gestureState.active) {
+        const progressRatio = Math.min((timestamp - gestureState.startedAt) / gestureState.duration, 1);
+        gestureAmount = easeInOut(progressRatio) * Math.sin(progressRatio * Math.PI) * (0.55 + speakingStrength * 0.45);
+        if (progressRatio >= 1) {
+          gestureState.active = false;
+          gestureState.cooldownUntil = timestamp + createNextGestureCooldown();
+          gestureAmount = 0;
         }
+      }
+
+      const torsoBreath = Math.sin(timestamp * 0.0022) * 0.012;
+      const trackedNodes = trackedBoneNodesRef.current;
+      const trackedRotations = trackedBoneRotationsRef.current;
+      const trackedAdditions: Partial<Record<(typeof TRACKED_BONES)[number], { x: number; y: number; z: number }>> = {
+        [VRMHumanBoneName.UpperChest]: {
+          x: torsoBreath + speakingStrength * 0.014,
+          y: 0,
+          z: Math.sin(timestamp * 0.0013) * 0.006,
+        },
+        [VRMHumanBoneName.Chest]: {
+          x: torsoBreath * 0.7,
+          y: 0,
+          z: Math.sin(timestamp * 0.0011) * 0.004,
+        },
+        [VRMHumanBoneName.Spine]: {
+          x: torsoBreath * 0.4,
+          y: 0,
+          z: Math.sin(timestamp * 0.0009) * 0.003,
+        },
+      };
+
+      if (gestureAmount > 0) {
+        if (gestureState.preset === 'rightBeat') {
+          trackedAdditions[VRMHumanBoneName.RightUpperArm] = {
+            x: -0.05 * gestureAmount,
+            y: -0.02 * gestureAmount,
+            z: -0.18 * gestureAmount,
+          };
+          trackedAdditions[VRMHumanBoneName.RightLowerArm] = {
+            x: 0.12 * gestureAmount,
+            y: 0,
+            z: -0.10 * gestureAmount,
+          };
+        } else if (gestureState.preset === 'openArms') {
+          trackedAdditions[VRMHumanBoneName.LeftUpperArm] = {
+            x: -0.03 * gestureAmount,
+            y: 0.04 * gestureAmount,
+            z: 0.16 * gestureAmount,
+          };
+          trackedAdditions[VRMHumanBoneName.RightUpperArm] = {
+            x: -0.03 * gestureAmount,
+            y: -0.04 * gestureAmount,
+            z: -0.16 * gestureAmount,
+          };
+          trackedAdditions[VRMHumanBoneName.LeftLowerArm] = {
+            x: 0.08 * gestureAmount,
+            y: 0,
+            z: 0.05 * gestureAmount,
+          };
+          trackedAdditions[VRMHumanBoneName.RightLowerArm] = {
+            x: 0.08 * gestureAmount,
+            y: 0,
+            z: -0.05 * gestureAmount,
+          };
+        } else {
+          trackedAdditions[VRMHumanBoneName.LeftUpperArm] = {
+            x: -0.04 * gestureAmount,
+            y: 0.03 * gestureAmount,
+            z: 0.15 * gestureAmount,
+          };
+          trackedAdditions[VRMHumanBoneName.LeftLowerArm] = {
+            x: 0.10 * gestureAmount,
+            y: 0,
+            z: 0.08 * gestureAmount,
+          };
+        }
+      }
+
+      TRACKED_BONES.forEach((bone) => {
+        const node = trackedNodes[bone];
+        const baseRotation = trackedRotations[bone];
+        if (!node || !baseRotation) return;
+        const addition = trackedAdditions[bone];
+        node.rotation.set(
+          baseRotation.x + (addition?.x ?? 0),
+          baseRotation.y + (addition?.y ?? 0),
+          baseRotation.z + (addition?.z ?? 0),
+        );
+      });
+
+      if (humanoid) {
+        humanoid.update();
       }
 
       applyFacialState({
         blinkWeight,
-        relaxedWeight: isSpeakingRef.current ? undefined : 0.6,
+        happyWeight: STAGE_MODEL_POSES[currentModel.id].defaultHappyWeight,
+        relaxedWeight: incomingSpeech.speaking ? 0.42 : 0.6,
+        mouthWeights: buildEnhancedMouthWeights(smoothedSpeech),
       });
     },
-    [applyFacialState, getMotionBone],
+    [applyFacialState, currentModel.id, getBlinkWeight, getMotionBone],
   );
 
   useEffect(() => {
@@ -545,8 +881,12 @@ const VrmStage = ({
         setIsReady(false);
       }
     });
+
     motionBoneRef.current = null;
     baseMotionRotationRef.current = null;
+    trackedBoneNodesRef.current = {};
+    trackedBoneRotationsRef.current = {};
+    lookAtTargetRef.current = null;
     directMorphTargetsRef.current = {
       mouthOpen: [],
       blinkLeft: [],
@@ -557,6 +897,10 @@ const VrmStage = ({
       relaxed: false,
       surprised: false,
       aa: false,
+      ih: false,
+      ou: false,
+      ee: false,
+      oh: false,
       blink: false,
       blinkLeft: false,
       blinkRight: false,
@@ -564,6 +908,7 @@ const VrmStage = ({
 
     const scene = new Scene();
     scene.background = null;
+    sceneRef.current = scene;
 
     const camera = new PerspectiveCamera(25, container.clientWidth / container.clientHeight, 0.1, 50);
     camera.position.set(0, 1.45, 2.8);
@@ -619,11 +964,25 @@ const VrmStage = ({
           relaxed: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Relaxed)?.binds.length ?? 0) > 0,
           surprised: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Surprised)?.binds.length ?? 0) > 0,
           aa: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Aa)?.binds.length ?? 0) > 0,
+          ih: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Ih)?.binds.length ?? 0) > 0,
+          ou: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Ou)?.binds.length ?? 0) > 0,
+          ee: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Ee)?.binds.length ?? 0) > 0,
+          oh: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Oh)?.binds.length ?? 0) > 0,
           blink: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.Blink)?.binds.length ?? 0) > 0,
           blinkLeft: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.BlinkLeft)?.binds.length ?? 0) > 0,
           blinkRight: (vrm.expressionManager?.getExpression(VRMExpressionPresetName.BlinkRight)?.binds.length ?? 0) > 0,
         };
-        resetIdleMotionState();
+
+        const lookAtTarget = new Object3D();
+        lookAtTarget.visible = false;
+        scene.add(lookAtTarget);
+        lookAtTargetRef.current = lookAtTarget;
+        if (vrm.lookAt) {
+          vrm.lookAt.autoUpdate = isEnhancedModel;
+          vrm.lookAt.target = isEnhancedModel ? lookAtTarget : null;
+        }
+
+        resetMotionState();
         setIdleExpression();
         setIsReady(true);
         applyFrontPose();
@@ -641,7 +1000,7 @@ const VrmStage = ({
       controls.update();
       const delta = clock.getDelta();
       if (vrmRef.current) {
-        updateIdleMotion(timestamp);
+        updateStageMotion(timestamp);
         vrmRef.current.update(delta);
       }
       renderer.render(scene, camera);
@@ -692,21 +1051,26 @@ const VrmStage = ({
         rendererRef.current.dispose();
         rendererRef.current.domElement.remove();
       }
+      sceneRef.current = null;
       vrmRef.current = null;
       rendererRef.current = null;
       controlsRef.current = null;
       cameraRef.current = null;
       motionBoneRef.current = null;
       baseMotionRotationRef.current = null;
+      trackedBoneNodesRef.current = {};
+      trackedBoneRotationsRef.current = {};
+      lookAtTargetRef.current = null;
     };
   }, [
     applyFrontPose,
     collectDirectMorphTargets,
     currentModel.path,
     getMotionBone,
-    resetIdleMotionState,
+    isEnhancedModel,
+    resetMotionState,
     setIdleExpression,
-    updateIdleMotion,
+    updateStageMotion,
   ]);
 
   useEffect(() => {
@@ -717,6 +1081,15 @@ const VrmStage = ({
 
   useEffect(() => {
     const stagePose = STAGE_MODEL_POSES[currentModel.id];
+    if (currentModel.id !== 'sample') {
+      applyFacialState({
+        happyWeight: stagePose.defaultHappyWeight,
+        mouthWeights: ZERO_MOUTH_WEIGHTS,
+        relaxedWeight: isSpeaking ? 0.42 : 0.6,
+      });
+      return;
+    }
+
     if (!isSpeaking) {
       applyFacialState({
         happyWeight: stagePose.defaultHappyWeight,
@@ -725,11 +1098,13 @@ const VrmStage = ({
       });
       return;
     }
+
     const interval = setInterval(() => {
       applyFacialState({
         lipSyncWeight: 0.05 + Math.random() * 0.25,
       });
     }, 350);
+
     return () => {
       clearInterval(interval);
       applyFacialState({

@@ -24,7 +24,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import ApiKeyModal from './ApiKeyModal';
 import KartePanel from './KartePanel';
 import ProcessingIndicator from './ProcessingIndicator';
-import VrmStage, { type StageModelId } from './VrmStage';
+import VrmStage, { type SpeechMotionFrame, type StageModelId } from './VrmStage';
 import {
   applyDemographicsToKarte,
   applyConditionToKarte,
@@ -248,6 +248,15 @@ const getFollowingInitialDetailStep = (step: InitialDetailStep | null): InitialD
   if (currentIndex < 0) return null;
   return INITIAL_REQUIRED_SHIRP_DETAIL_STEPS[currentIndex + 1] ?? null;
 };
+
+const createSilentSpeechMotion = (): SpeechMotionFrame => ({
+  speaking: false,
+  rms: 0,
+  low: 0,
+  mid: 0,
+  high: 0,
+  updatedAt: 0,
+});
 
 const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null) => {
   const currentCategory = nextStep?.category ?? 'S';
@@ -605,6 +614,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
+  const [speechMotion, setSpeechMotion] = useState<SpeechMotionFrame>(createSilentSpeechMotion);
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
@@ -615,6 +625,15 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const audioSourceUrlRef = useRef<string | null>(null);
   const audioResumePositionRef = useRef<number>(0);
   const shouldResumeAudioRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const audioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const audioAnalysisFrameRef = useRef<number | null>(null);
+  const audioAnalysisAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioTimeDomainRef = useRef<Float32Array | null>(null);
+  const audioFrequencyDataRef = useRef<Uint8Array | null>(null);
+  const lastSpeechMotionCommitRef = useRef(0);
+  const speechMotionRef = useRef<SpeechMotionFrame>(createSilentSpeechMotion());
 
   const isInitialMeeting = meetingType === 'initial';
   const isTurnTakingMode = !isInitialMeeting && continuousMode === 'turn';
@@ -655,7 +674,189 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     saveDemoUserState(nextState);
   }, []);
 
+  const resetSpeechMotion = useCallback(() => {
+    const silentMotion = createSilentSpeechMotion();
+    speechMotionRef.current = silentMotion;
+    setSpeechMotion(silentMotion);
+    lastSpeechMotionCommitRef.current = 0;
+  }, []);
+
+  const stopAudioAnalysis = useCallback(
+    (preserveGraph = false) => {
+      if (audioAnalysisFrameRef.current !== null) {
+        cancelAnimationFrame(audioAnalysisFrameRef.current);
+        audioAnalysisFrameRef.current = null;
+      }
+
+      if (!preserveGraph) {
+        audioSourceNodeRef.current?.disconnect();
+        audioAnalyserRef.current?.disconnect();
+        audioSourceNodeRef.current = null;
+        audioAnalyserRef.current = null;
+        audioAnalysisAudioRef.current = null;
+        audioTimeDomainRef.current = null;
+        audioFrequencyDataRef.current = null;
+
+        const context = audioContextRef.current;
+        if (context && context.state !== 'closed') {
+          void context.close().catch(() => undefined);
+        }
+        audioContextRef.current = null;
+      }
+
+      resetSpeechMotion();
+    },
+    [resetSpeechMotion],
+  );
+
+  const startAudioAnalysis = useCallback(
+    async (audio: HTMLAudioElement) => {
+      if (typeof window === 'undefined') return;
+
+      const AudioContextCtor = window.AudioContext
+        ?? (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextCtor) {
+        return;
+      }
+
+      let context = audioContextRef.current;
+      let sourceNode = audioSourceNodeRef.current;
+      let analyser = audioAnalyserRef.current;
+
+      if (audioAnalysisAudioRef.current !== audio || !context || !sourceNode || !analyser) {
+        stopAudioAnalysis();
+        context = new AudioContextCtor();
+        analyser = context.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.55;
+        sourceNode = context.createMediaElementSource(audio);
+        sourceNode.connect(analyser);
+        analyser.connect(context.destination);
+
+        audioContextRef.current = context;
+        audioSourceNodeRef.current = sourceNode;
+        audioAnalyserRef.current = analyser;
+        audioAnalysisAudioRef.current = audio;
+        audioTimeDomainRef.current = new Float32Array(analyser.fftSize);
+        audioFrequencyDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+      }
+
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+
+      const sampleTimeDomain = audioTimeDomainRef.current;
+      const sampleFrequency = audioFrequencyDataRef.current;
+      const activeAnalyser = audioAnalyserRef.current;
+      if (!sampleTimeDomain || !sampleFrequency || !activeAnalyser) {
+        resetSpeechMotion();
+        return;
+      }
+
+      if (audioAnalysisFrameRef.current !== null) {
+        cancelAnimationFrame(audioAnalysisFrameRef.current);
+      }
+
+      const updateMotionFrame = () => {
+        const currentAudio = audioAnalysisAudioRef.current;
+        const currentAnalyser = audioAnalyserRef.current;
+        const currentContext = audioContextRef.current;
+        if (currentAudio !== audio || !currentAnalyser || !currentContext) {
+          audioAnalysisFrameRef.current = null;
+          resetSpeechMotion();
+          return;
+        }
+
+        if (audio.paused || audio.ended) {
+          audioAnalysisFrameRef.current = null;
+          resetSpeechMotion();
+          return;
+        }
+
+        (currentAnalyser as AnalyserNode & {
+          getFloatTimeDomainData: (array: Float32Array) => void;
+          getByteFrequencyData: (array: Uint8Array) => void;
+        }).getFloatTimeDomainData(sampleTimeDomain as unknown as Float32Array);
+        (currentAnalyser as AnalyserNode & {
+          getFloatTimeDomainData: (array: Float32Array) => void;
+          getByteFrequencyData: (array: Uint8Array) => void;
+        }).getByteFrequencyData(sampleFrequency as unknown as Uint8Array);
+
+        let sumSquares = 0;
+        for (let index = 0; index < sampleTimeDomain.length; index += 1) {
+          const value = sampleTimeDomain[index];
+          sumSquares += value * value;
+        }
+        const rms = Math.min(Math.sqrt(sumSquares / sampleTimeDomain.length) * 2.2, 1);
+
+        const nyquist = currentContext.sampleRate / 2;
+        const binSize = nyquist / sampleFrequency.length;
+        let lowTotal = 0;
+        let midTotal = 0;
+        let highTotal = 0;
+        let lowCount = 0;
+        let midCount = 0;
+        let highCount = 0;
+
+        for (let index = 0; index < sampleFrequency.length; index += 1) {
+          const frequency = index * binSize;
+          const value = sampleFrequency[index];
+          if (frequency < 400) {
+            lowTotal += value;
+            lowCount += 1;
+          } else if (frequency < 1600) {
+            midTotal += value;
+            midCount += 1;
+          } else if (frequency < 4200) {
+            highTotal += value;
+            highCount += 1;
+          }
+        }
+
+        const now = performance.now();
+        const previousMotion = speechMotionRef.current;
+        const nextFrame: SpeechMotionFrame = {
+          speaking: true,
+          rms,
+          low: lowCount > 0 ? lowTotal / lowCount / 255 : 0,
+          mid: midCount > 0 ? midTotal / midCount / 255 : 0,
+          high: highCount > 0 ? highTotal / highCount / 255 : 0,
+          updatedAt: Date.now(),
+        };
+
+        if (
+          now - lastSpeechMotionCommitRef.current >= 48
+          || Math.abs(nextFrame.rms - previousMotion.rms) >= 0.035
+          || Math.abs(nextFrame.low - previousMotion.low) >= 0.05
+          || Math.abs(nextFrame.mid - previousMotion.mid) >= 0.05
+          || Math.abs(nextFrame.high - previousMotion.high) >= 0.05
+        ) {
+          lastSpeechMotionCommitRef.current = now;
+          setSpeechMotion((prev) => {
+            if (
+              Math.abs(nextFrame.rms - prev.rms) < 0.02
+              && Math.abs(nextFrame.low - prev.low) < 0.03
+              && Math.abs(nextFrame.mid - prev.mid) < 0.03
+              && Math.abs(nextFrame.high - prev.high) < 0.03
+                && prev.speaking === nextFrame.speaking
+            ) {
+              return prev;
+            }
+            speechMotionRef.current = nextFrame;
+            return nextFrame;
+          });
+        }
+
+        audioAnalysisFrameRef.current = requestAnimationFrame(updateMotionFrame);
+      };
+
+      audioAnalysisFrameRef.current = requestAnimationFrame(updateMotionFrame);
+    },
+    [resetSpeechMotion, stopAudioAnalysis],
+  );
+
   const disposeActiveAudio = useCallback(() => {
+    stopAudioAnalysis();
     const current = activeAudioRef.current;
     if (current) {
       current.pause();
@@ -668,7 +869,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     audioResumePositionRef.current = 0;
     shouldResumeAudioRef.current = false;
     setIsSpeaking(false);
-  }, []);
+  }, [stopAudioAnalysis]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -676,6 +877,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    speechMotionRef.current = speechMotion;
+  }, [speechMotion]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -790,6 +995,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         audioResumePositionRef.current = audio.currentTime;
         shouldResumeAudioRef.current = true;
         audio.pause();
+        stopAudioAnalysis(true);
         setIsSpeaking(false);
       }
       return;
@@ -802,6 +1008,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         playPromise
           .then(() => {
             setIsSpeaking(true);
+            void startAudioAnalysis(audio);
           })
           .catch(() => {
             if (activeAudioRef.current === audio) {
@@ -810,9 +1017,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           });
       } else {
         setIsSpeaking(true);
+        void startAudioAnalysis(audio);
       }
     }
-  }, [disposeActiveAudio, isKarteModalOpen]);
+  }, [disposeActiveAudio, isKarteModalOpen, startAudioAnalysis, stopAudioAnalysis]);
 
   useEffect(() => {
     if (!hasInitializedState) return;
@@ -919,6 +1127,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       try {
         await audio.play();
         setIsSpeaking(true);
+        await startAudioAnalysis(audio);
       } catch (playError) {
         if (activeAudioRef.current === audio) {
           disposeActiveAudio();
@@ -928,7 +1137,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         throw playError;
       }
     },
-    [disposeActiveAudio, isKarteModalOpen],
+    [disposeActiveAudio, isKarteModalOpen, startAudioAnalysis],
   );
 
   const playWithOpenAiTts = useCallback(
@@ -1452,6 +1661,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
             <VrmStage
               isSpeaking={isSpeaking}
+              speechMotion={speechMotion}
               conversationStarted={conversationStarted}
               progress={initialProgress}
               progressLabel={initialProgressLabel}
