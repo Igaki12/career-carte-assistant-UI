@@ -633,7 +633,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const audioTimeDomainRef = useRef<Float32Array | null>(null);
   const audioFrequencyDataRef = useRef<Uint8Array | null>(null);
   const lastSpeechMotionCommitRef = useRef(0);
-  const speechMotionRef = useRef<SpeechMotionFrame>(createSilentSpeechMotion());
 
   const isInitialMeeting = meetingType === 'initial';
   const isTurnTakingMode = !isInitialMeeting && continuousMode === 'turn';
@@ -675,9 +674,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, []);
 
   const resetSpeechMotion = useCallback(() => {
-    const silentMotion = createSilentSpeechMotion();
-    speechMotionRef.current = silentMotion;
-    setSpeechMotion(silentMotion);
+    setSpeechMotion(createSilentSpeechMotion());
     lastSpeechMotionCommitRef.current = 0;
   }, []);
 
@@ -814,7 +811,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         }
 
         const now = performance.now();
-        const previousMotion = speechMotionRef.current;
         const nextFrame: SpeechMotionFrame = {
           speaking: true,
           rms,
@@ -826,10 +822,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
         if (
           now - lastSpeechMotionCommitRef.current >= 48
-          || Math.abs(nextFrame.rms - previousMotion.rms) >= 0.035
-          || Math.abs(nextFrame.low - previousMotion.low) >= 0.05
-          || Math.abs(nextFrame.mid - previousMotion.mid) >= 0.05
-          || Math.abs(nextFrame.high - previousMotion.high) >= 0.05
+          || Math.abs(nextFrame.rms - speechMotion.rms) >= 0.035
+          || Math.abs(nextFrame.low - speechMotion.low) >= 0.05
+          || Math.abs(nextFrame.mid - speechMotion.mid) >= 0.05
+          || Math.abs(nextFrame.high - speechMotion.high) >= 0.05
         ) {
           lastSpeechMotionCommitRef.current = now;
           setSpeechMotion((prev) => {
@@ -838,11 +834,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               && Math.abs(nextFrame.low - prev.low) < 0.03
               && Math.abs(nextFrame.mid - prev.mid) < 0.03
               && Math.abs(nextFrame.high - prev.high) < 0.03
-                && prev.speaking === nextFrame.speaking
+              && prev.speaking === nextFrame.speaking
             ) {
               return prev;
             }
-            speechMotionRef.current = nextFrame;
             return nextFrame;
           });
         }
@@ -852,7 +847,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
       audioAnalysisFrameRef.current = requestAnimationFrame(updateMotionFrame);
     },
-    [resetSpeechMotion, stopAudioAnalysis],
+    [resetSpeechMotion, speechMotion.high, speechMotion.low, speechMotion.mid, speechMotion.rms, stopAudioAnalysis],
   );
 
   const disposeActiveAudio = useCallback(() => {
@@ -877,10 +872,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
-
-  useEffect(() => {
-    speechMotionRef.current = speechMotion;
-  }, [speechMotion]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

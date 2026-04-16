@@ -188,6 +188,9 @@ const ZERO_MOUTH_WEIGHTS: MouthWeightMap = {
   oh: 0,
 };
 
+const ENHANCED_IDLE_RELAXED_WEIGHT = 0.72;
+const ENHANCED_SPEAKING_RELAXED_WEIGHT = 0.52;
+
 const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
   sample: {
     armRotations: {
@@ -211,7 +214,7 @@ const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
       [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
     },
     headTiltDeg: 0,
-    defaultHappyWeight: 0.3,
+    defaultHappyWeight: 0.42,
     lipSyncExpression: 'aa',
     lipSyncWeightMultiplier: 5.2,
     cameraPosition: { x: 0, y: 1.45, z: 1.5 },
@@ -225,7 +228,7 @@ const STAGE_MODEL_POSES: Record<StageModelId, StagePose> = {
       [VRMHumanBoneName.RightLowerArm]: { x: -5, y: -8, z: 5 },
     },
     headTiltDeg: 0,
-    defaultHappyWeight: 0.3,
+    defaultHappyWeight: 0.42,
     lipSyncExpression: 'aa',
     lipSyncWeightMultiplier: 5.2,
     cameraPosition: { x: 0, y: 1.45, z: 1.5 },
@@ -240,8 +243,22 @@ const createNextGestureCooldown = () => 4000 + Math.random() * 5000;
 
 const clamp01 = (value: number) => MathUtils.clamp(value, 0, 1);
 
-const buildEnhancedMouthWeights = (speechMotion: SpeechMotionFrame): MouthWeightMap => {
-  if (!speechMotion.speaking && speechMotion.rms < 0.01) {
+const computeEnhancedMouthOpenness = (speechMotion: SpeechMotionFrame, timestamp: number) => {
+  const energy = clamp01((speechMotion.rms - 0.02) * 6.9);
+  if (!speechMotion.speaking) {
+    return energy < 0.06 ? 0 : clamp01(Math.pow(energy, 1.9) * 0.12);
+  }
+
+  const pulseA = Math.max(0, Math.sin(timestamp * 0.011));
+  const pulseB = Math.max(0, Math.sin(timestamp * 0.0065 + 1.2)) * 0.6;
+  const pulse = clamp01(Math.max(pulseA, pulseB));
+  const gatedPulse = pulse < 0.18 ? 0 : Math.pow((pulse - 0.18) / 0.82, 0.8);
+
+  return energy < 0.08 ? 0 : clamp01(Math.pow(energy, 0.88) * gatedPulse * 0.9);
+};
+
+const buildEnhancedMouthWeights = (speechMotion: SpeechMotionFrame, mouthOpenness: number): MouthWeightMap => {
+  if (mouthOpenness <= 0.015 || (!speechMotion.speaking && speechMotion.rms < 0.01)) {
     return ZERO_MOUTH_WEIGHTS;
   }
 
@@ -249,14 +266,29 @@ const buildEnhancedMouthWeights = (speechMotion: SpeechMotionFrame): MouthWeight
   const lowRatio = total > 0 ? speechMotion.low / total : 0.34;
   const midRatio = total > 0 ? speechMotion.mid / total : 0.33;
   const highRatio = total > 0 ? speechMotion.high / total : 0.33;
-  const intensity = clamp01(speechMotion.rms * 4.6) * (speechMotion.speaking ? 1 : 0.25);
+  const openness = clamp01(mouthOpenness);
+  const baseWeights: MouthWeightMap = {
+    aa: 0.38 + lowRatio * 0.28 + midRatio * 0.06,
+    ih: 0.07 + midRatio * 0.14 + highRatio * 0.05,
+    ou: 0.06 + lowRatio * 0.08 + highRatio * 0.11,
+    ee: 0.08 + highRatio * 0.26,
+    oh: 0.18 + lowRatio * 0.20 + midRatio * 0.08,
+  };
+  const maxWeight = Math.max(
+    baseWeights.aa,
+    baseWeights.ih,
+    baseWeights.ou,
+    baseWeights.ee,
+    baseWeights.oh,
+  ) || 1;
+  const contrast = 1.15 + openness * 1.35;
 
   return {
-    aa: clamp01(intensity * (0.38 + lowRatio * 0.28 + midRatio * 0.06)),
-    ih: clamp01(intensity * (0.12 + midRatio * 0.22 + highRatio * 0.08)),
-    ou: clamp01(intensity * (0.10 + lowRatio * 0.12 + highRatio * 0.18)),
-    ee: clamp01(intensity * (0.08 + highRatio * 0.26)),
-    oh: clamp01(intensity * (0.18 + lowRatio * 0.20 + midRatio * 0.08)),
+    aa: clamp01(Math.pow(baseWeights.aa / maxWeight, contrast) * openness * 1.05),
+    ih: clamp01(Math.pow(baseWeights.ih / maxWeight, contrast) * openness * 1.05),
+    ou: clamp01(Math.pow(baseWeights.ou / maxWeight, contrast) * openness * 1.05),
+    ee: clamp01(Math.pow(baseWeights.ee / maxWeight, contrast) * openness * 1.05),
+    oh: clamp01(Math.pow(baseWeights.oh / maxWeight, contrast) * openness * 1.05),
   };
 };
 
@@ -515,7 +547,7 @@ const VrmStage = ({
     const stagePose = STAGE_MODEL_POSES[currentModel.id];
     applyFacialState({
       happyWeight: stagePose.defaultHappyWeight,
-      relaxedWeight: 0.6,
+      relaxedWeight: isEnhancedModel ? ENHANCED_IDLE_RELAXED_WEIGHT : 0.6,
       lipSyncWeight: isEnhancedModel ? undefined : 0,
       mouthWeights: isEnhancedModel ? ZERO_MOUTH_WEIGHTS : undefined,
       blinkWeight: 0,
@@ -726,6 +758,7 @@ const VrmStage = ({
       smoothedSpeech.updatedAt = incomingSpeech.updatedAt;
 
       const speakingStrength = clamp01(smoothedSpeech.rms * 4.8) * (incomingSpeech.speaking ? 1 : 0.35);
+      const mouthOpenness = computeEnhancedMouthOpenness(smoothedSpeech, timestamp);
       const idleWave = Math.sin(timestamp * 0.0018);
       const speakingWave = Math.sin(timestamp * 0.023);
 
@@ -865,8 +898,8 @@ const VrmStage = ({
       applyFacialState({
         blinkWeight,
         happyWeight: STAGE_MODEL_POSES[currentModel.id].defaultHappyWeight,
-        relaxedWeight: incomingSpeech.speaking ? 0.42 : 0.6,
-        mouthWeights: buildEnhancedMouthWeights(smoothedSpeech),
+        relaxedWeight: incomingSpeech.speaking ? ENHANCED_SPEAKING_RELAXED_WEIGHT : ENHANCED_IDLE_RELAXED_WEIGHT,
+        mouthWeights: buildEnhancedMouthWeights(smoothedSpeech, mouthOpenness),
       });
     },
     [applyFacialState, currentModel.id, getBlinkWeight, getMotionBone],
@@ -1085,7 +1118,7 @@ const VrmStage = ({
       applyFacialState({
         happyWeight: stagePose.defaultHappyWeight,
         mouthWeights: ZERO_MOUTH_WEIGHTS,
-        relaxedWeight: isSpeaking ? 0.42 : 0.6,
+        relaxedWeight: isSpeaking ? ENHANCED_SPEAKING_RELAXED_WEIGHT : ENHANCED_IDLE_RELAXED_WEIGHT,
       });
       return;
     }
