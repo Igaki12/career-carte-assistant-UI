@@ -37,8 +37,12 @@ import {
 import {
   getInitialDetailStepLabel,
   INITIAL_REQUIRED_SHIRP_DETAIL_STEPS,
+  SHIRP_DETAIL_CATEGORY_KEYS,
+  SHIRP_DETAIL_DEFINITIONS,
   SHIRP_DETAIL_FIELDS,
+  SHIRP_DETAIL_ITEM_LABELS,
   SHIRP_DETAIL_PROMPT_HINTS,
+  SHIRP_LABELS,
 } from '../lib/shirp';
 import { SHIRP_KEYS } from '../types';
 import type {
@@ -80,54 +84,40 @@ const SHIRP_SCHEMA_PROPERTIES = {
   P: { type: ['string', 'null'] },
   '#': { type: ['string', 'null'] },
 } as const;
-const SHIRP_DETAIL_SCHEMA_PROPERTIES = {
-  S: {
+
+const buildShirpDetailFieldSchema = (category: ShirpDetailCategoryKey, field: string) => {
+  const items = Object.keys(SHIRP_DETAIL_ITEM_LABELS[category][field]);
+  return {
     type: 'object',
     additionalProperties: false,
     properties: {
-      organizationFit: { type: ['string', 'null'] },
-      selfEvaluation: { type: ['string', 'null'] },
-      relationshipQuality: { type: ['string', 'null'] },
-      otherCurrent: { type: ['string', 'null'] },
+      summary: { type: ['string', 'null'] },
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        properties: Object.fromEntries(items.map((itemKey) => [itemKey, { type: ['string', 'null'] }])),
+        required: items,
+      },
     },
-    required: ['organizationFit', 'selfEvaluation', 'relationshipQuality', 'otherCurrent'],
-  },
-  H: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      desiredIncome: { type: ['string', 'null'] },
-      desiredWork: { type: ['string', 'null'] },
-      desiredWorkStyle: { type: ['string', 'null'] },
-      otherHope: { type: ['string', 'null'] },
-    },
-    required: ['desiredIncome', 'desiredWork', 'desiredWorkStyle', 'otherHope'],
-  },
-  I: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      skillIssue: { type: ['string', 'null'] },
-      healthIssue: { type: ['string', 'null'] },
-      ageIssue: { type: ['string', 'null'] },
-      familyIssue: { type: ['string', 'null'] },
-      otherIssue: { type: ['string', 'null'] },
-    },
-    required: ['skillIssue', 'healthIssue', 'ageIssue', 'familyIssue', 'otherIssue'],
-  },
-  R: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      strengthQualification: { type: ['string', 'null'] },
-      strengthExperience: { type: ['string', 'null'] },
-      supporters: { type: ['string', 'null'] },
-      timeOrMoney: { type: ['string', 'null'] },
-      otherResource: { type: ['string', 'null'] },
-    },
-    required: ['strengthQualification', 'strengthExperience', 'supporters', 'timeOrMoney', 'otherResource'],
-  },
-} as const;
+    required: ['summary', 'items'],
+  };
+};
+
+const SHIRP_DETAIL_SCHEMA_PROPERTIES = Object.freeze(
+  Object.fromEntries(
+    SHIRP_DETAIL_CATEGORY_KEYS.map((category) => [
+      category,
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: Object.fromEntries(
+          SHIRP_DETAIL_FIELDS[category].map((field) => [field, buildShirpDetailFieldSchema(category, field)]),
+        ),
+        required: [...SHIRP_DETAIL_FIELDS[category]],
+      },
+    ]),
+  ),
+) as Record<ShirpDetailCategoryKey, unknown>;
 const INTERNAL_REPLY_PATTERNS = [
   /["“”']updated_shirp["“”']\s*:/i,
   /["“”']updated_shirp_details["“”']\s*:/i,
@@ -137,30 +127,16 @@ const INTERNAL_REPLY_PATTERNS = [
 ];
 
 const SHIRP_GUIDE = `
-S (Satisfaction/現状):
-- 組織適応
-- 自身への評価
-- 良好な人間関係
-- #そのほかの現状
-H (Hope/希望):
-- 希望する収入
-- 希望する仕事内容
-- 希望する勤務形態
-- #そのほかの希望
-I (Issue/課題):
-- スキルの課題
-- 健康上の課題
-- 年齢の課題
-- 家庭の課題
-- #そのほかの課題
-R (Resource/資源):
-- 強みとなる資格
-- 強みとなる経験
-- 強みとなる協力者
-- 強みとなる時間や資金
-- #そのほかの強み
-P (Plan/プラン):
-- S〜Rの情報を元に、AIが解決に向けたプランを生成する。
+${(['S', 'H', 'I', 'R', 'P'] as const)
+  .map((category) => {
+    const lines = SHIRP_DETAIL_FIELDS[category].map((field) => {
+      const definition = SHIRP_DETAIL_DEFINITIONS[category][field];
+      const itemLabels = Object.values(definition.items).join(' / ');
+      return `- ${definition.label}: ${itemLabels}`;
+    });
+    return `${SHIRP_LABELS[category]}:\n${lines.join('\n')}`;
+  })
+  .join('\n')}
 # (その他):
 - S〜Pに当てはまらない内容や、面談中の雑談・余談などを記録する自由記述欄。
 `;
@@ -169,7 +145,7 @@ type InitialDetailStep = (typeof INITIAL_REQUIRED_SHIRP_DETAIL_STEPS)[number];
 
 const greetingForMeeting = (meetingType: MeetingType) =>
   meetingType === 'initial'
-    ? 'こんにちは。キャリアメンターです。まずは組織適応から伺います。今の職場や組織の雰囲気、働きやすさについて、どのように感じていますか。なお、この対話は事前準備であり、実際の面談が本番です。'
+    ? 'こんにちは。キャリアメンターです。まずは現状の働く条件から伺います。今の収入や労働時間、勤務形態、作業環境などについて、どのように感じていますか。なお、この対話は事前準備であり、実際の面談が本番です。'
     : 'こんにちは。キャリアメンターです。今日は自由にお話しください。必要に応じて、前回のカルテ内容を更新していきます。なお、この対話は事前準備であり、実際の面談が本番です。';
 
 const AI_RESPONSE_GUIDELINES = `
@@ -220,8 +196,8 @@ const getInitialProgress = (shirpDetails: ShirpDetailsData) => {
   const total = INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length;
   const filled = INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.reduce(
     (acc, step) => {
-      const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
-      return categoryDetails[step.field] ? acc + 1 : acc;
+      const summary = shirpDetails[step.category]?.[step.field]?.summary;
+      return summary ? acc + 1 : acc;
     },
     0,
   );
@@ -230,14 +206,14 @@ const getInitialProgress = (shirpDetails: ShirpDetailsData) => {
 
 const getInitialProgressCount = (shirpDetails: ShirpDetailsData) =>
   INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.reduce((acc, step) => {
-    const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
-    return categoryDetails[step.field] ? acc + 1 : acc;
+    const summary = shirpDetails[step.category]?.[step.field]?.summary;
+    return summary ? acc + 1 : acc;
   }, 0);
 
 const getNextInitialDetailStep = (shirpDetails: ShirpDetailsData): InitialDetailStep | null =>
   INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.find((step) => {
-    const categoryDetails = shirpDetails[step.category] as Record<string, string | null>;
-    return !categoryDetails[step.field];
+    const summary = shirpDetails[step.category]?.[step.field]?.summary;
+    return !summary;
   }) ?? null;
 
 const getFollowingInitialDetailStep = (step: InitialDetailStep | null): InitialDetailStep | null => {
@@ -264,12 +240,12 @@ const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null
   const followingStep = getFollowingInitialDetailStep(nextStep);
   const currentStepLabel = currentField
     ? getInitialDetailStepLabel(currentCategory, currentField)
-    : 'P. プラン生成と全体整理';
+    : 'P. 計画生成と全体整理';
   const currentPromptHint = currentField
-    ? (SHIRP_DETAIL_PROMPT_HINTS[currentCategory] as Record<string, string>)[currentField]
-    : '全体要約とプラン生成';
+    ? SHIRP_DETAIL_PROMPT_HINTS[currentCategory][currentField]
+    : '全体要約と計画生成';
   const followingStepLabel =
-    followingStep ? getInitialDetailStepLabel(followingStep.category, followingStep.field) : 'P. プラン生成と全体整理';
+    followingStep ? getInitialDetailStepLabel(followingStep.category, followingStep.field) : 'P. 計画生成と全体整理';
   return `
 あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で詳細項目を1つずつ埋めます。
 
@@ -294,15 +270,15 @@ ${JSON.stringify(karte.shirpDetails, null, 2)}
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
-1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で詳細項目を更新してください。
+1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で二段目要約と分かる範囲の三段目項目を更新してください。
 2. 以前のテンポの良い面談のように、reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
 3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
 4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
-5. is_complete は、必須詳細項目がすべて埋まり、P(プラン)を生成した時だけ true にしてください。それまでは false にしてください。
-6. 必須詳細項目がすべて埋まった場合は、P(プラン)を生成し、面談のまとめを返してください。
+5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まり、P(計画)を生成した時だけ true にしてください。それまでは false にしてください。
+6. 必須詳細項目がすべて埋まった場合は、P(計画)のトップレベル要約と詳細計画を生成し、面談のまとめを返してください。
 7. 6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
 8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
-9. otherCurrent / otherHope / otherIssue / otherResource は、会話中の補足があれば必要に応じて更新して構いません。余談やS〜Pに当てはまらない内容は#に記録してください。
+9. 三段目項目は会話から自然に読み取れるものだけ埋め、判断できないものは null のままにしてください。S〜Pに当てはまらない内容は#に記録してください。
 10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
 11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
 12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
@@ -329,7 +305,7 @@ ${AI_RESPONSE_GUIDELINES}
 
 # 指示
 1. ユーザーが自由に話せるように傾聴し、深掘り質問やプロービングを行います。
-2. ユーザーの発話から得た情報で、トップレベル要約と必要な詳細項目の両方を部分更新してください。
+2. ユーザーの発話から得た情報で、トップレベル要約と必要な二段目要約・三段目項目を部分更新してください。P は面談終了時に更新する前提で構いません。
 3. response_format の JSON Schema に厳密に従って出力してください。
 4. reply にはユーザーに見せる自然な返答だけを書いてください。
 5. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
@@ -354,8 +330,8 @@ ${JSON.stringify(karte.shirpDetails, null, 2)}
 ${AI_RESPONSE_GUIDELINES}
 
 # 指示
-1. 会話履歴から情報を抽出し、SHIRPのトップレベル要約と詳細項目を可能な限り埋めてください。
-2. 足りない項目は補足し、P(プラン)を生成してください。
+1. 会話履歴から情報を抽出し、SHIRPのトップレベル要約と二段目要約・三段目項目を可能な限り埋めてください。
+2. 足りない項目は補足し、P(計画)のトップレベル要約と詳細計画を生成してください。
 3. 面談後のキャリアに関する簡単なフィードバックを80~120文字で作成してください。
 4. reply の最後に、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を含めてください。
 5. response_format の JSON Schema に厳密に従って出力してください。
@@ -385,7 +361,7 @@ const createMeetingResponseSchema = (finalize: boolean) => ({
         type: 'object',
         additionalProperties: false,
         properties: SHIRP_DETAIL_SCHEMA_PROPERTIES,
-        required: ['S', 'H', 'I', 'R'],
+        required: [...SHIRP_DETAIL_CATEGORY_KEYS],
       },
       is_complete: {
         type: 'boolean',
@@ -471,26 +447,49 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
 
   const validatedDetailUpdates: ShirpDetailUpdates = {};
   Object.entries(updatedShirpDetails).forEach(([categoryKey, detailValue]) => {
-    if (!Object.keys(SHIRP_DETAIL_FIELDS).includes(categoryKey)) {
+    if (!SHIRP_DETAIL_CATEGORY_KEYS.includes(categoryKey as ShirpDetailCategoryKey)) {
       throw new Error('AI応答のupdated_shirp_detailsに許可されていないカテゴリがあります。');
     }
     if (!isRecord(detailValue)) {
       throw new Error('AI応答のupdated_shirp_detailsの形式が不正です。');
     }
     const category = categoryKey as ShirpDetailCategoryKey;
-    const allowedFields = SHIRP_DETAIL_FIELDS[category] as readonly string[];
-    const nextCategoryUpdates: Record<string, string> = {};
+    const allowedFields = SHIRP_DETAIL_FIELDS[category];
+    const nextCategoryUpdates: Record<string, { summary?: string; items?: Record<string, string | null> }> = {};
 
     Object.entries(detailValue).forEach(([fieldKey, fieldContent]) => {
       if (!allowedFields.includes(fieldKey)) {
         throw new Error('AI応答のupdated_shirp_detailsに許可されていない詳細キーがあります。');
       }
-      if (fieldContent !== null && typeof fieldContent !== 'string') {
+      if (!isRecord(fieldContent)) {
         throw new Error('AI応答のupdated_shirp_detailsの値が不正です。');
       }
-      if (typeof fieldContent === 'string') {
-        nextCategoryUpdates[fieldKey] = fieldContent;
+
+      const nextFieldUpdates: { summary?: string; items?: Record<string, string | null> } = {};
+
+      if (fieldContent.summary !== null && fieldContent.summary !== undefined && typeof fieldContent.summary !== 'string') {
+        throw new Error('AI応答のupdated_shirp_details.summaryが不正です。');
       }
+      if (typeof fieldContent.summary === 'string') {
+        nextFieldUpdates.summary = fieldContent.summary;
+      }
+
+      if (!isRecord(fieldContent.items)) {
+        throw new Error('AI応答のupdated_shirp_details.itemsが不正です。');
+      }
+      const allowedItems = Object.keys(SHIRP_DETAIL_ITEM_LABELS[category][fieldKey]);
+      const nextItemUpdates: Record<string, string | null> = {};
+      Object.entries(fieldContent.items).forEach(([itemKey, itemContent]) => {
+        if (!allowedItems.includes(itemKey)) {
+          throw new Error('AI応答のupdated_shirp_details.itemsに許可されていないキーがあります。');
+        }
+        if (itemContent !== null && typeof itemContent !== 'string') {
+          throw new Error('AI応答のupdated_shirp_details.itemsの値が不正です。');
+        }
+        nextItemUpdates[itemKey] = itemContent as string | null;
+      });
+      nextFieldUpdates.items = nextItemUpdates;
+      nextCategoryUpdates[fieldKey] = nextFieldUpdates;
     });
 
     validatedDetailUpdates[category] = nextCategoryUpdates as ShirpDetailUpdates[typeof category];
@@ -537,16 +536,32 @@ const updateShirpDetails = (prev: KarteData, updates?: ShirpDetailUpdates) => {
     H: { ...prev.shirpDetails.H },
     I: { ...prev.shirpDetails.I },
     R: { ...prev.shirpDetails.R },
+    P: { ...prev.shirpDetails.P },
   };
 
   Object.entries(updates).forEach(([categoryKey, categoryUpdates]) => {
     if (!categoryUpdates) return;
     const category = categoryKey as ShirpDetailCategoryKey;
-    const categoryDetails = nextShirpDetails[category] as Record<string, string | null>;
     Object.entries(categoryUpdates).forEach(([detailKey, detailValue]) => {
-      if (typeof detailValue === 'string' && detailValue.trim()) {
-        categoryDetails[detailKey] = detailValue;
-      }
+      if (!detailValue) return;
+      const currentField = nextShirpDetails[category][detailKey] ?? {
+        summary: null,
+        items: {},
+      };
+      nextShirpDetails[category][detailKey] = {
+        summary:
+          typeof detailValue.summary === 'string' && detailValue.summary.trim()
+            ? detailValue.summary
+            : currentField.summary,
+        items: {
+          ...currentField.items,
+        },
+      };
+      Object.entries(detailValue.items ?? {}).forEach(([itemKey, itemValue]) => {
+        if (typeof itemValue === 'string' && itemValue.trim()) {
+          nextShirpDetails[category][detailKey].items[itemKey] = itemValue;
+        }
+      });
     });
   });
 
@@ -663,7 +678,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     () =>
       nextInitialStep
         ? getInitialDetailStepLabel(nextInitialStep.category, nextInitialStep.field)
-        : 'P. プラン生成と全体整理',
+        : 'P. 計画生成と全体整理',
     [nextInitialStep],
   );
   const initialProgressCountLabel = `${initialProgressCount} / ${INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length} 項目完了`;

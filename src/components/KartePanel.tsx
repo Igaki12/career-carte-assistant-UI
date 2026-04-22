@@ -16,9 +16,9 @@ import {
 } from '@chakra-ui/react';
 import SurveyRadar from './SurveyRadar';
 import {
+  getShirpDetailFieldEntries,
+  getShirpDetailItemEntries,
   isShirpDetailCategoryKey,
-  SHIRP_DETAIL_FIELDS,
-  SHIRP_DETAIL_LABELS,
   SHIRP_HINTS,
   SHIRP_LABELS,
 } from '../lib/shirp';
@@ -174,37 +174,56 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                           <AccordionIcon />
                         </AccordionButton>
                         <AccordionPanel pt={2}>
-                          {(() => {
-                            const detailLabels = SHIRP_DETAIL_LABELS[key] as Record<string, string>;
-                            const detailValues = data.shirpDetails[key] as Record<string, string | null>;
-                            return (
-                          <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
-                            {SHIRP_DETAIL_FIELDS[key].map((field) => {
-                              const detailValue = detailValues[field];
+                          <Stack spacing={4}>
+                            {getShirpDetailFieldEntries(key).map(([field, definition]) => {
+                              const detailValue = data.shirpDetails[key]?.[field];
                               return (
-                                <Box key={`${key}-${field}`}>
-                                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
-                                    {detailLabels[field]}
+                                <Box key={`${key}-${field}`} borderWidth="1px" borderRadius="lg" p={3} bg="gray.50">
+                                  <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                                    {definition.label}
                                   </Text>
                                   <Box
                                     borderWidth="1px"
                                     borderRadius="md"
                                     p={3}
-                                    bg={detailValue ? 'gray.50' : 'white'}
-                                    color={detailValue ? 'gray.800' : 'gray.400'}
+                                    bg={detailValue?.summary ? 'white' : 'gray.100'}
+                                    color={detailValue?.summary ? 'gray.800' : 'gray.400'}
                                     fontSize="sm"
-                                    fontStyle={detailValue ? 'normal' : 'italic'}
+                                    fontStyle={detailValue?.summary ? 'normal' : 'italic'}
                                     minH="56px"
                                     whiteSpace="pre-wrap"
                                   >
-                                    {detailValue || '未聴取'}
+                                    {detailValue?.summary || '未聴取'}
                                   </Box>
+                                  <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3} mt={3}>
+                                    {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => {
+                                      const itemValue = detailValue?.items?.[itemKey];
+                                      return (
+                                        <Box key={`${key}-${field}-${itemKey}`}>
+                                          <Text fontSize="xs" color="gray.500" mb={1}>
+                                            {itemLabel}
+                                          </Text>
+                                          <Box
+                                            borderWidth="1px"
+                                            borderRadius="md"
+                                            p={3}
+                                            bg={itemValue ? 'white' : 'gray.100'}
+                                            color={itemValue ? 'gray.800' : 'gray.400'}
+                                            fontSize="sm"
+                                            fontStyle={itemValue ? 'normal' : 'italic'}
+                                            minH="56px"
+                                            whiteSpace="pre-wrap"
+                                          >
+                                            {itemValue || '未記載'}
+                                          </Box>
+                                        </Box>
+                                      );
+                                    })}
+                                  </SimpleGrid>
                                 </Box>
                               );
                             })}
-                          </SimpleGrid>
-                            );
-                          })()}
+                          </Stack>
                         </AccordionPanel>
                       </AccordionItem>
                     </Accordion>

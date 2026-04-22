@@ -53,9 +53,9 @@ import { downloadKarteCsv, downloadKartePdf } from '../lib/karteExport';
 import {
   cloneShirpDetails,
   createEmptyShirpDetails,
+  getShirpDetailFieldEntries,
+  getShirpDetailItemEntries,
   isShirpDetailCategoryKey,
-  SHIRP_DETAIL_FIELDS,
-  SHIRP_DETAIL_LABELS,
   SHIRP_HINTS,
   SHIRP_LABELS,
 } from '../lib/shirp';
@@ -1008,35 +1008,68 @@ function UserHome() {
                           <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
                             {SHIRP_LABELS[key]} の詳細
                           </Text>
-                          {(() => {
-                            const detailLabels = SHIRP_DETAIL_LABELS[key] as Record<string, string>;
-                            const detailValues = latestDetailDraft[key] as Record<string, string | null>;
-                            return (
-                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                            {SHIRP_DETAIL_FIELDS[key].map((field) => (
-                              <Box key={`${key}-${field}`}>
-                                <Text fontSize="xs" color="gray.500" mb={1}>
-                                  {detailLabels[field]}
-                                </Text>
-                                <Textarea
-                                  value={detailValues[field] ?? ''}
-                                  onChange={(event) =>
-                                    setLatestDetailDraft((prev) => ({
-                                      ...prev,
-                                      [key]: {
-                                        ...prev[key],
-                                        [field]: event.target.value,
-                                      },
-                                    }))
-                                  }
-                                  rows={3}
-                                  bg="white"
-                                />
-                              </Box>
-                            ))}
-                          </SimpleGrid>
-                            );
-                          })()}
+                          <Stack spacing={4}>
+                            {getShirpDetailFieldEntries(key).map(([field, definition]) => {
+                              const fieldValue = latestDetailDraft[key]?.[field];
+                              return (
+                                <Box key={`${key}-${field}`} borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
+                                  <Text fontSize="xs" color="gray.500" mb={1}>
+                                    {definition.label}
+                                  </Text>
+                                  <Textarea
+                                    value={fieldValue?.summary ?? ''}
+                                    onChange={(event) =>
+                                      setLatestDetailDraft((prev) => ({
+                                        ...prev,
+                                        [key]: {
+                                          ...prev[key],
+                                          [field]: {
+                                            summary: event.target.value,
+                                            items: {
+                                              ...(prev[key]?.[field]?.items ?? {}),
+                                            },
+                                          },
+                                        },
+                                      }))
+                                    }
+                                    rows={3}
+                                    bg="white"
+                                    placeholder="二段目の要約"
+                                  />
+                                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={3}>
+                                    {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => (
+                                      <Box key={`${key}-${field}-${itemKey}`}>
+                                        <Text fontSize="xs" color="gray.500" mb={1}>
+                                          {itemLabel}
+                                        </Text>
+                                        <Textarea
+                                          value={fieldValue?.items?.[itemKey] ?? ''}
+                                          onChange={(event) =>
+                                            setLatestDetailDraft((prev) => ({
+                                              ...prev,
+                                              [key]: {
+                                                ...prev[key],
+                                                [field]: {
+                                                  summary: prev[key]?.[field]?.summary ?? null,
+                                                  items: {
+                                                    ...(prev[key]?.[field]?.items ?? {}),
+                                                    [itemKey]: event.target.value,
+                                                  },
+                                                },
+                                              },
+                                            }))
+                                          }
+                                          rows={2}
+                                          bg="white"
+                                          placeholder="三段目の具体項目"
+                                        />
+                                      </Box>
+                                    ))}
+                                  </SimpleGrid>
+                                </Box>
+                              );
+                            })}
+                          </Stack>
                         </Box>
                       )}
                     </Stack>

@@ -30,9 +30,9 @@ import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
 import { createEmptyKarte } from '../lib/demoUserState';
 import {
   cloneShirpDetails,
+  getShirpDetailFieldEntries,
+  getShirpDetailItemEntries,
   isShirpDetailCategoryKey,
-  SHIRP_DETAIL_FIELDS,
-  SHIRP_DETAIL_LABELS,
   SHIRP_HINTS,
   SHIRP_LABELS,
 } from '../lib/shirp';
@@ -155,67 +155,196 @@ function ConsultantHome() {
     [],
   );
 
-  const [karteRecords, setKarteRecords] = useState<KarteRecord[]>(() => [
-    {
-      id: 'karte-002',
-      atCreated: '2024/11/20',
-      atUpdated: '2024/11/30',
-      statusLabel: 'コンサル編集済み',
-      data: {
-        demographics: {
-          name: '山田 花子',
-          age: '32',
-          company: 'Career Carte Inc.',
-          jobTitle: 'Product Manager',
-          workLocationPrefecture: '東京都',
-          jobChangeCount: '2',
-          yearsOfService: '4',
-          gender: '女性',
-          maritalStatus: '既婚',
-          childrenCount: '1',
-          youngestChildAge: '4',
+  const [karteRecords, setKarteRecords] = useState<KarteRecord[]>(() => {
+    const empty = createEmptyKarte();
+    return [
+      {
+        id: 'karte-002',
+        atCreated: '2024/11/20',
+        atUpdated: '2024/11/30',
+        statusLabel: 'コンサル編集済み',
+        data: {
+          ...empty,
+          demographics: {
+            name: '山田 花子',
+            age: '32',
+            company: 'Career Carte Inc.',
+            jobTitle: 'Product Manager',
+            workLocationPrefecture: '東京都',
+            jobChangeCount: '2',
+            yearsOfService: '4',
+            gender: '女性',
+            maritalStatus: '既婚',
+            childrenCount: '1',
+            youngestChildAge: '4',
+          },
+          shirp: {
+            S: '裁量はあるが、成長機会と組織との適合に揺らぎを感じている。',
+            H: '事業開発に近い役割で、裁量と納得感のある働き方を望んでいる。',
+            I: '英語発信力と子育て両立を踏まえた次の打ち手が課題。',
+            R: '新規事業経験と相談できる社内支援者がある。',
+            P: '情報収集と英語強化、面談設定を次回までの行動計画として整理。',
+            '#': '次回は転職判断軸と社内異動の優先度を深掘りする。',
+          },
+          shirpDetails: {
+            ...empty.shirpDetails,
+            S: {
+              ...empty.shirpDetails.S,
+              externalConditions: {
+                summary: '裁量や働き方の柔軟性はあるが、将来の安定感には迷いがある。',
+                items: {
+                  ...empty.shirpDetails.S.externalConditions.items,
+                  workStyle: '裁量を持って動ける。',
+                  employmentStability: 'この先の成長機会には不安がある。',
+                },
+              },
+              jobContent: {
+                summary: '事業推進そのものにはやりがいがあるが、成長実感はやや薄れている。',
+                items: {
+                  ...empty.shirpDetails.S.jobContent.items,
+                  jobContent: '新規事業の推進に関わっている。',
+                  growthFeeling: '最近は成長機会の減少を感じている。',
+                },
+              },
+              relationshipsAndOrgFit: {
+                summary: '社内の相談先はあるが、組織の方向性とのずれを感じている。',
+                items: {
+                  ...empty.shirpDetails.S.relationshipsAndOrgFit.items,
+                  organizationalCultureFit: '組織の方向性とのずれを感じる。',
+                  consultationAvailability: '社内メンターに相談できる。',
+                },
+              },
+              selfEvaluationAndAcceptance: {
+                summary: '事業推進力には自信がある一方で、今の環境での納得感は下がっている。',
+                items: {
+                  ...empty.shirpDetails.S.selfEvaluationAndAcceptance.items,
+                  selfEvaluation: '事業推進力には自信がある。',
+                },
+              },
+            },
+            H: {
+              ...empty.shirpDetails.H,
+              treatmentPreferences: {
+                summary: '現年収を維持しつつ、成果が処遇に反映される環境を望んでいる。',
+                items: {
+                  ...empty.shirpDetails.H.treatmentPreferences.items,
+                  desiredIncome: '現年収を維持したい。',
+                },
+              },
+              workPreferences: {
+                summary: '事業開発や新規事業に近い役割を希望している。',
+                items: {
+                  ...empty.shirpDetails.H.workPreferences.items,
+                  desiredJobContent: '事業開発や新規事業に近い役割。',
+                },
+              },
+              workStylePreferences: {
+                summary: '裁量と柔軟性のある働き方を重視している。',
+                items: {
+                  ...empty.shirpDetails.H.workStylePreferences.items,
+                  desiredWorkStyle: '裁量を持って動ける働き方。',
+                },
+              },
+              selfRealizationPreferences: {
+                summary: '自分の強みを活かしながら納得感の高い仕事を続けたい。',
+                items: {
+                  ...empty.shirpDetails.H.selfRealizationPreferences.items,
+                  desiredAbilityUtilization: '事業推進力をもっと活かしたい。',
+                },
+              },
+            },
+            I: {
+              ...empty.shirpDetails.I,
+              capabilityExperienceIssues: {
+                summary: '英語でのプレゼンや発信力に課題がある。',
+                items: {
+                  ...empty.shirpDetails.I.capabilityExperienceIssues.items,
+                  skillGap: '英語でのプレゼンに不安がある。',
+                },
+              },
+              healthLifeConstraints: {
+                summary: '子育てとの両立を踏まえた行動設計が必要。',
+                items: {
+                  ...empty.shirpDetails.I.healthLifeConstraints.items,
+                  familyConstraint: '子育てとの両立を踏まえて検討したい。',
+                },
+              },
+              psychologicalIssues: {
+                summary: null,
+                items: { ...empty.shirpDetails.I.psychologicalIssues.items },
+              },
+              organizationalEnvironmentalConstraints: {
+                summary: null,
+                items: { ...empty.shirpDetails.I.organizationalEnvironmentalConstraints.items },
+              },
+            },
+            R: {
+              ...empty.shirpDetails.R,
+              capabilityResources: {
+                summary: '新規事業立ち上げ経験が大きな強みになっている。',
+                items: {
+                  ...empty.shirpDetails.R.capabilityResources.items,
+                  experience: '新規事業立ち上げ経験がある。',
+                },
+              },
+              interpersonalResources: {
+                summary: '社内メンターが継続的な相談相手になっている。',
+                items: {
+                  ...empty.shirpDetails.R.interpersonalResources.items,
+                  mentorOrAdvisor: '社内メンターが相談相手。',
+                },
+              },
+              psychologicalResources: {
+                summary: null,
+                items: { ...empty.shirpDetails.R.psychologicalResources.items },
+              },
+              environmentalResources: {
+                summary: null,
+                items: { ...empty.shirpDetails.R.environmentalResources.items },
+              },
+              fitResources: {
+                summary: null,
+                items: { ...empty.shirpDetails.R.fitResources.items },
+              },
+            },
+            P: {
+              ...empty.shirpDetails.P,
+              explorationActions: {
+                summary: '次回までに候補領域の情報収集と自己分析を進める。',
+                items: {
+                  ...empty.shirpDetails.P.explorationActions.items,
+                  informationGathering: '事業開発ポジションの情報を集める。',
+                  selfAnalysis: '強みと判断軸を言語化する。',
+                },
+              },
+              learningActions: {
+                summary: '英語発信と実績整理を進める。',
+                items: {
+                  ...empty.shirpDetails.P.learningActions.items,
+                  learning: '英語ピッチ練習を行う。',
+                  achievementOrganization: '新規事業実績を整理する。',
+                },
+              },
+              executionActions: {
+                summary: '必要な関係者との面談設定を行う。',
+                items: {
+                  ...empty.shirpDetails.P.executionActions.items,
+                  meetingSetup: '社内メンターと次回面談を設定する。',
+                },
+              },
+              executionManagement: {
+                summary: '優先順位と進捗確認方法を決めて進める。',
+                items: {
+                  ...empty.shirpDetails.P.executionManagement.items,
+                  priority: '情報収集と英語練習を優先する。',
+                },
+              },
+            },
+          },
         },
-        shirp: {
-          S: '組織の裁量は大きいが、成長機会の減少を感じている。',
-          H: '事業開発に関わる仕事を希望。',
-          I: '英語でのプレゼンに課題。',
-          R: '新規事業立ち上げ経験と社内メンター。',
-          P: 'マネジメント研修と英語ピッチ練習を計画。',
-          '#': '次回に転職判断軸を深掘り。',
-        },
-        shirpDetails: {
-          S: {
-            organizationFit: '裁量は大きいが、最近は組織の方向性とのずれを感じている。',
-            selfEvaluation: '事業推進力には自信がある一方、今の環境では成長実感が薄い。',
-            relationshipQuality: '社内メンターとの関係は良好で、相談先はある。',
-            otherCurrent: null,
-          },
-          H: {
-            desiredIncome: '現年収を維持しつつ、成果が報酬に反映される環境を望んでいる。',
-            desiredWork: '事業開発や新規事業に近い役割を希望。',
-            desiredWorkStyle: '裁量を持って動ける働き方を重視。',
-            otherHope: null,
-          },
-          I: {
-            skillIssue: '英語でのプレゼンに不安がある。',
-            healthIssue: null,
-            ageIssue: null,
-            familyIssue: '子育てとの両立を踏まえて検討したい。',
-            otherIssue: null,
-          },
-          R: {
-            strengthQualification: null,
-            strengthExperience: '新規事業立ち上げ経験がある。',
-            supporters: '社内メンターが相談相手になっている。',
-            timeOrMoney: null,
-            otherResource: null,
-          },
-        },
-        survey: createEmptyKarte().survey,
-        conditionSummary: null,
       },
-    },
-  ]);
+    ];
+  });
 
   const [selectedRecord, setSelectedRecord] = useState<KarteRecord | null>(null);
   const [karteDraft, setKarteDraft] = useState<KarteData>(createEmptyKarte());
@@ -504,38 +633,74 @@ function ConsultantHome() {
                         <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
                           {SHIRP_LABELS[key]} の詳細
                         </Text>
-                        {(() => {
-                          const detailLabels = SHIRP_DETAIL_LABELS[key] as Record<string, string>;
-                          const detailValues = karteDraft.shirpDetails[key] as Record<string, string | null>;
-                          return (
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                          {SHIRP_DETAIL_FIELDS[key].map((field) => (
-                            <Box key={`${key}-${field}`}>
-                              <Text fontSize="xs" color="gray.500" mb={1}>
-                                {detailLabels[field]}
-                              </Text>
-                              <Textarea
-                                value={detailValues[field] ?? ''}
-                                onChange={(event) =>
-                                  setKarteDraft((prev) => ({
-                                    ...prev,
-                                    shirpDetails: {
-                                      ...prev.shirpDetails,
-                                      [key]: {
-                                        ...prev.shirpDetails[key],
-                                        [field]: event.target.value,
+                        <Stack spacing={4}>
+                          {getShirpDetailFieldEntries(key).map(([field, definition]) => {
+                            const fieldValue = karteDraft.shirpDetails[key]?.[field];
+                            return (
+                              <Box key={`${key}-${field}`} borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
+                                <Text fontSize="xs" color="gray.500" mb={1}>
+                                  {definition.label}
+                                </Text>
+                                <Textarea
+                                  value={fieldValue?.summary ?? ''}
+                                  onChange={(event) =>
+                                    setKarteDraft((prev) => ({
+                                      ...prev,
+                                      shirpDetails: {
+                                        ...prev.shirpDetails,
+                                        [key]: {
+                                          ...prev.shirpDetails[key],
+                                          [field]: {
+                                            summary: event.target.value,
+                                            items: {
+                                              ...(prev.shirpDetails[key]?.[field]?.items ?? {}),
+                                            },
+                                          },
+                                        },
                                       },
-                                    },
-                                  }))
-                                }
-                                rows={3}
-                                bg="white"
-                              />
-                            </Box>
-                          ))}
-                        </SimpleGrid>
-                          );
-                        })()}
+                                    }))
+                                  }
+                                  rows={3}
+                                  bg="white"
+                                  placeholder="二段目の要約"
+                                />
+                                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={3}>
+                                  {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => (
+                                    <Box key={`${key}-${field}-${itemKey}`}>
+                                      <Text fontSize="xs" color="gray.500" mb={1}>
+                                        {itemLabel}
+                                      </Text>
+                                      <Textarea
+                                        value={fieldValue?.items?.[itemKey] ?? ''}
+                                        onChange={(event) =>
+                                          setKarteDraft((prev) => ({
+                                            ...prev,
+                                            shirpDetails: {
+                                              ...prev.shirpDetails,
+                                              [key]: {
+                                                ...prev.shirpDetails[key],
+                                                [field]: {
+                                                  summary: prev.shirpDetails[key]?.[field]?.summary ?? null,
+                                                  items: {
+                                                    ...(prev.shirpDetails[key]?.[field]?.items ?? {}),
+                                                    [itemKey]: event.target.value,
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          }))
+                                        }
+                                        rows={2}
+                                        bg="white"
+                                        placeholder="三段目の具体項目"
+                                      />
+                                    </Box>
+                                  ))}
+                                </SimpleGrid>
+                              </Box>
+                            );
+                          })}
+                        </Stack>
                       </Box>
                     )}
                   </Stack>

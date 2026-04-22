@@ -13,27 +13,21 @@ export type ShirpKey = 'S' | 'H' | 'I' | 'R' | 'P' | '#';
 
 export type ShirpData = Record<ShirpKey, string | null>;
 
-export type ShirpDetailCategoryKey = 'S' | 'H' | 'I' | 'R';
+export type ShirpDetailCategoryKey = 'S' | 'H' | 'I' | 'R' | 'P';
 
-export type ShirpSDetailKey = 'organizationFit' | 'selfEvaluation' | 'relationshipQuality' | 'otherCurrent';
-export type ShirpHDetailKey = 'desiredIncome' | 'desiredWork' | 'desiredWorkStyle' | 'otherHope';
-export type ShirpIDetailKey = 'skillIssue' | 'healthIssue' | 'ageIssue' | 'familyIssue' | 'otherIssue';
-export type ShirpRDetailKey = 'strengthQualification' | 'strengthExperience' | 'supporters' | 'timeOrMoney' | 'otherResource';
-
-export type ShirpDetailKeyMap = {
-  S: ShirpSDetailKey;
-  H: ShirpHDetailKey;
-  I: ShirpIDetailKey;
-  R: ShirpRDetailKey;
+export type ShirpDetailFieldData = {
+  summary: string | null;
+  items: Record<string, string | null>;
 };
 
-export type ShirpDetailsData = {
-  [K in ShirpDetailCategoryKey]: Record<ShirpDetailKeyMap[K], string | null>;
+export type ShirpDetailsData = Record<ShirpDetailCategoryKey, Record<string, ShirpDetailFieldData>>;
+
+export type ShirpDetailFieldUpdates = {
+  summary?: string | null;
+  items?: Record<string, string | null>;
 };
 
-export type ShirpDetailUpdates = {
-  [K in ShirpDetailCategoryKey]?: Partial<Record<ShirpDetailKeyMap[K], string | null>>;
-};
+export type ShirpDetailUpdates = Partial<Record<ShirpDetailCategoryKey, Record<string, ShirpDetailFieldUpdates>>>;
 
 export type DemographicData = {
   name: string | null;

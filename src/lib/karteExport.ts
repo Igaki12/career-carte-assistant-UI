@@ -1,9 +1,9 @@
 import { jsPDF } from 'jspdf';
 import { drawSurveyRadarOnCanvas, createSurveyRadarModel } from './surveyRadar';
 import {
+  getShirpDetailFieldEntries,
+  getShirpDetailItemEntries,
   SHIRP_DETAIL_CATEGORY_KEYS,
-  SHIRP_DETAIL_FIELDS,
-  SHIRP_DETAIL_LABELS,
   SHIRP_LABELS,
 } from './shirp';
 import { SHIRP_KEYS } from '../types';
@@ -129,13 +129,19 @@ const buildCsvRows = ({ karte, meta }: KarteExportPayload): CsvRow[] => {
   });
 
   SHIRP_DETAIL_CATEGORY_KEYS.forEach((category) => {
-    const detailLabels = SHIRP_DETAIL_LABELS[category] as Record<string, string>;
-    const detailValues = karte.shirpDetails[category] as Record<string, string | null>;
-    SHIRP_DETAIL_FIELDS[category].forEach((field) => {
+    getShirpDetailFieldEntries(category).forEach(([field, definition]) => {
+      const detailValue = karte.shirpDetails[category]?.[field];
       rows.push({
         section: 'shirp_detail',
-        item: `${SHIRP_LABELS[category]} / ${detailLabels[field]}`,
-        value: formatKarteValue(detailValues[field]),
+        item: `${SHIRP_LABELS[category]} / ${definition.label}`,
+        value: formatKarteValue(detailValue?.summary),
+      });
+      getShirpDetailItemEntries(category, field).forEach(([itemKey, itemLabel]) => {
+        rows.push({
+          section: 'shirp_detail',
+          item: `${SHIRP_LABELS[category]} / ${definition.label} / ${itemLabel}`,
+          value: formatPlainValue(detailValue?.items?.[itemKey], '未記載'),
+        });
       });
     });
   });
@@ -375,10 +381,16 @@ export const downloadKartePdf = async (payload: KarteExportPayload) => {
 
   drawSectionTitle(pages, '電子カルテ詳細');
   SHIRP_DETAIL_CATEGORY_KEYS.forEach((category) => {
-    const detailLabels = SHIRP_DETAIL_LABELS[category] as Record<string, string>;
-    const detailValues = karte.shirpDetails[category] as Record<string, string | null>;
-    SHIRP_DETAIL_FIELDS[category].forEach((field) => {
-      drawField(pages, `${SHIRP_LABELS[category]} / ${detailLabels[field]}`, formatKarteValue(detailValues[field]));
+    getShirpDetailFieldEntries(category).forEach(([field, definition]) => {
+      const detailValue = karte.shirpDetails[category]?.[field];
+      drawField(pages, `${SHIRP_LABELS[category]} / ${definition.label}`, formatKarteValue(detailValue?.summary));
+      getShirpDetailItemEntries(category, field).forEach(([itemKey, itemLabel]) => {
+        drawField(
+          pages,
+          `${SHIRP_LABELS[category]} / ${definition.label} / ${itemLabel}`,
+          formatPlainValue(detailValue?.items?.[itemKey], '未記載'),
+        );
+      });
     });
   });
 

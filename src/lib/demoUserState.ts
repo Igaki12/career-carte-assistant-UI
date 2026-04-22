@@ -10,13 +10,137 @@ import type {
   Tenant,
   TenantFeatureFlags,
 } from '../types';
-import { cloneShirpDetails, createEmptyShirpDetails } from './shirp';
+import { cloneShirpDetails, createEmptyShirpDetails, SHIRP_DETAIL_CATEGORY_KEYS, SHIRP_DETAIL_FIELDS, SHIRP_DETAIL_ITEM_LABELS } from './shirp';
 
 export const LOCAL_STORAGE_DEMO_USER_KEY = 'cca-demo-user-state';
 export const LEGACY_LOCAL_STORAGE_KARTE_KEY = 'cca-karte';
 export const DEFAULT_TENANT_ID = 'tenant-career-carte-demo';
 export const DEFAULT_DEMO_USER_ID = 'USR-2024-021';
 export const CONDITION_CONSENT_VERSION = 'condition-demo-v1';
+
+const createEmptyShirp = (): KarteData['shirp'] => ({
+  S: null,
+  H: null,
+  I: null,
+  R: null,
+  P: null,
+  '#': null,
+});
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const mergeText = (base: string | null | undefined, addition: string) => {
+  const next = addition.trim();
+  if (!next) return base ?? null;
+  if (!base?.trim()) return next;
+  return `${base.trim()}\n${next}`;
+};
+
+const LEGACY_SHIRP_DETAIL_MIGRATIONS: Record<
+  string,
+  Record<string, { field: string; item?: string; appendToTopLevel?: boolean }>
+> = {
+  S: {
+    organizationFit: { field: 'relationshipsAndOrgFit', item: 'organizationalCultureFit' },
+    selfEvaluation: { field: 'selfEvaluationAndAcceptance', item: 'selfEvaluation' },
+    relationshipQuality: { field: 'relationshipsAndOrgFit', item: 'colleagueRelationship' },
+    otherCurrent: { field: 'relationshipsAndOrgFit', appendToTopLevel: true },
+  },
+  H: {
+    desiredIncome: { field: 'treatmentPreferences', item: 'desiredIncome' },
+    desiredWork: { field: 'workPreferences', item: 'desiredJobContent' },
+    desiredWorkStyle: { field: 'workStylePreferences', item: 'desiredWorkStyle' },
+    otherHope: { field: 'workPreferences', appendToTopLevel: true },
+  },
+  I: {
+    skillIssue: { field: 'capabilityExperienceIssues', item: 'skillGap' },
+    healthIssue: { field: 'healthLifeConstraints', item: 'healthConstraint' },
+    ageIssue: { field: 'organizationalEnvironmentalConstraints', item: 'ageLifeStageConstraint' },
+    familyIssue: { field: 'healthLifeConstraints', item: 'familyConstraint' },
+    otherIssue: { field: 'organizationalEnvironmentalConstraints', appendToTopLevel: true },
+  },
+  R: {
+    strengthQualification: { field: 'capabilityResources', item: 'qualification' },
+    strengthExperience: { field: 'capabilityResources', item: 'experience' },
+    supporters: { field: 'interpersonalResources', item: 'supporter' },
+    timeOrMoney: { field: 'environmentalResources' },
+    otherResource: { field: 'environmentalResources', appendToTopLevel: true },
+  },
+};
+
+const normalizeShirpState = (
+  shirp: Partial<KarteData['shirp']> | null | undefined,
+  rawDetails: unknown,
+): Pick<KarteData, 'shirp' | 'shirpDetails'> => {
+  const nextShirp = {
+    ...createEmptyShirp(),
+    ...(shirp ?? {}),
+  };
+  const nextShirpDetails = createEmptyShirpDetails();
+
+  if (!isRecord(rawDetails)) {
+    return {
+      shirp: nextShirp,
+      shirpDetails: nextShirpDetails,
+    };
+  }
+
+  SHIRP_DETAIL_CATEGORY_KEYS.forEach((category) => {
+    const rawCategory = rawDetails[category];
+    if (!isRecord(rawCategory)) return;
+
+    SHIRP_DETAIL_FIELDS[category].forEach((field) => {
+      const rawField = rawCategory[field];
+      if (isRecord(rawField)) {
+        if (typeof rawField.summary === 'string' && rawField.summary.trim()) {
+          nextShirpDetails[category][field].summary = rawField.summary;
+        }
+        const rawItems = isRecord(rawField.items) ? rawField.items : null;
+        if (rawItems) {
+          Object.keys(SHIRP_DETAIL_ITEM_LABELS[category][field]).forEach((itemKey) => {
+            const itemValue = rawItems[itemKey];
+            if (typeof itemValue === 'string' && itemValue.trim()) {
+              nextShirpDetails[category][field].items[itemKey] = itemValue;
+            }
+          });
+        }
+      }
+    });
+  });
+
+  (['S', 'H', 'I', 'R'] as const).forEach((category) => {
+    const rawCategory = rawDetails[category];
+    if (!isRecord(rawCategory)) return;
+    const categoryMigrations = LEGACY_SHIRP_DETAIL_MIGRATIONS[category];
+
+    Object.entries(rawCategory).forEach(([legacyKey, legacyValue]) => {
+      if (typeof legacyValue !== 'string' || !legacyValue.trim()) return;
+      const migration = categoryMigrations[legacyKey];
+      if (!migration) return;
+
+      const detailField = nextShirpDetails[category][migration.field];
+      if (!detailField.summary) {
+        detailField.summary = legacyValue;
+      } else if (detailField.summary !== legacyValue) {
+        detailField.summary = mergeText(detailField.summary, legacyValue);
+      }
+
+      if (migration.item && !detailField.items[migration.item]) {
+        detailField.items[migration.item] = legacyValue;
+      }
+
+      if (migration.appendToTopLevel) {
+        nextShirp[category] = mergeText(nextShirp[category], legacyValue);
+      }
+    });
+  });
+
+  return {
+    shirp: nextShirp,
+    shirpDetails: nextShirpDetails,
+  };
+};
 
 export const createDefaultTenants = (): Tenant[] => [
   {
@@ -79,14 +203,7 @@ export const createEmptySurvey = (): SurveyResult => ({
 
 export const createEmptyKarte = (): KarteData => ({
   demographics: createEmptyDemographics(),
-  shirp: {
-    S: null,
-    H: null,
-    I: null,
-    R: null,
-    P: null,
-    '#': null,
-  },
+  shirp: createEmptyShirp(),
   shirpDetails: createEmptyShirpDetails(),
   survey: createEmptySurvey(),
   conditionSummary: null,
@@ -137,10 +254,12 @@ export const applyDemographicsToKarte = (
   demographics: DemographicData | null | undefined,
 ): KarteData => {
   const nextKarte = karte ? { ...karte } : createEmptyKarte();
+  const normalizedShirpState = normalizeShirpState(nextKarte.shirp, nextKarte.shirpDetails);
   return {
     ...nextKarte,
     demographics: mergeDemographics(nextKarte.demographics, demographics),
-    shirpDetails: nextKarte.shirpDetails ? cloneShirpDetails(nextKarte.shirpDetails) : createEmptyShirpDetails(),
+    shirp: normalizedShirpState.shirp,
+    shirpDetails: cloneShirpDetails(normalizedShirpState.shirpDetails),
     survey: nextKarte.survey ?? createEmptySurvey(),
     conditionSummary: nextKarte.conditionSummary ?? null,
   };
