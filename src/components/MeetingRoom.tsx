@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Flex,
+  Heading,
   HStack,
   Icon,
   IconButton,
@@ -34,6 +35,13 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
+import {
+  consumeMeetingQuota,
+  getDemoUsageQuota,
+  getMeetingQuotaSummary,
+  subscribeDemoUsageQuota,
+  type DemoUsageQuota,
+} from '../lib/demoUsageQuota';
 import {
   getInitialDetailStepLabel,
   INITIAL_REQUIRED_SHIRP_DETAIL_STEPS,
@@ -612,6 +620,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isApiModalOpen, setApiModalOpen] = useState(false);
   const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
   const [karte, setKarte] = useState<KarteData>(createEmptyKarte);
   const [messages, setMessages] = useState<ConversationMessage[]>([
     { role: 'assistant', content: greetingForMeeting(meetingType) },
@@ -628,11 +637,13 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [feedbackText, setFeedbackText] = useState('');
   const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
+  const [hasConsumedMeetingQuota, setHasConsumedMeetingQuota] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
   const [speechMotion, setSpeechMotion] = useState<SpeechMotionFrame>(createSilentSpeechMotion);
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
+  const quotaSessionIdRef = useRef(`meeting-${meetingType}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -652,9 +663,11 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const isInitialMeeting = meetingType === 'initial';
   const isTurnTakingMode = !isInitialMeeting && continuousMode === 'turn';
   const draftAction = searchParams.get('draft');
-  const maxApiCalls = isInitialMeeting ? 10 : 7; // 初回面談は10回、継続面談は7回までAPI呼び出し可能（フィードバック生成を含む）
-  const conversationQuotaLimit = Math.max(isInitialMeeting ? maxApiCalls : maxApiCalls - 1, 0);
-  const hasConversationQuota = apiUsageCount < conversationQuotaLimit;
+  const meetingQuota = getMeetingQuotaSummary(usageQuota, meetingType);
+  const canUseMeetingQuota = hasConsumedMeetingQuota || meetingQuota.remaining > 0;
+  const maxApiCalls = meetingQuota.llmCallsPerInterview;
+  const conversationQuotaLimit = maxApiCalls;
+  const hasConversationQuota = canUseMeetingQuota && apiUsageCount < conversationQuotaLimit;
   const hasApiBudget = apiUsageCount < maxApiCalls;
   const hasUsedApi = hasSessionStarted || apiUsageCount > 0;
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
@@ -687,6 +700,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     setUserState(nextState);
     saveDemoUserState(nextState);
   }, []);
+
+  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
 
   const resetSpeechMotion = useCallback(() => {
     setSpeechMotion(createSilentSpeechMotion());
@@ -948,6 +963,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     setTextValue('');
     setTextareaExpanded(false);
     setHasStoredKarte(Boolean(nextUserState.latestKarte));
+    quotaSessionIdRef.current = `meeting-${meetingType}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     if (shouldResumeDraft) {
       setMessages(currentDraft.messages);
@@ -956,6 +972,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setApiUsageCount(currentDraft.apiUsageCount);
       setConversationStarted(currentDraft.conversationStarted);
       setSessionStarted(currentDraft.hasSessionStarted);
+      setHasConsumedMeetingQuota(currentDraft.apiUsageCount > 0);
       setFeedbackText(currentDraft.feedbackText);
     } else {
       if (draftAction === 'fresh' && currentDraft) {
@@ -973,6 +990,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setConversationStarted(false);
       setApiUsageCount(0);
       setSessionStarted(false);
+      setHasConsumedMeetingQuota(false);
       setFeedbackText('');
     }
 
@@ -1349,6 +1367,19 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         return;
       }
       if (!ensureApiKey()) return;
+      if (!hasConsumedMeetingQuota) {
+        const consumed = consumeMeetingQuota(meetingType, quotaSessionIdRef.current);
+        if (!consumed) {
+          toast({
+            title: isInitialMeeting ? '初回面談の利用回数がありません' : '継続面談の利用回数がありません',
+            description: '管理者画面または企業管理者画面で利用回数を追加してください。',
+            status: 'warning',
+            duration: 4000,
+          });
+          return;
+        }
+        setHasConsumedMeetingQuota(true);
+      }
       const nextUsageCount = apiUsageCount + 1;
       if (conversationQuotaLimit > 0 && nextUsageCount === conversationQuotaLimit) {
         notifyApiLimit('今回の送信が最後のメッセージです。');
@@ -1364,7 +1395,18 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setTextValue('');
       await runLLMProcess(updatedHistory);
     },
-    [apiUsageCount, conversationQuotaLimit, ensureApiKey, hasConversationQuota, isInitialMeeting, notifyApiLimit, runLLMProcess],
+    [
+      apiUsageCount,
+      conversationQuotaLimit,
+      ensureApiKey,
+      hasConsumedMeetingQuota,
+      hasConversationQuota,
+      isInitialMeeting,
+      meetingType,
+      notifyApiLimit,
+      runLLMProcess,
+      toast,
+    ],
   );
 
   const insertTextAtCursor = useCallback((incomingText: string) => {
@@ -1572,6 +1614,26 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       : 'OpenAI Key: 設定済 / Gemini Key: 未設定'
     : 'OpenAI Key: 未設定';
   const apiStatusColor = openAiApiKey ? 'green' : 'gray';
+
+  if (!canUseMeetingQuota) {
+    return (
+      <Box bg="gray.100" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
+        <Box maxW="640px" mx="auto" bg="white" borderRadius="2xl" borderWidth="1px" borderColor="gray.200" boxShadow="sm" p={{ base: 6, md: 8 }}>
+          <Stack spacing={4}>
+            <Heading size="md">
+              {isInitialMeeting ? '初回面談の利用回数がありません' : '継続面談の利用回数がありません'}
+            </Heading>
+            <Text color="gray.600">
+              管理者画面または企業管理者画面で利用回数を追加してから、もう一度開始してください。
+            </Text>
+            <Button colorScheme="blue" alignSelf="flex-start" onClick={() => navigate('/user')}>
+              ユーザホームへ戻る
+            </Button>
+          </Stack>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box bg="gray.100" minH="100dvh" h="100dvh" py={{ base: 4, md: 6 }} px={{ base: 3, md: 6 }} overflow="hidden">

@@ -32,7 +32,7 @@ import {
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiActivity, FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { Navigate, useNavigate } from 'react-router-dom';
 import KartePanel from '../components/KartePanel';
@@ -49,6 +49,12 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
+import {
+  getDemoUsageQuota,
+  getMeetingQuotaSummary,
+  subscribeDemoUsageQuota,
+  type DemoUsageQuota,
+} from '../lib/demoUsageQuota';
 import { downloadKarteCsv, downloadKartePdf } from '../lib/karteExport';
 import {
   cloneShirpDetails,
@@ -148,10 +154,13 @@ type ProfileView = {
   updatedAt: string;
   logs: number;
   initialInterviewLimit: number;
+  initialInterviewUsed: number;
   initialInterviewRemaining: number;
   continuousInterviewLimit: number;
+  continuousInterviewUsed: number;
   continuousInterviewRemaining: number;
-  llmCallsPerInterview: number;
+  initialLlmCallsPerInterview: number;
+  continuousLlmCallsPerInterview: number;
 };
 
 type PendingStart = {
@@ -229,7 +238,7 @@ const formatShortDate = () =>
 
 const getDraftMetaLabel = (meetingType: MeetingType) => (meetingType === 'initial' ? '初回面談の下書き' : '継続面談の下書き');
 
-const resolveProfile = (userState: DemoUserState): ProfileView => {
+const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): ProfileView => {
   const latestRecord = userState.karteRecords[0];
   const hasDraft = Boolean(userState.draftSessions.initial || userState.draftSessions.continuous);
   const demographics = userState.demographics;
@@ -264,6 +273,8 @@ const resolveProfile = (userState: DemoUserState): ProfileView => {
           : userState.demographicsSkipped
             ? 'デモスキップ中'
           : '面談準備中';
+  const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
+  const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
 
   return {
     id: 'USR-2024-021',
@@ -291,11 +302,14 @@ const resolveProfile = (userState: DemoUserState): ProfileView => {
       latestRecord?.atUpdated ||
       '未更新',
     logs: userState.karteRecords.reduce((sum, record) => sum + record.conversationLog.length, 0),
-    initialInterviewLimit: 1,
-    initialInterviewRemaining: latestRecord?.meetingType === 'initial' ? 0 : 1,
-    continuousInterviewLimit: 4,
-    continuousInterviewRemaining: Math.max(4 - userState.karteRecords.filter((record) => record.meetingType === 'continuous').length, 0),
-    llmCallsPerInterview: 3,
+    initialInterviewLimit: initialQuota.limit,
+    initialInterviewUsed: initialQuota.used,
+    initialInterviewRemaining: initialQuota.remaining,
+    continuousInterviewLimit: continuousQuota.limit,
+    continuousInterviewUsed: continuousQuota.used,
+    continuousInterviewRemaining: continuousQuota.remaining,
+    initialLlmCallsPerInterview: initialQuota.llmCallsPerInterview,
+    continuousLlmCallsPerInterview: continuousQuota.llmCallsPerInterview,
   };
 };
 
@@ -311,6 +325,7 @@ function UserHome() {
   const resumeDraftDisclosure = useDisclosure();
 
   const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
   const [continuousMode, setContinuousMode] = useState<ContinuousMode>('normal');
   const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
   const [isEditingLatest, setIsEditingLatest] = useState(false);
@@ -330,7 +345,9 @@ function UserHome() {
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
   const [lastSurveyAnswers, setLastSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
 
-  const profile = useMemo(() => resolveProfile(userState), [userState]);
+  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
+
+  const profile = useMemo(() => resolveProfile(userState, usageQuota), [usageQuota, userState]);
   const stressAnalysisEnabled = isStressAnalysisEnabled(userState);
   const latestCondition = useMemo(() => getLatestConditionRecord(userState), [userState]);
   const latestKarte = useMemo(
@@ -372,6 +389,16 @@ function UserHome() {
   };
 
   const handleStartInitial = () => {
+    if (!userState.draftSessions.initial && profile.initialInterviewRemaining <= 0) {
+      toast({
+        title: '初回面談の利用回数がありません',
+        description: '管理者画面または企業管理者画面で利用回数を追加してください。',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
     if (userState.draftSessions.initial) {
       handleOpenResumeDraft('initial', null);
       return;
@@ -380,6 +407,16 @@ function UserHome() {
   };
 
   const handleStartContinuous = () => {
+    if (!userState.draftSessions.continuous && profile.continuousInterviewRemaining <= 0) {
+      toast({
+        title: '継続面談の利用回数がありません',
+        description: '管理者画面または企業管理者画面で利用回数を追加してください。',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
     continuousModeDisclosure.onOpen();
   };
 
@@ -700,10 +737,21 @@ function UserHome() {
                   初回面談と継続面談を選択できます。未完了のセッションがある場合は、続きから再開できます。
                 </Text>
                 <Stack spacing={3}>
-                  <Button colorScheme="blue" size="lg" onClick={handleStartInitial}>
+                  <Button
+                    colorScheme="blue"
+                    size="lg"
+                    onClick={handleStartInitial}
+                    isDisabled={!userState.draftSessions.initial && profile.initialInterviewRemaining <= 0}
+                  >
                     初回面談を開始
                   </Button>
-                  <Button variant="outline" size="lg" colorScheme="teal" onClick={handleStartContinuous}>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    colorScheme="teal"
+                    onClick={handleStartContinuous}
+                    isDisabled={!userState.draftSessions.continuous && profile.continuousInterviewRemaining <= 0}
+                  >
                     継続面談を開始
                   </Button>
                 </Stack>
@@ -733,20 +781,26 @@ function UserHome() {
                   <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="blue.400">
                     <Stack spacing={0}>
                       <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                        初回面談残り回数
+                        初回面談
                       </Text>
                       <Text fontSize="md" color="gray.800" fontWeight="bold">
-                        {profile.initialInterviewLimit}回 <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">（残り{profile.initialInterviewRemaining}回）</Text>
+                        残り{profile.initialInterviewRemaining}回
+                        <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
+                          {' '}（使用済み{profile.initialInterviewUsed}回 / 上限{profile.initialInterviewLimit}回）
+                        </Text>
                       </Text>
                     </Stack>
                   </Box>
                   <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="teal.400">
                     <Stack spacing={0}>
                       <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                        継続面談残り回数
+                        継続面談
                       </Text>
                       <Text fontSize="md" color="gray.800" fontWeight="bold">
-                        {profile.continuousInterviewLimit}回 <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">（残り{profile.continuousInterviewRemaining}回）</Text>
+                        残り{profile.continuousInterviewRemaining}回
+                        <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
+                          {' '}（使用済み{profile.continuousInterviewUsed}回 / 上限{profile.continuousInterviewLimit}回）
+                        </Text>
                       </Text>
                     </Stack>
                   </Box>
@@ -757,7 +811,7 @@ function UserHome() {
                       AI利用可能回数
                     </Text>
                     <Text fontSize="sm" color="gray.700" fontWeight="semibold">
-                      面談あたり{profile.llmCallsPerInterview}回
+                      初回{profile.initialLlmCallsPerInterview}回 / 継続{profile.continuousLlmCallsPerInterview}回
                     </Text>
                   </Flex>
                 </Box>

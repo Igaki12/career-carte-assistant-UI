@@ -5,7 +5,10 @@ import {
   Checkbox,
   Container,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
+  Input,
   SimpleGrid,
   Stack,
   Stat,
@@ -20,7 +23,7 @@ import {
   Tr,
   useToast,
 } from '@chakra-ui/react';
-import { useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DEFAULT_DEMO_USER_ID,
@@ -30,12 +33,26 @@ import {
   saveDemoUserState,
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
+import {
+  getDemoUsageQuota,
+  getMeetingQuotaSummary,
+  subscribeDemoUsageQuota,
+  updateDemoUsageQuota,
+  type DemoUsageQuota,
+} from '../lib/demoUsageQuota';
 import type { DemoUserState } from '../types';
 
 function CompanyAdminHome() {
   const toast = useToast();
   const navigate = useNavigate();
   const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
+  const [quotaForm, setQuotaForm] = useState({
+    initialMonthlyLimit: '',
+    continuousMonthlyLimit: '',
+    initialLlmCallsPerInterview: '',
+    continuousLlmCallsPerInterview: '',
+  });
   const tenantId = resolveTenantId(userState);
   const tenant = userState.tenants.find((entry) => entry.id === tenantId) ?? userState.tenants[0];
   const flags = getTenantFeatureFlags(userState, tenantId);
@@ -46,6 +63,19 @@ function CompanyAdminHome() {
   const latestMeasuredAt = tenantConditionRecords[0]?.measuredAt
     ? new Date(tenantConditionRecords[0].measuredAt).toLocaleString('ja-JP')
     : '未測定';
+  const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
+  const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+
+  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
+
+  useEffect(() => {
+    setQuotaForm({
+      initialMonthlyLimit: usageQuota.initialMonthlyLimit.toString(),
+      continuousMonthlyLimit: usageQuota.continuousMonthlyLimit.toString(),
+      initialLlmCallsPerInterview: usageQuota.initialLlmCallsPerInterview.toString(),
+      continuousLlmCallsPerInterview: usageQuota.continuousLlmCallsPerInterview.toString(),
+    });
+  }, [usageQuota]);
 
   const persistState = (nextState: DemoUserState) => {
     setUserState(nextState);
@@ -56,6 +86,46 @@ function CompanyAdminHome() {
     persistState(updateTenantFeatureFlags(userState, tenantId, { stressAnalysisEnabled: isChecked }));
     toast({
       title: isChecked ? '緊張度スコア表示を有効にしました' : '緊張度スコア表示を無効にしました',
+      status: 'success',
+      duration: 2200,
+      isClosable: true,
+    });
+  };
+
+  const handleQuotaSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const initialMonthlyLimit = Number(quotaForm.initialMonthlyLimit);
+    const continuousMonthlyLimit = Number(quotaForm.continuousMonthlyLimit);
+    const initialLlmCallsPerInterview = Number(quotaForm.initialLlmCallsPerInterview);
+    const continuousLlmCallsPerInterview = Number(quotaForm.continuousLlmCallsPerInterview);
+
+    if (
+      Number.isNaN(initialMonthlyLimit) ||
+      Number.isNaN(continuousMonthlyLimit) ||
+      Number.isNaN(initialLlmCallsPerInterview) ||
+      Number.isNaN(continuousLlmCallsPerInterview) ||
+      initialMonthlyLimit < 0 ||
+      continuousMonthlyLimit < 0 ||
+      initialLlmCallsPerInterview <= 0 ||
+      continuousLlmCallsPerInterview <= 0
+    ) {
+      toast({
+        title: '入力値が正しくありません',
+        status: 'warning',
+        duration: 2400,
+        isClosable: true,
+      });
+      return;
+    }
+
+    updateDemoUsageQuota({
+      initialMonthlyLimit,
+      continuousMonthlyLimit,
+      initialLlmCallsPerInterview,
+      continuousLlmCallsPerInterview,
+    });
+    toast({
+      title: '面談利用回数を更新しました',
       status: 'success',
       duration: 2200,
       isClosable: true,
@@ -127,6 +197,58 @@ function CompanyAdminHome() {
             </Stack>
           </Box>
 
+          <Box bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
+            <form onSubmit={handleQuotaSubmit}>
+              <Stack spacing={4}>
+                <Heading size="md">面談利用回数・会話ターン制限</Heading>
+                <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel>初回面談月間上限</FormLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={quotaForm.initialMonthlyLimit}
+                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, initialMonthlyLimit: event.target.value }))}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>継続面談月間上限</FormLabel>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={quotaForm.continuousMonthlyLimit}
+                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, continuousMonthlyLimit: event.target.value }))}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>初回AI回数/面談</FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={quotaForm.initialLlmCallsPerInterview}
+                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, initialLlmCallsPerInterview: event.target.value }))}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>継続AI回数/面談</FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={quotaForm.continuousLlmCallsPerInterview}
+                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, continuousLlmCallsPerInterview: event.target.value }))}
+                    />
+                  </FormControl>
+                </SimpleGrid>
+                <Text fontSize="sm" color="gray.500">
+                  初回面談: 使用済み{initialQuota.used}回 / 残り{initialQuota.remaining}回、継続面談: 使用済み{continuousQuota.used}回 / 残り{continuousQuota.remaining}回
+                </Text>
+                <Button type="submit" colorScheme="pink" alignSelf="flex-start">
+                  設定を保存
+                </Button>
+              </Stack>
+            </form>
+          </Box>
+
           <Box bg="white" borderRadius="xl" borderWidth="1px" borderColor="gray.100" boxShadow="sm" p={{ base: 5, md: 7 }} overflowX="auto">
             <Stack spacing={4}>
               <Heading size="md">自社ユーザー</Heading>
@@ -138,6 +260,7 @@ function CompanyAdminHome() {
                     <Th>所属企業</Th>
                     <Th>初回面談残り</Th>
                     <Th>継続面談残り</Th>
+                    <Th>AI回数/面談</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -145,8 +268,9 @@ function CompanyAdminHome() {
                     <Td>{DEFAULT_DEMO_USER_ID}</Td>
                     <Td>{userState.demographics.name || '未設定'}</Td>
                     <Td>{tenant?.name ?? 'デモ企業'}</Td>
-                    <Td>1回</Td>
-                    <Td>4回</Td>
+                    <Td>上限{initialQuota.limit} / 使用{initialQuota.used} / 残{initialQuota.remaining}</Td>
+                    <Td>上限{continuousQuota.limit} / 使用{continuousQuota.used} / 残{continuousQuota.remaining}</Td>
+                    <Td>初回{initialQuota.llmCallsPerInterview}回 / 継続{continuousQuota.llmCallsPerInterview}回</Td>
                   </Tr>
                 </Tbody>
               </Table>

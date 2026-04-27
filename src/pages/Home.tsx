@@ -31,6 +31,8 @@ function Home() {
               colorScheme="teal"
               size="lg"
               px={10}
+              py={{ base: 7, md: 6 }}
+              minH={{ base: '64px', md: '48px' }}
               flex="1"
             >
               初回面談を始める
@@ -42,6 +44,8 @@ function Home() {
               colorScheme="teal"
               size="lg"
               px={10}
+              py={{ base: 7, md: 6 }}
+              minH={{ base: '64px', md: '48px' }}
               flex="1"
             >
               継続面談を始める

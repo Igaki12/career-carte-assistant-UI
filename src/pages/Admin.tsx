@@ -32,14 +32,22 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
 import { FiFileText, FiPlus, FiUpload } from 'react-icons/fi';
 import {
+  DEFAULT_DEMO_USER_ID,
   getTenantFeatureFlags,
   loadDemoUserState,
   saveDemoUserState,
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
+import {
+  getDemoUsageQuota,
+  getMeetingQuotaSummary,
+  subscribeDemoUsageQuota,
+  updateDemoUsageQuota,
+  type DemoUsageQuota,
+} from '../lib/demoUsageQuota';
 import type { DemoUserState } from '../types';
 
 type AccountRecord = {
@@ -54,7 +62,8 @@ type AccountRecord = {
   logs: number;
   initialInterviewRemaining: number;
   continuousInterviewRemaining: number;
-  llmCallsPerInterview: number;
+  initialLlmCallsPerInterview: number;
+  continuousLlmCallsPerInterview: number;
 };
 
 type SortState = {
@@ -82,7 +91,8 @@ type AccountEditForm = {
   status: string;
   initialInterviewRemaining: string;
   continuousInterviewRemaining: string;
-  llmCallsPerInterview: string;
+  initialLlmCallsPerInterview: string;
+  continuousLlmCallsPerInterview: string;
 };
 
 type BulkEditForm = {
@@ -91,7 +101,8 @@ type BulkEditForm = {
   status: string;
   initialInterviewRemaining: string;
   continuousInterviewRemaining: string;
-  llmCallsPerInterview: string;
+  initialLlmCallsPerInterview: string;
+  continuousLlmCallsPerInterview: string;
 };
 
 type AccountTarget = 'user' | 'consultant';
@@ -135,7 +146,8 @@ function Admin() {
       logs: 23,
       initialInterviewRemaining: 10,
       continuousInterviewRemaining: 4,
-      llmCallsPerInterview: 3,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
     },
     {
       id: 'USR-2024-019',
@@ -149,7 +161,8 @@ function Admin() {
       logs: 17,
       initialInterviewRemaining: 10,
       continuousInterviewRemaining: 7,
-      llmCallsPerInterview: 3,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
     },
     {
       id: 'USR-2024-016',
@@ -163,7 +176,8 @@ function Admin() {
       logs: 29,
       initialInterviewRemaining: 10,
       continuousInterviewRemaining: 1,
-      llmCallsPerInterview: 3,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
     },
   ]);
 
@@ -180,7 +194,8 @@ function Admin() {
       logs: 61,
       initialInterviewRemaining: 10,
       continuousInterviewRemaining: 2,
-      llmCallsPerInterview: 3,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
     },
     {
       id: 'CNS-398',
@@ -194,7 +209,8 @@ function Admin() {
       logs: 48,
       initialInterviewRemaining: 10,
       continuousInterviewRemaining: 6,
-      llmCallsPerInterview: 3,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
     },
     {
       id: 'CNS-395',
@@ -208,7 +224,8 @@ function Admin() {
       logs: 12,
       initialInterviewRemaining: 10,
       continuousInterviewRemaining: 9,
-      llmCallsPerInterview: 3,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
     },
   ]);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -223,7 +240,8 @@ function Admin() {
     status: '',
     initialInterviewRemaining: '',
     continuousInterviewRemaining: '',
-    llmCallsPerInterview: '',
+    initialLlmCallsPerInterview: '',
+    continuousLlmCallsPerInterview: '',
   });
   const [bulkTarget, setBulkTarget] = useState<'user' | 'consultant' | null>(null);
   const [bulkForm, setBulkForm] = useState<BulkEditForm>({
@@ -232,7 +250,8 @@ function Admin() {
     status: '',
     initialInterviewRemaining: '',
     continuousInterviewRemaining: '',
-    llmCallsPerInterview: '',
+    initialLlmCallsPerInterview: '',
+    continuousLlmCallsPerInterview: '',
   });
 
   const [userQuery, setUserQuery] = useState('');
@@ -280,6 +299,9 @@ function Admin() {
 
   const [activeSection, setActiveSection] = useState<'user' | 'consultant' | 'tenant'>('user');
   const [demoState, setDemoState] = useState<DemoUserState>(() => loadDemoUserState());
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
+
+  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
 
   const buildTimestamp = () => {
     const now = new Date();
@@ -291,16 +313,41 @@ function Admin() {
       .padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  const buildEditForm = (account: AccountRecord): AccountEditForm => ({
-    name: account.name,
-    email: account.email,
-    company: account.company,
-    role: account.role,
-    status: account.status,
-    initialInterviewRemaining: account.initialInterviewRemaining.toString(),
-    continuousInterviewRemaining: account.continuousInterviewRemaining.toString(),
-    llmCallsPerInterview: account.llmCallsPerInterview.toString(),
-  });
+  const getQuotaBackedAccount = (account: AccountRecord): AccountRecord => {
+    if (account.id !== DEFAULT_DEMO_USER_ID) return account;
+    const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
+    const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+    return {
+      ...account,
+      initialInterviewRemaining: initialQuota.remaining,
+      continuousInterviewRemaining: continuousQuota.remaining,
+      initialLlmCallsPerInterview: initialQuota.llmCallsPerInterview,
+      continuousLlmCallsPerInterview: continuousQuota.llmCallsPerInterview,
+    };
+  };
+
+  const buildEditForm = (account: AccountRecord): AccountEditForm => {
+    const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
+    const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+    const isDemoUser = account.id === DEFAULT_DEMO_USER_ID;
+    return {
+      name: account.name,
+      email: account.email,
+      company: account.company,
+      role: account.role,
+      status: account.status,
+      initialInterviewRemaining: (isDemoUser ? initialQuota.limit : account.initialInterviewRemaining).toString(),
+      continuousInterviewRemaining: (isDemoUser ? continuousQuota.limit : account.continuousInterviewRemaining).toString(),
+      initialLlmCallsPerInterview: (isDemoUser
+        ? initialQuota.llmCallsPerInterview
+        : account.initialLlmCallsPerInterview
+      ).toString(),
+      continuousLlmCallsPerInterview: (isDemoUser
+        ? continuousQuota.llmCallsPerInterview
+        : account.continuousLlmCallsPerInterview
+      ).toString(),
+    };
+  };
 
   const handleSort = (target: 'user' | 'consultant', column: keyof AccountRecord) => {
     if (target === 'user') {
@@ -407,7 +454,8 @@ function Admin() {
         logs: 0,
         initialInterviewRemaining: 10,
         continuousInterviewRemaining: 10,
-        llmCallsPerInterview: 3,
+        initialLlmCallsPerInterview: 10,
+        continuousLlmCallsPerInterview: 7,
       },
       ...prev,
     ]);
@@ -452,7 +500,8 @@ function Admin() {
         logs: 0,
         initialInterviewRemaining: 10,
         continuousInterviewRemaining: 10,
-        llmCallsPerInterview: 3,
+        initialLlmCallsPerInterview: 10,
+        continuousLlmCallsPerInterview: 7,
       },
       ...prev,
     ]);
@@ -561,7 +610,8 @@ function Admin() {
       status: '',
       initialInterviewRemaining: '',
       continuousInterviewRemaining: '',
-      llmCallsPerInterview: '',
+      initialLlmCallsPerInterview: '',
+      continuousLlmCallsPerInterview: '',
     });
     bulkEditDisclosure.onOpen();
   };
@@ -572,15 +622,18 @@ function Admin() {
 
     const initialRemainingValue = Number(editForm.initialInterviewRemaining);
     const continuousRemainingValue = Number(editForm.continuousInterviewRemaining);
-    const llmValue = Number(editForm.llmCallsPerInterview);
+    const initialLlmValue = Number(editForm.initialLlmCallsPerInterview);
+    const continuousLlmValue = Number(editForm.continuousLlmCallsPerInterview);
 
     if (
       Number.isNaN(initialRemainingValue) ||
       Number.isNaN(continuousRemainingValue) ||
-      Number.isNaN(llmValue) ||
+      Number.isNaN(initialLlmValue) ||
+      Number.isNaN(continuousLlmValue) ||
       initialRemainingValue < 0 ||
       continuousRemainingValue < 0 ||
-      llmValue <= 0
+      initialLlmValue <= 0 ||
+      continuousLlmValue <= 0
     ) {
       toast({
         title: '入力値が正しくありません',
@@ -589,6 +642,15 @@ function Admin() {
         isClosable: true,
       });
       return;
+    }
+
+    if (editTarget === 'user' && editingAccount.id === DEFAULT_DEMO_USER_ID) {
+      updateDemoUsageQuota({
+        initialMonthlyLimit: initialRemainingValue,
+        continuousMonthlyLimit: continuousRemainingValue,
+        initialLlmCallsPerInterview: initialLlmValue,
+        continuousLlmCallsPerInterview: continuousLlmValue,
+      });
     }
 
     const nextTimestamp = buildTimestamp();
@@ -604,7 +666,8 @@ function Admin() {
               status: editForm.status,
               initialInterviewRemaining: initialRemainingValue,
               continuousInterviewRemaining: continuousRemainingValue,
-              llmCallsPerInterview: llmValue,
+              initialLlmCallsPerInterview: initialLlmValue,
+              continuousLlmCallsPerInterview: continuousLlmValue,
               updatedAt: nextTimestamp,
             }
           : account,
@@ -641,14 +704,17 @@ function Admin() {
         ? null
         : Number(bulkForm.continuousInterviewRemaining);
     const llmValue =
-      bulkForm.llmCallsPerInterview.trim() === '' ? null : Number(bulkForm.llmCallsPerInterview);
+      bulkForm.initialLlmCallsPerInterview.trim() === '' ? null : Number(bulkForm.initialLlmCallsPerInterview);
+    const continuousLlmValue =
+      bulkForm.continuousLlmCallsPerInterview.trim() === '' ? null : Number(bulkForm.continuousLlmCallsPerInterview);
 
     if (
       (initialRemainingValue !== null &&
         (Number.isNaN(initialRemainingValue) || initialRemainingValue < 0)) ||
       (continuousRemainingValue !== null &&
         (Number.isNaN(continuousRemainingValue) || continuousRemainingValue < 0)) ||
-      (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0))
+      (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0)) ||
+      (continuousLlmValue !== null && (Number.isNaN(continuousLlmValue) || continuousLlmValue <= 0))
     ) {
       toast({
         title: '入力値が正しくありません',
@@ -657,6 +723,15 @@ function Admin() {
         isClosable: true,
       });
       return;
+    }
+
+    if (bulkTarget === 'user' && selectedIds.includes(DEFAULT_DEMO_USER_ID)) {
+      updateDemoUsageQuota({
+        ...(initialRemainingValue !== null ? { initialMonthlyLimit: initialRemainingValue } : {}),
+        ...(continuousRemainingValue !== null ? { continuousMonthlyLimit: continuousRemainingValue } : {}),
+        ...(llmValue !== null ? { initialLlmCallsPerInterview: llmValue } : {}),
+        ...(continuousLlmValue !== null ? { continuousLlmCallsPerInterview: continuousLlmValue } : {}),
+      });
     }
 
     const nextTimestamp = buildTimestamp();
@@ -671,7 +746,8 @@ function Admin() {
           initialInterviewRemaining: initialRemainingValue ?? account.initialInterviewRemaining,
           continuousInterviewRemaining:
             continuousRemainingValue ?? account.continuousInterviewRemaining,
-          llmCallsPerInterview: llmValue ?? account.llmCallsPerInterview,
+          initialLlmCallsPerInterview: llmValue ?? account.initialLlmCallsPerInterview,
+          continuousLlmCallsPerInterview: continuousLlmValue ?? account.continuousLlmCallsPerInterview,
           updatedAt: nextTimestamp,
         };
       });
@@ -883,7 +959,7 @@ function Admin() {
                           onSort={handleSort}
                           label="AI回数/面談"
                           target="user"
-                          column="llmCallsPerInterview"
+                          column="initialLlmCallsPerInterview"
                         />
                       </Th>
                       <Th>
@@ -893,7 +969,11 @@ function Admin() {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {filteredUserAccounts.map((account) => (
+                    {filteredUserAccounts.map((rawAccount) => {
+                      const account = getQuotaBackedAccount(rawAccount);
+                      const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
+                      const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+                      return (
                       <Tr
                         key={account.id}
                         bg={selectedUserIds.includes(account.id) ? 'blue.100' : 'transparent'}
@@ -935,9 +1015,19 @@ function Admin() {
                         </Td>
                         <Td fontSize="sm">{account.createdAt}</Td>
                         <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
-                        <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
-                        <Td fontSize="sm">{account.llmCallsPerInterview}回</Td>
+                        <Td fontSize="sm">
+                          {account.id === DEFAULT_DEMO_USER_ID
+                            ? `上限${initialQuota.limit} / 使用${initialQuota.used} / 残${initialQuota.remaining}`
+                            : `${account.initialInterviewRemaining}回`}
+                        </Td>
+                        <Td fontSize="sm">
+                          {account.id === DEFAULT_DEMO_USER_ID
+                            ? `上限${continuousQuota.limit} / 使用${continuousQuota.used} / 残${continuousQuota.remaining}`
+                            : `${account.continuousInterviewRemaining}回`}
+                        </Td>
+                        <Td fontSize="sm">
+                          初回{account.initialLlmCallsPerInterview}回 / 継続{account.continuousLlmCallsPerInterview}回
+                        </Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
@@ -958,7 +1048,8 @@ function Admin() {
                           </Stack>
                         </Td>
                       </Tr>
-                    ))}
+                      );
+                    })}
                   </Tbody>
                 </Table>
               </Box>
@@ -1199,7 +1290,7 @@ function Admin() {
                           onSort={handleSort}
                           label="AI回数/面談"
                           target="consultant"
-                          column="llmCallsPerInterview"
+                          column="initialLlmCallsPerInterview"
                         />
                       </Th>
                       <Th>
@@ -1253,7 +1344,9 @@ function Admin() {
                         <Td fontSize="sm">{account.updatedAt}</Td>
                         <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
                         <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
-                        <Td fontSize="sm">{account.llmCallsPerInterview}回</Td>
+                        <Td fontSize="sm">
+                          初回{account.initialLlmCallsPerInterview}回 / 継続{account.continuousLlmCallsPerInterview}回
+                        </Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
@@ -1591,9 +1684,9 @@ function Admin() {
                     </FormControl>
                   </SimpleGrid>
                   <Divider />
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
                     <FormControl isRequired>
-                      <FormLabel>初回面談残り回数</FormLabel>
+                      <FormLabel>初回面談月間上限</FormLabel>
                       <Input
                         type="number"
                         min="0"
@@ -1607,7 +1700,7 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>継続面談残り回数</FormLabel>
+                      <FormLabel>継続面談月間上限</FormLabel>
                       <Input
                         type="number"
                         min="0"
@@ -1621,15 +1714,29 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>LLM使用回数/面談</FormLabel>
+                      <FormLabel>初回AI回数/面談</FormLabel>
                       <Input
                         type="number"
                         min="1"
-                        value={editForm.llmCallsPerInterview}
+                        value={editForm.initialLlmCallsPerInterview}
                         onChange={(event) =>
                           setEditForm((prev) => ({
                             ...prev,
-                            llmCallsPerInterview: event.target.value,
+                            initialLlmCallsPerInterview: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>継続AI回数/面談</FormLabel>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editForm.continuousLlmCallsPerInterview}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({
+                            ...prev,
+                            continuousLlmCallsPerInterview: event.target.value,
                           }))
                         }
                       />
@@ -1711,9 +1818,9 @@ function Admin() {
                 </FormControl>
               </SimpleGrid>
               <Divider />
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
                 <FormControl>
-                  <FormLabel>初回面談残り回数</FormLabel>
+                  <FormLabel>初回面談月間上限</FormLabel>
                   <Input
                     type="number"
                     min="0"
@@ -1728,7 +1835,7 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>継続面談残り回数</FormLabel>
+                  <FormLabel>継続面談月間上限</FormLabel>
                   <Input
                     type="number"
                     min="0"
@@ -1743,16 +1850,31 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>LLM使用回数/面談</FormLabel>
+                  <FormLabel>初回AI回数/面談</FormLabel>
                   <Input
                     type="number"
                     min="1"
                     placeholder="変更しない"
-                    value={bulkForm.llmCallsPerInterview}
+                    value={bulkForm.initialLlmCallsPerInterview}
                     onChange={(event) =>
                       setBulkForm((prev) => ({
                         ...prev,
-                        llmCallsPerInterview: event.target.value,
+                        initialLlmCallsPerInterview: event.target.value,
+                      }))
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>継続AI回数/面談</FormLabel>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="変更しない"
+                    value={bulkForm.continuousLlmCallsPerInterview}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({
+                        ...prev,
+                        continuousLlmCallsPerInterview: event.target.value,
                       }))
                     }
                   />
