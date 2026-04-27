@@ -221,7 +221,7 @@ function CompanyAdminHome() {
                     />
                   </FormControl>
                   <FormControl isRequired>
-                    <FormLabel>初回AI回数/面談</FormLabel>
+                    <FormLabel>初回面談1回あたりのAI使用可能回数</FormLabel>
                     <Input
                       type="number"
                       min="1"
@@ -230,7 +230,7 @@ function CompanyAdminHome() {
                     />
                   </FormControl>
                   <FormControl isRequired>
-                    <FormLabel>継続AI回数/面談</FormLabel>
+                    <FormLabel>継続面談1回あたりのAI使用可能回数</FormLabel>
                     <Input
                       type="number"
                       min="1"
@@ -260,7 +260,7 @@ function CompanyAdminHome() {
                     <Th>所属企業</Th>
                     <Th>初回面談残り</Th>
                     <Th>継続面談残り</Th>
-                    <Th>AI回数/面談</Th>
+                    <Th>AI使用可能回数/面談</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -270,7 +270,7 @@ function CompanyAdminHome() {
                     <Td>{tenant?.name ?? 'デモ企業'}</Td>
                     <Td>上限{initialQuota.limit} / 使用{initialQuota.used} / 残{initialQuota.remaining}</Td>
                     <Td>上限{continuousQuota.limit} / 使用{continuousQuota.used} / 残{continuousQuota.remaining}</Td>
-                    <Td>初回{initialQuota.llmCallsPerInterview}回 / 継続{continuousQuota.llmCallsPerInterview}回</Td>
+                    <Td>初回面談{initialQuota.llmCallsPerInterview}回 / 継続面談{continuousQuota.llmCallsPerInterview}回</Td>
                   </Tr>
                 </Tbody>
               </Table>

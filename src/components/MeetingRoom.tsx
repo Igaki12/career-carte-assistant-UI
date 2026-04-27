@@ -644,6 +644,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
   const quotaSessionIdRef = useRef(`meeting-${meetingType}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const hasShownQuotaBlockToastRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -1614,6 +1615,22 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       : 'OpenAI Key: 設定済 / Gemini Key: 未設定'
     : 'OpenAI Key: 未設定';
   const apiStatusColor = openAiApiKey ? 'green' : 'gray';
+
+  useEffect(() => {
+    if (canUseMeetingQuota) {
+      hasShownQuotaBlockToastRef.current = false;
+      return;
+    }
+    if (hasShownQuotaBlockToastRef.current) return;
+    hasShownQuotaBlockToastRef.current = true;
+    toast({
+      title: isInitialMeeting ? '初回面談の利用回数がありません' : '継続面談の利用回数がありません',
+      description: '残り利用回数が0回のため開始できません。管理者画面または企業管理者画面で利用回数を追加してください。',
+      status: 'warning',
+      duration: 5000,
+      isClosable: true,
+    });
+  }, [canUseMeetingQuota, isInitialMeeting, toast]);
 
   if (!canUseMeetingQuota) {
     return (

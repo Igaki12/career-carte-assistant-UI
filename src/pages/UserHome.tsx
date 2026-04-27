@@ -741,7 +741,6 @@ function UserHome() {
                     colorScheme="blue"
                     size="lg"
                     onClick={handleStartInitial}
-                    isDisabled={!userState.draftSessions.initial && profile.initialInterviewRemaining <= 0}
                   >
                     初回面談を開始
                   </Button>
@@ -750,7 +749,6 @@ function UserHome() {
                     size="lg"
                     colorScheme="teal"
                     onClick={handleStartContinuous}
-                    isDisabled={!userState.draftSessions.continuous && profile.continuousInterviewRemaining <= 0}
                   >
                     継続面談を開始
                   </Button>
@@ -784,9 +782,9 @@ function UserHome() {
                         初回面談
                       </Text>
                       <Text fontSize="md" color="gray.800" fontWeight="bold">
-                        残り{profile.initialInterviewRemaining}回
+                        使用済み{profile.initialInterviewUsed}回 / 残り{profile.initialInterviewRemaining}回
                         <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
-                          {' '}（使用済み{profile.initialInterviewUsed}回 / 上限{profile.initialInterviewLimit}回）
+                          {' '}（上限{profile.initialInterviewLimit}回）
                         </Text>
                       </Text>
                     </Stack>
@@ -797,9 +795,9 @@ function UserHome() {
                         継続面談
                       </Text>
                       <Text fontSize="md" color="gray.800" fontWeight="bold">
-                        残り{profile.continuousInterviewRemaining}回
+                        使用済み{profile.continuousInterviewUsed}回 / 残り{profile.continuousInterviewRemaining}回
                         <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
-                          {' '}（使用済み{profile.continuousInterviewUsed}回 / 上限{profile.continuousInterviewLimit}回）
+                          {' '}（上限{profile.continuousInterviewLimit}回）
                         </Text>
                       </Text>
                     </Stack>
@@ -811,7 +809,7 @@ function UserHome() {
                       AI利用可能回数
                     </Text>
                     <Text fontSize="sm" color="gray.700" fontWeight="semibold">
-                      初回{profile.initialLlmCallsPerInterview}回 / 継続{profile.continuousLlmCallsPerInterview}回
+                      初回面談{profile.initialLlmCallsPerInterview}回 / 継続面談{profile.continuousLlmCallsPerInterview}回
                     </Text>
                   </Flex>
                 </Box>

@@ -957,7 +957,7 @@ function Admin() {
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="AI回数/面談"
+                          label="AI使用可能回数/面談"
                           target="user"
                           column="initialLlmCallsPerInterview"
                         />
@@ -1026,7 +1026,7 @@ function Admin() {
                             : `${account.continuousInterviewRemaining}回`}
                         </Td>
                         <Td fontSize="sm">
-                          初回{account.initialLlmCallsPerInterview}回 / 継続{account.continuousLlmCallsPerInterview}回
+                          初回面談{account.initialLlmCallsPerInterview}回 / 継続面談{account.continuousLlmCallsPerInterview}回
                         </Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
@@ -1288,7 +1288,7 @@ function Admin() {
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="AI回数/面談"
+                          label="AI使用可能回数/面談"
                           target="consultant"
                           column="initialLlmCallsPerInterview"
                         />
@@ -1345,7 +1345,7 @@ function Admin() {
                         <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
                         <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
                         <Td fontSize="sm">
-                          初回{account.initialLlmCallsPerInterview}回 / 継続{account.continuousLlmCallsPerInterview}回
+                          初回面談{account.initialLlmCallsPerInterview}回 / 継続面談{account.continuousLlmCallsPerInterview}回
                         </Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
@@ -1714,7 +1714,7 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>初回AI回数/面談</FormLabel>
+                      <FormLabel>初回面談1回あたりのAI使用可能回数</FormLabel>
                       <Input
                         type="number"
                         min="1"
@@ -1728,7 +1728,7 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>継続AI回数/面談</FormLabel>
+                      <FormLabel>継続面談1回あたりのAI使用可能回数</FormLabel>
                       <Input
                         type="number"
                         min="1"
@@ -1850,7 +1850,7 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>初回AI回数/面談</FormLabel>
+                  <FormLabel>初回面談1回あたりのAI使用可能回数</FormLabel>
                   <Input
                     type="number"
                     min="1"
@@ -1865,7 +1865,7 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>継続AI回数/面談</FormLabel>
+                  <FormLabel>継続面談1回あたりのAI使用可能回数</FormLabel>
                   <Input
                     type="number"
                     min="1"
