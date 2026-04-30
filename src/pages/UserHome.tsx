@@ -941,12 +941,18 @@ function UserHome() {
                   <FiBookOpen /> カルテ確認・出力
                 </Heading>
                 <Text color={mutedTextColor}>保存済みカルテの確認、会話ログの閲覧、出力を行います。</Text>
-                <Stack direction={{ base: 'column', sm: 'row' }} spacing={3}>
-                  <PrimaryButton onClick={karteModalDisclosure.onOpen} size="md">
+                <Stack spacing={3}>
+                  <PrimaryButton onClick={karteModalDisclosure.onOpen} size="md" w="full">
                     カルテを開く
                   </PrimaryButton>
-                  <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('csv')}>CSV出力</Button>
-                  <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('pdf')}>PDF出力</Button>
+                  <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
+                    <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('csv')}>
+                      CSV出力
+                    </Button>
+                    <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('pdf')}>
+                      PDF出力
+                    </Button>
+                  </SimpleGrid>
                 </Stack>
                 <Text fontSize="sm" color={mutedTextColor}>
                   保存済み履歴: {userState.karteRecords.length}件 / 会話ログ: {profile.logs}件
