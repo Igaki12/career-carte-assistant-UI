@@ -1,6 +1,7 @@
-import { Box } from '@chakra-ui/react';
-import { Route, Routes } from 'react-router-dom';
+import { Badge, Box, Button, Flex, Text } from '@chakra-ui/react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import Admin from './pages/Admin';
+import AdminLogin from './pages/AdminLogin';
 import CompanyAdminHome from './pages/CompanyAdminHome';
 import ConditionCheck from './pages/ConditionCheck';
 import ContinuousMeetingRoom from './pages/ContinuousMeetingRoom';
@@ -8,21 +9,168 @@ import ConsultantHome from './pages/ConsultantHome';
 import DemographicsSetup from './pages/DemographicsSetup';
 import Home from './pages/Home';
 import InitialMeetingRoom from './pages/InitialMeetingRoom';
+import Login from './pages/Login';
 import UserHome from './pages/UserHome';
+import {
+  clearDemoAuthSession,
+  getDefaultRouteForRole,
+  getRoleLabel,
+  loadDemoAuthSession,
+  type DemoAuthRole,
+  type DemoAuthSession,
+} from './lib/demoAuth';
+import { useState } from 'react';
+
+type ProtectedRouteProps = {
+  session: DemoAuthSession | null;
+  allowedRoles: DemoAuthRole[];
+  onLogout: () => void;
+  children: JSX.Element;
+};
+
+const AuthStatusBar = ({ session, onLogout }: { session: DemoAuthSession; onLogout: () => void }) => (
+  <Flex
+    position="fixed"
+    top="12px"
+    right="12px"
+    zIndex={20}
+    gap={2}
+    align="center"
+    bg="white"
+    borderWidth="1px"
+    borderColor="gray.200"
+    borderRadius="lg"
+    boxShadow="md"
+    px={3}
+    py={2}
+  >
+    <Box display={{ base: 'none', md: 'block' }}>
+      <Text fontSize="xs" color="gray.500">
+        ログイン中
+      </Text>
+      <Text fontSize="sm" color="gray.700" fontWeight="semibold">
+        {session.accountId}
+      </Text>
+    </Box>
+    <Badge colorScheme={session.role === 'admin' ? 'orange' : session.role === 'company-admin' ? 'pink' : 'teal'}>
+      {getRoleLabel(session.role)}
+    </Badge>
+    <Button size="sm" variant="outline" onClick={onLogout}>
+      ログアウト
+    </Button>
+  </Flex>
+);
+
+const ProtectedRoute = ({ session, allowedRoles, onLogout, children }: ProtectedRouteProps) => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (!session) {
+    const loginPath = isAdminRoute ? '/admin/login' : '/login';
+    return <Navigate to={`${loginPath}?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  if (!allowedRoles.includes(session.role)) {
+    return <Navigate to={getDefaultRouteForRole(session.role)} replace />;
+  }
+
+  return (
+    <>
+      <AuthStatusBar session={session} onLogout={onLogout} />
+      {children}
+    </>
+  );
+};
 
 function App() {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<DemoAuthSession | null>(() => loadDemoAuthSession());
+
+  const handleLogout = () => {
+    const wasAdmin = session?.role === 'admin';
+    clearDemoAuthSession();
+    setSession(null);
+    navigate(wasAdmin ? '/admin/login' : '/login', { replace: true });
+  };
+
   return (
     <Box minH="100vh" bg="gray.900">
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/user" element={<UserHome />} />
-        <Route path="/user/condition-check" element={<ConditionCheck />} />
-        <Route path="/user/demographics" element={<DemographicsSetup />} />
-        <Route path="/consultant" element={<ConsultantHome />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/company-admin" element={<CompanyAdminHome />} />
-        <Route path="/app/initial" element={<InitialMeetingRoom />} />
-        <Route path="/app/continuous" element={<ContinuousMeetingRoom />} />
+        <Route path="/login" element={<Login session={session} onLogin={setSession} />} />
+        <Route path="/admin/login" element={<AdminLogin session={session} onLogin={setSession} />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin', 'consultant']} onLogout={handleLogout}>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+              <UserHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/condition-check"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+              <ConditionCheck />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/user/demographics"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+              <DemographicsSetup />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/consultant"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['consultant']} onLogout={handleLogout}>
+              <ConsultantHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['admin']} onLogout={handleLogout}>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company-admin"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['company-admin']} onLogout={handleLogout}>
+              <CompanyAdminHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/initial"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+              <InitialMeetingRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/continuous"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+              <ContinuousMeetingRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to={session ? getDefaultRouteForRole(session.role) : '/login'} replace />} />
       </Routes>
     </Box>
   );
