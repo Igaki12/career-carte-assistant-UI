@@ -12,15 +12,26 @@
 - Hosting (Future): VPS (Ubuntu) + Node.js (Express) + Apache2 (Reverse Proxy) + DB + BrowserRouter
 
 ### 2.2 役割別ページ構成とルーティング
+- Login (`/login`): 一般ユーザー・企業管理者・キャリアコンサルタント共通のダミーログイン画面。任意のID/パスワードで認証を通し、ロール選択により `/user`、`/company-admin`、`/consultant` へ遷移する。利用条件モーダル、利用条件同意チェック、常にログインした状態にしておくチェックを持つ。
+- AdminLogin (`/admin/login`): システム管理者専用の別ログイン画面。通常ログイン画面とは入口を分け、画面上で「管理者ログイン」であることを明示する。任意の管理者ID/パスワードで認証を通し、`/admin` へ遷移する。
 - Home (`/`): サービス紹介、各ロールへの遷移。デモ版では「初回面談を始める」「継続面談を始める」を横並びで表示し、別導線で「プロフィールを設定」を配置する。
 - DemographicsSetup (`/user/demographics`): プロフィール初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。デモ検証用に「デモ用にスキップして進む」を持つ。
 - UserHome (`/user`): 一般ユーザー用。初回/継続面談スタート、継続面談モード選択、カルテ閲覧・出力、アンケート、プロフィール編集、面談前コンディションチェック導線を配置する。ステータスは summary 表示を基本とし、詳細 badge の羅列は表示しない。カルテ出力は最新の保存済みカルテ1件を対象に、ブラウザ経由で CSV / PDF を直接ダウンロードできるようにする。面談利用回数は「使用済み / 残り（上限）」が分かる表示とし、AI利用可能回数は「初回面談10回 / 継続面談7回」のように面談種別を省略せず表示する。
 - ConsultantHome (`/consultant`): コンサルタント用。担当ユーザーのカルテ閲覧・修正、AI練習面談（ロードマップ）。
 - Admin (`/admin`): 管理者用。アカウント管理、利用回数（初回/継続を別カラム）設定、面談1回あたりのAI使用可能回数設定、企業別オプション管理。
-- CompanyAdminHome (`/company-admin`): 企業管理者用。自社テナントのユーザー管理デモ、面談利用回数・会話ターン制限の設定、緊張度スコア表示オプションのON/OFF、コンディション測定件数の集計表示。
+- CompanyAdminHome (`/company-admin`): 企業管理者用。自社テナントの従業員カルテ一覧、検索、並び替え、一括選択、カルテ表示、個別/一括PDF出力、個別/一括印刷、面談利用回数・会話ターン制限の設定、緊張度スコア表示オプションのON/OFF、コンディション測定件数の集計表示。
 - InitialMeetingRoom (`/app/initial`): 初回面談（順次ヒアリング型）。
 - ContinuousMeetingRoom (`/app/continuous`): 継続面談（自由対話型）。
 - ConditionCheck (`/user/condition-check`): 面談前コンディションチェック。現時点では顔分析ロジック未接続のため、同意文付きのダミースコア保存画面として扱う。
+
+### 2.2.1 ダミー認証・ログイン制御
+- 現時点では本番認証未接続のため、`src/lib/demoAuth.ts` のダミー認証を使う。
+- 未ログイン状態で保護ページへアクセスした場合、通常ページは `/login?returnTo=...`、管理者ページは `/admin/login?returnTo=...` へ必ずリダイレクトする。
+- ロール別にアクセス可能画面を分離する。`user` は `/user`, `/user/demographics`, `/user/condition-check`, `/app/initial`, `/app/continuous`、`company-admin` は `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を対象とする。
+- ログイン済みの保護ページ右上にはアカウントID、ロール、ログアウトボタンを表示する。
+- 通常ログイン画面は一般ユーザー・企業管理者・キャリアコンサルタント共通入口とし、管理者ログイン画面は別入口にする。企業管理者は一般ユーザーと同じ入口を使う。
+- 「常にログインした状態にしておく」がONの場合は `localStorage`、OFFの場合は `sessionStorage` に `cca-demo-auth-session` を保存する。ログアウト時は両方を削除する。
+- 本番実装ではサーバー側セッション/JWT、パスワード検証、ロール、テナントID、監査ログへ置き換える前提とする。
 
 ### 2.3 フロント保存方針（GitHub Pages デモ版）
 - GitHub Pages デモ版ではバックエンドの代わりに `localStorage` を正とする。
@@ -35,6 +46,8 @@
   - `tenants`: 企業テナント一覧
   - `featureFlags`: 企業別機能フラグ
   - `conditionRecords`: 面談前コンディションチェックの保存済み測定結果
+  - `companyEmployees`: 企業管理者画面のデモ用従業員カルテ一覧
+- ダミー認証セッションの保存キーは `cca-demo-auth-session`。ログイン維持ON時は `localStorage`、OFF時は `sessionStorage` に保存する。
 - 旧 `cca-karte` は読み込み互換のみ残す。
 - 例外: デモ版の面談利用回数・会話ターン制限は `src/lib/demoUsageQuota.ts` のメモリ状態を正とし、`localStorage` へ保存しない。SPA内の画面遷移では同期し、ページリフレッシュ時はデフォルト値へ戻す。
 - デモ用クォータ初期値:
@@ -410,6 +423,8 @@ ${AI_RESPONSE_GUIDELINES}
 - テナント管理: デモ版では企業を `tenants` として扱い、現在ユーザーは `tenantId` で所属企業に紐づく。既存データに `tenantId` がない場合はデフォルトテナントへ正規化する。
 - 企業別機能フラグ: `featureFlags` で `stressAnalysisEnabled`, `turnTakingEnabled`, `lightThemeEnabled` を保持する。現時点でUI切替対象は `stressAnalysisEnabled`。
 - 管理者画面: `/admin` では企業別オプション管理から、各テナントの `stressAnalysisEnabled` を切り替えられる。
-- 企業管理者画面: `/company-admin` では自社テナントの `stressAnalysisEnabled` と、面談利用回数・会話ターン制限を切り替え・設定できる。個人別の顔分析・緊張度詳細は表示せず、測定件数などの集計値に留める。
-- SSO・ディープリンク: VPS環境下で `/#/user/:userId?token=...` によるSSOログインを実装予定。
+- 企業管理者画面: `/company-admin` では自社テナントの `stressAnalysisEnabled` と、面談利用回数・会話ターン制限を切り替え・設定できる。加えて、自社テナントの従業員カルテを検索・並び替え・一括選択し、個別/一括PDF出力と個別/一括印刷を行える。個人別の顔分析・緊張度詳細は表示せず、測定件数などの集計値に留める。
+- 企業管理者用従業員データ: デモ版では `companyEmployees` に保存し、`getCompanyAdminEmployees(state, tenantId)` で現在テナントの従業員のみ取得する。現在のデモユーザー `DEFAULT_DEMO_USER_ID` は `latestKarte` / `karteRecords` から動的に従業員一覧へ反映し、重複保存しない。
+- カルテ出力: 一般ユーザーのCSV/PDFは最新カルテ1件を対象とする。企業管理者画面では選択した従業員カルテを1つの結合PDFとして一括出力でき、印刷時も選択カルテを印刷用ページにまとめる。カルテ未作成ユーザーは出力対象からスキップし、toastで件数を通知する。
+- ログイン認証: SSOは見送り、アカウントIDとパスワードによる標準ログインへ移行する方針。現時点では `/login` と `/admin/login` のダミー認証を使い、任意のID/パスワードで認証を通す。VPS/本番ではDB・サーバー側セッション・ロール/テナント制御に置き換える。
 - コンサルタント向けシミュレータ: 一般ユーザー向け機能の後続で追加開発予定。

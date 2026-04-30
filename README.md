@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# Career Karte Assistant UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+キャリア面談の事前準備、SHIRP形式のキャリアカルテ作成、企業管理者向けカルテ閲覧を行うReact/Vite製のデモSPAです。
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React + TypeScript + Vite
+- Chakra UI
+- React Router + HashRouter
+- Three.js + @pixiv/three-vrm
+- GitHub Pages配信用ビルド出力: `docs/`
 
-## React Compiler
+## Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Build and validation:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run lint
+npm run build
 ```
+
+## Demo Login
+
+本番認証は未接続です。現在はダミー認証として、任意のIDとパスワードでログインできます。
+
+- 通常ログイン: `/#/login`
+  - 一般ユーザー、企業管理者、キャリアコンサルタント共通
+  - 利用条件モーダル、同意チェック、ログイン維持チェックあり
+- 管理者ログイン: `/#/admin/login`
+  - システム管理者専用の別入口
+  - 管理者画面であることを画面上に明示
+
+未ログインで保護ページへアクセスすると、通常ページは `/#/login`、管理者ページは `/#/admin/login` へリダイレクトされます。保護ページ右上にはログイン中のロール表示とログアウトボタンが表示されます。
+
+## Main Routes
+
+- `/#/user`: 一般ユーザーホーム
+- `/#/user/demographics`: プロフィール設定
+- `/#/app/initial`: 初回面談
+- `/#/app/continuous`: 継続面談
+- `/#/company-admin`: 企業管理者ホーム
+- `/#/admin`: システム管理者画面
+- `/#/consultant`: コンサルタント画面
+
+## Demo Storage
+
+GitHub Pagesデモ版ではバックエンドの代わりにブラウザ保存を使います。
+
+- `cca-demo-user-state`: プロフィール、カルテ、下書き、テナント、企業管理者用従業員データなど
+- `cca-demo-auth-session`: ダミー認証セッション
+  - 「常にログインした状態にしておく」ON: `localStorage`
+  - OFF: `sessionStorage`
+
+面談利用回数・会話ターン制限は `src/lib/demoUsageQuota.ts` のメモリ状態を正とし、リロード時はデフォルト値へ戻ります。
+
+## Notes
+
+詳細な仕様、役割別画面、AI面談フロー、カルテ構造、VRM運用メモは `AGENTS.md` を参照してください。
