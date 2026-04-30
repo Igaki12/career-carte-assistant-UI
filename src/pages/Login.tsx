@@ -99,7 +99,7 @@ function Login({ session, onLogin }: LoginProps) {
     <Box
       height="100dvh"
       overflowY="auto"
-      bgGradient="linear(135deg, #071f1a 0%, #0f3d33 48%, #1f6b4f 100%)"
+      bgGradient="linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)"
       color="white"
     >
       <Container maxW="5xl" minH="100dvh" py={{ base: 10, md: 16 }} display="flex" flexDirection="column">
@@ -109,12 +109,12 @@ function Login({ session, onLogin }: LoginProps) {
               <Heading
                 size="2xl"
                 lineHeight="short"
-                bgGradient="linear(110deg, #f8fafc, #b6c4cf, #e5edf2, #8fa2af)"
+                bgGradient="linear(110deg, #f1f5f9, #cbd5e1, #f8fafc, #94a3b8)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.32), 0 -1px 0 rgba(2, 44, 34, 0.55), 0 10px 24px rgba(2, 44, 34, 0.24)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.32), 0 -1px 0 rgba(15, 23, 42, 0.55), 0 10px 24px rgba(15, 23, 42, 0.4)',
                   animation: 'loginTitleGradient 12s ease-in-out infinite',
                   '@keyframes loginTitleGradient': {
                     '0%': { backgroundPosition: '0% 50%' },
@@ -130,7 +130,7 @@ function Login({ session, onLogin }: LoginProps) {
               </Text>
             </Box>
             <Alert status="info" bg="whiteAlpha.200" color="white" borderRadius="lg">
-              <AlertIcon color="teal.200" />
+              <AlertIcon color="blue.200" />
               現在はデモ認証です。任意のIDとパスワードでログインできます。
             </Alert>
             <Text color="gray.300" fontSize="sm">
@@ -156,7 +156,7 @@ function Login({ session, onLogin }: LoginProps) {
               left: 0,
               right: 0,
               height: { base: '5px', md: '7px' },
-              bgGradient: 'linear(to-r, transparent, rgba(94, 234, 212, 0.92), rgba(16, 185, 129, 0.95), transparent)',
+              bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.8), rgba(203, 213, 225, 0.9), transparent)',
             }}
             _after={{
               content: '""',
@@ -165,9 +165,9 @@ function Login({ session, onLogin }: LoginProps) {
               left: 0,
               right: 0,
               height: { base: '5px', md: '7px' },
-              bgGradient: 'linear(to-r, transparent, rgba(20, 184, 166, 0.82), rgba(34, 197, 94, 0.92), transparent)',
+              bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.7), rgba(148, 163, 184, 0.8), transparent)',
             }}
-            boxShadow="0 28px 80px rgba(2, 44, 34, 0.28)"
+            boxShadow="0 28px 80px rgba(15, 23, 42, 0.4)"
             backdropFilter="blur(14px)"
           >
             <form onSubmit={handleSubmit}>
@@ -225,7 +225,7 @@ function Login({ session, onLogin }: LoginProps) {
                     <Checkbox isChecked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)}>
                       利用条件に同意する
                     </Checkbox>
-                    <Button variant="link" color="green.200" onClick={termsDisclosure.onOpen} ml="auto">
+                    <Button variant="link" color="blue.200" onClick={termsDisclosure.onOpen} ml="auto">
                       利用条件を確認する
                     </Button>
                   </Flex>
@@ -233,17 +233,17 @@ function Login({ session, onLogin }: LoginProps) {
                 <Button
                   type="submit"
                   size="lg"
-                  bgGradient="linear(to-r, green.700, teal.600, green.500)"
+                  bgGradient="linear(to-r, #1e293b, #334155, #475569)"
                   color="white"
-                  boxShadow="0 14px 34px rgba(21, 128, 61, 0.34)"
+                  boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
                   _hover={{
-                    bgGradient: 'linear(to-r, green.600, teal.500, green.400)',
-                    boxShadow: '0 18px 42px rgba(21, 128, 61, 0.44)',
+                    bgGradient: 'linear(to-r, #334155, #475569, #64748b)',
+                    boxShadow: '0 18px 42px rgba(15, 23, 42, 0.44)',
                     transform: 'translateY(-1px)',
                   }}
                   _active={{
                     transform: 'translateY(0)',
-                    boxShadow: '0 10px 24px rgba(21, 128, 61, 0.3)',
+                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.3)',
                   }}
                   transition="all 0.18s ease"
                 >
