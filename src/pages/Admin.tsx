@@ -118,12 +118,61 @@ const SortButton = ({ label, target, column, onSort }: SortButtonProps) => (
   <Button
     size="sm"
     variant="ghost"
+    color="whiteAlpha.900"
+    _hover={{ bg: 'whiteAlpha.200' }}
     rightIcon={<ChevronDownIcon fontSize="1rem" />}
     onClick={() => onSort(target, column)}
   >
     {label}
   </Button>
 );
+
+const adminPageBg = 'linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)';
+
+const linePanelProps = {
+  bg: 'transparent',
+  color: 'white',
+  borderRadius: '0',
+  borderWidth: '0',
+  position: 'relative',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.34)',
+  backdropFilter: 'blur(14px)',
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: { base: '4px', md: '6px' },
+    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(203, 213, 225, 0.88), transparent)',
+  },
+  _after: {
+    content: '""',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: { base: '4px', md: '6px' },
+    bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.66), rgba(148, 163, 184, 0.8), transparent)',
+  },
+  sx: {
+    '& th': { color: 'rgba(255, 255, 255, 0.76)', borderColor: 'rgba(255, 255, 255, 0.14)' },
+    '& td': { color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(255, 255, 255, 0.1)' },
+    '& .chakra-form__label': { color: 'rgba(255, 255, 255, 0.9)' },
+    '& input, & select': {
+      background: 'rgba(255, 255, 255, 0.92)',
+      color: '#0f172a',
+      borderColor: 'rgba(255, 255, 255, 0.6)',
+    },
+  },
+} as const;
+
+const outlineLightButtonProps = {
+  variant: 'outline',
+  color: 'white',
+  borderColor: 'whiteAlpha.500',
+  _hover: { bg: 'whiteAlpha.160' },
+} as const;
 
 function Admin() {
   const toast = useToast();
@@ -809,37 +858,56 @@ function Admin() {
   };
 
   return (
-    <Box bg="gray.50" maxH="100dvh" py={12} overflowY="scroll">
+    <Box bgGradient={adminPageBg} color="white" maxH="100dvh" py={12} overflowY="scroll">
       <Container maxW="7xl">
         <Stack spacing={10}>
-          <Box bg="white" borderRadius="xl" boxShadow="sm" px={{ base: 6, lg: 10 }} py={8}>
+          <Box {...linePanelProps} px={{ base: 6, lg: 10 }} py={8}>
             <Stack spacing={3}>
-              <Heading size="lg">システム管理コンソール</Heading>
-              <Text color="gray.600">
+              <Heading
+                size="lg"
+                bgGradient="linear(110deg, #f8fafc, #cbd5e1, #f1f5f9, #94a3b8)"
+                bgClip="text"
+                sx={{
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.24), 0 -1px 0 rgba(15, 23, 42, 0.55)',
+                }}
+              >
+                システム管理コンソール
+              </Heading>
+              <Text color="whiteAlpha.800">
                 PC向けレイアウトでアカウントとCSV一括登録を集中管理します。絞り込み検索や並び替えは表の上部から操作できます。
               </Text>
-              <Text color="gray.500" fontSize="sm">
+              <Text color="whiteAlpha.700" fontSize="sm">
                 最終更新: {new Date().toLocaleString('ja-JP')}
               </Text>
             </Stack>
             <Flex mt={6} gap={3} wrap="wrap">
               <Button
                 variant={activeSection === 'user' ? 'solid' : 'outline'}
-                colorScheme="blue"
+                colorScheme={activeSection === 'user' ? 'blue' : undefined}
+                color={activeSection === 'user' ? undefined : 'white'}
+                borderColor={activeSection === 'user' ? undefined : 'whiteAlpha.500'}
+                _hover={activeSection === 'user' ? undefined : { bg: 'whiteAlpha.160' }}
                 onClick={() => setActiveSection('user')}
               >
                 ユーザーアカウント管理
               </Button>
               <Button
                 variant={activeSection === 'consultant' ? 'solid' : 'outline'}
-                colorScheme="green"
+                colorScheme={activeSection === 'consultant' ? 'green' : undefined}
+                color={activeSection === 'consultant' ? undefined : 'white'}
+                borderColor={activeSection === 'consultant' ? undefined : 'whiteAlpha.500'}
+                _hover={activeSection === 'consultant' ? undefined : { bg: 'whiteAlpha.160' }}
                 onClick={() => setActiveSection('consultant')}
               >
                 コンサルアカウント管理
               </Button>
               <Button
                 variant={activeSection === 'tenant' ? 'solid' : 'outline'}
-                colorScheme="orange"
+                colorScheme={activeSection === 'tenant' ? 'blue' : undefined}
+                color={activeSection === 'tenant' ? undefined : 'white'}
+                borderColor={activeSection === 'tenant' ? undefined : 'whiteAlpha.500'}
+                _hover={activeSection === 'tenant' ? undefined : { bg: 'whiteAlpha.160' }}
                 onClick={() => setActiveSection('tenant')}
               >
                 企業別オプション管理
@@ -848,16 +916,14 @@ function Admin() {
           </Box>
 
           <Box
-            bg="white"
-            borderRadius="xl"
-            boxShadow="sm"
+            {...linePanelProps}
             p={{ base: 6, lg: 8 }}
             display={activeSection === 'user' ? 'block' : 'none'}
           >
             <Stack spacing={8}>
               <Stack spacing={3}>
                 <Heading size="md">アカウント管理（ユーザー）</Heading>
-                <Text color="gray.600">ユーザーアカウント専用の一覧。Excelライクな表で状態を確認できます。</Text>
+                <Text color="whiteAlpha.800">ユーザーアカウント専用の一覧。Excelライクな表で状態を確認できます。</Text>
                 <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                   <Input
                     placeholder="ID / 氏名 / メール / 会社 で検索"
@@ -878,7 +944,9 @@ function Admin() {
                     width={{ md: '240px' }}
                     size="md"
                     variant="outline"
-                    colorScheme="blue"
+                    color="white"
+                    borderColor="whiteAlpha.500"
+                    _hover={{ bg: 'whiteAlpha.160' }}
                     onClick={() => handleSelectAll('user')}
                   >
                     {allFilteredUsersSelected ? '選択解除' : '全ての行を選択'}
@@ -887,7 +955,7 @@ function Admin() {
               </Stack>
 
               {selectedUserIds.length > 0 && (
-                <Box border="1px solid" borderColor="blue.100" borderRadius="lg" bg="blue.50" p={4}>
+                <Box border="1px solid" borderColor="whiteAlpha.200" borderRadius="0" bg="whiteAlpha.140" p={4}>
                   <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
                     <Text fontWeight="semibold">選択中: {selectedUserIds.length}件</Text>
                     <Flex gap={2} wrap="wrap">
@@ -900,17 +968,16 @@ function Admin() {
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
-                        colorScheme="red"
-                        onClick={() => handleBulkDelete('user')}
+                          {...outlineLightButtonProps}
+                          colorScheme="red"
+                          onClick={() => handleBulkDelete('user')}
                       >
                         全て削除
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
-                        colorScheme="blue"
-                        onClick={() => setSelectedUserIds([])}
+                          {...outlineLightButtonProps}
+                          onClick={() => setSelectedUserIds([])}
                       >
                         選択解除
                       </Button>
@@ -919,9 +986,9 @@ function Admin() {
                 </Box>
               )}
 
-              <Box border="1px solid" borderColor="gray.100" borderRadius="lg" overflowX="auto">
+              <Box border="1px solid" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
                 <Table size="sm" variant="simple">
-                  <Thead bg="gray.50">
+                  <Thead bg="whiteAlpha.160">
                     <Tr>
                       <Th>選択</Th>
                       <Th>
@@ -976,12 +1043,12 @@ function Admin() {
                       return (
                       <Tr
                         key={account.id}
-                        bg={selectedUserIds.includes(account.id) ? 'blue.100' : 'transparent'}
+                        bg={selectedUserIds.includes(account.id) ? 'whiteAlpha.200' : 'transparent'}
                         _hover={{
-                          bg: selectedUserIds.includes(account.id) ? 'blue.100' : 'gray.50',
+                          bg: 'whiteAlpha.160',
                         }}
                         _focusWithin={{
-                          bg: selectedUserIds.includes(account.id) ? 'blue.100' : 'transparent',
+                          bg: selectedUserIds.includes(account.id) ? 'whiteAlpha.200' : 'transparent',
                         }}
                       >
                         <Td>
@@ -997,14 +1064,14 @@ function Admin() {
                         <Td>
                           <Stack spacing={0}>
                             <Text fontWeight="semibold">{account.name}</Text>
-                            <Text fontSize="xs" color="gray.500">
+                            <Text fontSize="xs" color="whiteAlpha.700">
                               {account.role}
                             </Text>
                           </Stack>
                         </Td>
                         <Td>{account.company}</Td>
                         <Td>
-                          <Text fontSize="sm" color="gray.600">
+                          <Text fontSize="sm" color="whiteAlpha.800">
                             {account.email}
                           </Text>
                         </Td>
@@ -1060,7 +1127,9 @@ function Admin() {
                   size="lg"
                   w="full"
                   variant="outline"
-                  colorScheme="blue"
+                  color="white"
+                  borderColor="whiteAlpha.500"
+                  _hover={{ bg: 'whiteAlpha.160' }}
                   onClick={userAddDisclosure.onToggle}
                 >
                   {userAddDisclosure.isOpen ? '追加フォームを閉じる' : 'ユーザーアカウントを追加'}
@@ -1069,9 +1138,10 @@ function Admin() {
                   <Box
                     mt={4}
                     border="1px solid"
-                    borderColor="gray.100"
-                    borderRadius="lg"
+                    borderColor="whiteAlpha.200"
+                    borderRadius="0"
                     p={6}
+                    bg="whiteAlpha.080"
                   >
                     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
                       <Box>
@@ -1141,19 +1211,19 @@ function Admin() {
                           <Heading size="sm" display="flex" alignItems="center" gap={2}>
                             <FiUpload /> CSV一括追加
                           </Heading>
-                          <Text color="gray.600">
+                          <Text color="whiteAlpha.800">
                             CSVをアップロードして内容を確認後、一括登録を実行します。ヘッダーは
                             <strong> ID, Name, Email, Role </strong>
                             の順で設定してください。
                           </Text>
                           <Button
-                            variant="outline"
+                            {...outlineLightButtonProps}
                             leftIcon={<FiFileText />}
                             onClick={() => openCsvModal('user')}
                           >
                             CSV確認モーダルを開く
                           </Button>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color="whiteAlpha.700">
                             ※モーダル内でファイル選択とレコード確認が可能です。
                           </Text>
                         </Stack>
@@ -1167,16 +1237,14 @@ function Admin() {
           </Box>
 
           <Box
-            bg="white"
-            borderRadius="xl"
-            boxShadow="sm"
+            {...linePanelProps}
             p={{ base: 6, lg: 8 }}
             display={activeSection === 'consultant' ? 'block' : 'none'}
           >
             <Stack spacing={8}>
               <Stack spacing={3}>
                 <Heading size="md">アカウント管理（コンサルタント）</Heading>
-                <Text color="gray.600">
+                <Text color="whiteAlpha.800">
                   コンサルタント向けアカウント。ユーザー一覧とは完全に分離しています。
                 </Text>
                 <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
@@ -1198,7 +1266,9 @@ function Admin() {
                     width={{ md: '240px' }}
                     size="md"
                     variant="outline"
-                    colorScheme="green"
+                    color="white"
+                    borderColor="whiteAlpha.500"
+                    _hover={{ bg: 'whiteAlpha.160' }}
                     onClick={() => handleSelectAll('consultant')}
                   >
                     {allFilteredConsultantsSelected ? '選択解除' : '全ての行を選択'}
@@ -1209,9 +1279,9 @@ function Admin() {
               {selectedConsultantIds.length > 0 && (
                 <Box
                   border="1px solid"
-                  borderColor="green.100"
-                  borderRadius="lg"
-                  bg="green.50"
+                  borderColor="whiteAlpha.200"
+                  borderRadius="0"
+                  bg="whiteAlpha.140"
                   p={4}
                 >
                   <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
@@ -1226,7 +1296,7 @@ function Admin() {
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        {...outlineLightButtonProps}
                         colorScheme="red"
                         onClick={() => handleBulkDelete('consultant')}
                       >
@@ -1234,8 +1304,7 @@ function Admin() {
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
-                        colorScheme="green"
+                        {...outlineLightButtonProps}
                         onClick={() => setSelectedConsultantIds([])}
                       >
                         選択解除
@@ -1245,9 +1314,9 @@ function Admin() {
                 </Box>
               )}
 
-              <Box border="1px solid" borderColor="gray.100" borderRadius="lg" overflowX="auto">
+              <Box border="1px solid" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
                 <Table size="sm" variant="simple">
-                  <Thead bg="gray.50">
+                  <Thead bg="whiteAlpha.160">
                     <Tr>
                       <Th>選択</Th>
                       <Th>
@@ -1303,12 +1372,12 @@ function Admin() {
                     {filteredConsultantAccounts.map((account) => (
                       <Tr
                         key={account.id}
-                        bg={selectedConsultantIds.includes(account.id) ? 'green.100' : 'transparent'}
+                        bg={selectedConsultantIds.includes(account.id) ? 'whiteAlpha.200' : 'transparent'}
                         _hover={{
-                          bg: selectedConsultantIds.includes(account.id) ? 'green.100' : 'gray.50',
+                          bg: 'whiteAlpha.160',
                         }}
                         _focusWithin={{
-                          bg: selectedConsultantIds.includes(account.id) ? 'green.100' : 'transparent',
+                          bg: selectedConsultantIds.includes(account.id) ? 'whiteAlpha.200' : 'transparent',
                         }}
                       >
                         <Td>
@@ -1324,14 +1393,14 @@ function Admin() {
                         <Td>
                           <Stack spacing={0}>
                             <Text fontWeight="semibold">{account.name}</Text>
-                            <Text fontSize="xs" color="gray.500">
+                            <Text fontSize="xs" color="whiteAlpha.700">
                               {account.role}
                             </Text>
                           </Stack>
                         </Td>
                         <Td>{account.company}</Td>
                         <Td>
-                          <Text fontSize="sm" color="gray.600">
+                          <Text fontSize="sm" color="whiteAlpha.800">
                             {account.email}
                           </Text>
                         </Td>
@@ -1378,7 +1447,9 @@ function Admin() {
                   size="lg"
                   w="full"
                   variant="outline"
-                  colorScheme="green"
+                  color="white"
+                  borderColor="whiteAlpha.500"
+                  _hover={{ bg: 'whiteAlpha.160' }}
                   onClick={consultantAddDisclosure.onToggle}
                 >
                   {consultantAddDisclosure.isOpen ? '追加フォームを閉じる' : 'コンサルタントアカウントを追加'}
@@ -1387,9 +1458,10 @@ function Admin() {
                   <Box
                     mt={4}
                     border="1px solid"
-                    borderColor="gray.100"
-                    borderRadius="lg"
+                    borderColor="whiteAlpha.200"
+                    borderRadius="0"
                     p={6}
+                    bg="whiteAlpha.080"
                   >
                     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
                       <Box>
@@ -1458,17 +1530,17 @@ function Admin() {
                           <Heading size="sm" display="flex" alignItems="center" gap={2}>
                             <FiUpload /> CSV一括追加
                           </Heading>
-                          <Text color="gray.600">
+                          <Text color="whiteAlpha.800">
                             CSVアップロードで複数のコンサルタントを同時に登録します。担当ロールやSlack通知設定もCSVに含められます。
                           </Text>
                           <Button
-                            variant="outline"
+                            {...outlineLightButtonProps}
                             leftIcon={<FiFileText />}
                             onClick={() => openCsvModal('consultant')}
                           >
                             CSV確認モーダルを開く
                           </Button>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color="whiteAlpha.700">
                             ※担当範囲や稼働状況も今後追加予定です。
                           </Text>
                         </Stack>
@@ -1481,22 +1553,20 @@ function Admin() {
           </Box>
 
           <Box
-            bg="white"
-            borderRadius="xl"
-            boxShadow="sm"
+            {...linePanelProps}
             p={{ base: 6, lg: 8 }}
             display={activeSection === 'tenant' ? 'block' : 'none'}
           >
             <Stack spacing={6}>
               <Stack spacing={3}>
                 <Heading size="md">企業別オプション管理</Heading>
-                <Text color="gray.600">
+                <Text color="whiteAlpha.800">
                   企業テナントごとに、面談前コンディションチェックと緊張度スコア表示の有効/無効を切り替えます。
                 </Text>
               </Stack>
-              <Box border="1px solid" borderColor="gray.100" borderRadius="lg" overflowX="auto">
+              <Box border="1px solid" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
                 <Table size="sm" variant="simple">
-                  <Thead bg="gray.50">
+                  <Thead bg="whiteAlpha.160">
                     <Tr>
                       <Th>tenantId</Th>
                       <Th>企業名</Th>
@@ -1547,7 +1617,7 @@ function Admin() {
                   </Tbody>
                 </Table>
               </Box>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="sm" color="whiteAlpha.700">
                 デモ版では localStorage の featureFlags を更新します。本番ではサーバー側セッションの tenantId と契約情報から判定します。
               </Text>
             </Stack>

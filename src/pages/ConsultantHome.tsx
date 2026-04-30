@@ -101,6 +101,53 @@ const heroContentSlide = keyframes`
   }
 `;
 
+const consultantPageBg = 'linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)';
+
+const linePanelProps = {
+  bg: 'transparent',
+  color: 'white',
+  borderRadius: '0',
+  border: '0',
+  position: 'relative',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.34)',
+  backdropFilter: 'blur(14px)',
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: { base: '4px', md: '6px' },
+    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(203, 213, 225, 0.88), transparent)',
+  },
+  _after: {
+    content: '""',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: { base: '4px', md: '6px' },
+    bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.66), rgba(148, 163, 184, 0.8), transparent)',
+  },
+} as const;
+
+const smallPanelProps = {
+  bg: 'whiteAlpha.120',
+  color: 'white',
+  borderRadius: '0',
+  borderWidth: '1px',
+  borderColor: 'whiteAlpha.200',
+  boxShadow: '0 18px 46px rgba(15, 23, 42, 0.18)',
+  backdropFilter: 'blur(12px)',
+} as const;
+
+const whiteOutlineButtonProps = {
+  variant: 'outline',
+  color: 'white',
+  borderColor: 'whiteAlpha.500',
+  _hover: { bg: 'whiteAlpha.160' },
+} as const;
+
 function ConsultantHome() {
   const toast = useToast();
   const profileDisclosure = useDisclosure();
@@ -399,13 +446,13 @@ function ConsultantHome() {
   };
 
   return (
-    <Box bgGradient="linear(to-br, gray.600, gray.700, gray.800)" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
+    <Box bgGradient={consultantPageBg} color="white" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
           <Box
             position="relative"
-            borderRadius="2xl"
-            boxShadow="xl"
+            borderRadius="0"
+            boxShadow="0 28px 80px rgba(15, 23, 42, 0.34)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
             bgImage={`linear-gradient(rgba(8, 15, 26, 0.68), rgba(8, 15, 26, 0.72)), url(${heroBackground})`}
@@ -420,6 +467,15 @@ function ConsultantHome() {
               inset: 0,
               bg: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 30%, rgba(8,15,26,0.12) 100%)',
               pointerEvents: 'none',
+            }}
+            _after={{
+              content: '""',
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: { base: '4px', md: '6px' },
+              bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.78), rgba(203, 213, 225, 0.88), transparent)',
             }}
           >
             <Flex
@@ -471,31 +527,31 @@ function ConsultantHome() {
           </Box>
 
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...linePanelProps} p={6}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiUsers /> 担当ユーザー一覧
                 </Heading>
                 <Stack spacing={3}>
                   {assignedUsers.map((user) => (
-                    <Box key={user.id} borderWidth="1px" borderRadius="lg" p={4} borderColor="gray.100">
+                    <Box key={user.id} {...smallPanelProps} p={4}>
                       <Stack spacing={1}>
                         <Text fontWeight="semibold">{user.name}</Text>
-                        <Text fontSize="sm" color="gray.500">
+                        <Text fontSize="sm" color="whiteAlpha.700">
                           {user.company} / {user.role}
                         </Text>
-                        <Text fontSize="xs" color="gray.400">
+                        <Text fontSize="xs" color="whiteAlpha.600">
                           最終面談: {user.lastSession}
                         </Text>
                         <Flex align="center" justify="space-between" gap={3}>
-                          <Text fontSize="sm" color="gray.600" flex="1" minW={0}>
+                          <Text fontSize="sm" color="whiteAlpha.800" flex="1" minW={0}>
                             フォーカス: {user.focus}
                           </Text>
                           <Badge colorScheme={user.status === '完了' ? 'green' : 'purple'} flexShrink={0}>
                             {user.status}
                           </Badge>
                         </Flex>
-                        <Button size="sm" variant="outline" onClick={() => handleOpenKarte(karteRecords[0])}>
+                        <Button size="sm" {...whiteOutlineButtonProps} onClick={() => handleOpenKarte(karteRecords[0])}>
                           カルテを確認
                         </Button>
                       </Stack>
@@ -505,52 +561,52 @@ function ConsultantHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...linePanelProps} p={6}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiCpu /> AI練習面談 (ロードマップ)
                 </Heading>
-                <Text color="gray.600">クライアントAI練習面談機能は準備中です。</Text>
-                <Button colorScheme="purple" variant="outline" onClick={() => toast({ title: '準備中です', status: 'info', duration: 2000 })}>
+                <Text color="whiteAlpha.800">クライアントAI練習面談機能は準備中です。</Text>
+                <Button {...whiteOutlineButtonProps} onClick={() => toast({ title: '準備中です', status: 'info', duration: 2000 })}>
                   準備中
                 </Button>
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...linePanelProps} p={6}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiMail /> メール問い合わせ
                 </Heading>
-                <Text color="gray.600">管理者または担当ユーザーへの問い合わせを送信します。</Text>
-                <Button variant="outline" onClick={emailDisclosure.onOpen}>
+                <Text color="whiteAlpha.800">管理者または担当ユーザーへの問い合わせを送信します。</Text>
+                <Button {...whiteOutlineButtonProps} onClick={emailDisclosure.onOpen}>
                   メールを作成
                 </Button>
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...linePanelProps} p={6}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiRefreshCw /> アカウント情報確認
                 </Heading>
-                <Text color="gray.600">登録内容とパスワードの管理が行えます。</Text>
-                <Button variant="outline" onClick={profileDisclosure.onToggle}>
+                <Text color="whiteAlpha.800">登録内容とパスワードの管理が行えます。</Text>
+                <Button {...whiteOutlineButtonProps} onClick={profileDisclosure.onToggle}>
                   {profileDisclosure.isOpen ? '情報を閉じる' : '情報を表示'}
                 </Button>
                 <Collapse in={profileDisclosure.isOpen} animateOpacity>
                   <Box pt={4}>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">氏名</Text>
+                        <Text fontSize="sm" color="whiteAlpha.700">氏名</Text>
                         <Text fontWeight="semibold">{profile.name}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">会社 / 役職</Text>
+                        <Text fontSize="sm" color="whiteAlpha.700">会社 / 役職</Text>
                         <Text fontWeight="semibold">{profile.company} / {profile.title}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="gray.500">メール</Text>
+                        <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
                         <Text fontWeight="semibold">{profile.email}</Text>
                       </Stack>
                     </SimpleGrid>

@@ -80,6 +80,58 @@ const getStatusColor = (status: string) => {
   return 'purple';
 };
 
+const adminPageBg = 'linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)';
+
+const linePanelProps = {
+  bg: 'transparent',
+  color: 'white',
+  borderRadius: '0',
+  borderWidth: '0',
+  position: 'relative',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.34)',
+  backdropFilter: 'blur(14px)',
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: { base: '4px', md: '6px' },
+    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(203, 213, 225, 0.88), transparent)',
+  },
+  _after: {
+    content: '""',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: { base: '4px', md: '6px' },
+    bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.66), rgba(148, 163, 184, 0.8), transparent)',
+  },
+  sx: {
+    '& th': { color: 'rgba(255, 255, 255, 0.76)', borderColor: 'rgba(255, 255, 255, 0.14)' },
+    '& td': { color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(255, 255, 255, 0.1)' },
+    '& .chakra-form__label': { color: 'rgba(255, 255, 255, 0.9)' },
+  },
+} as const;
+
+const translucentPanelProps = {
+  bg: 'whiteAlpha.120',
+  color: 'white',
+  borderRadius: '0',
+  borderWidth: '1px',
+  borderColor: 'whiteAlpha.200',
+  boxShadow: '0 18px 46px rgba(15, 23, 42, 0.18)',
+  backdropFilter: 'blur(12px)',
+} as const;
+
+const formControlProps = {
+  bg: 'whiteAlpha.900',
+  color: 'gray.900',
+  borderColor: 'whiteAlpha.600',
+  _placeholder: { color: 'gray.500' },
+} as const;
+
 const SortButton = ({
   label,
   column,
@@ -94,6 +146,8 @@ const SortButton = ({
   <Button
     size="xs"
     variant="ghost"
+    color="whiteAlpha.900"
+    _hover={{ bg: 'whiteAlpha.200' }}
     rightIcon={<ChevronDownIcon transform={sort.column === column && sort.direction === 'asc' ? 'rotate(180deg)' : undefined} />}
     onClick={() => onSort(column)}
   >
@@ -350,14 +404,24 @@ function CompanyAdminHome() {
   };
 
   return (
-    <Box bgGradient="linear(to-br, gray.50, pink.50, gray.100)" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
+    <Box bgGradient={adminPageBg} color="white" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
       <Container maxW="7xl">
         <Stack spacing={8}>
-          <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="pink.100" boxShadow="sm" p={{ base: 5, md: 8 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 8 }}>
             <Flex justify="space-between" align={{ base: 'flex-start', md: 'center' }} gap={4} direction={{ base: 'column', md: 'row' }}>
               <Stack spacing={2}>
-                <Heading size="lg">企業管理者ホーム</Heading>
-                <Text color="gray.600">
+                <Heading
+                  size="lg"
+                  bgGradient="linear(110deg, #f8fafc, #cbd5e1, #f1f5f9, #94a3b8)"
+                  bgClip="text"
+                  sx={{
+                    WebkitTextFillColor: 'transparent',
+                    textShadow: '0 1px 0 rgba(255, 255, 255, 0.24), 0 -1px 0 rgba(15, 23, 42, 0.55)',
+                  }}
+                >
+                  企業管理者ホーム
+                </Heading>
+                <Text color="whiteAlpha.800">
                   {tenant?.name ?? 'デモ企業'} の従業員カルテ、利用状況、契約オプションを管理します。
                 </Text>
                 <Flex gap={2} wrap="wrap">
@@ -366,64 +430,64 @@ function CompanyAdminHome() {
                   <Badge colorScheme="purple">一般ユーザーと同一ログイン入口想定</Badge>
                 </Flex>
               </Stack>
-              <Button variant="outline" onClick={() => navigate('/')}>
+              <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/')}>
                 ホームへ戻る
               </Button>
             </Flex>
           </Box>
 
           <SimpleGrid columns={{ base: 1, md: 4 }} spacing={5}>
-            <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" p={5}>
+            <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel>社員アカウント</StatLabel>
+                <StatLabel color="whiteAlpha.700">社員アカウント</StatLabel>
                 <StatNumber>{employees.length}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="whiteAlpha.700">
                 カルテ保存済み: {employeesWithKarte}件
               </Text>
             </Box>
-            <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" p={5}>
+            <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel>今月の残り使用回数</StatLabel>
+                <StatLabel color="whiteAlpha.700">今月の残り使用回数</StatLabel>
                 <StatNumber>{initialQuota.remaining + continuousQuota.remaining}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="whiteAlpha.700">
                 初回{initialQuota.remaining}回 / 継続{continuousQuota.remaining}回
               </Text>
             </Box>
-            <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" p={5}>
+            <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel>コンディション測定件数</StatLabel>
+                <StatLabel color="whiteAlpha.700">コンディション測定件数</StatLabel>
                 <StatNumber>{tenantConditionRecords.length}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="whiteAlpha.700">
                 直近: {latestMeasuredAt}
               </Text>
             </Box>
-            <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" p={5}>
+            <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel>緊張度スコア表示</StatLabel>
+                <StatLabel color="whiteAlpha.700">緊張度スコア表示</StatLabel>
                 <StatNumber>{flags.stressAnalysisEnabled ? 'ON' : 'OFF'}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="whiteAlpha.700">
                 AI使用可能回数: 初回面談{initialQuota.llmCallsPerInterview}回 / 継続面談{continuousQuota.llmCallsPerInterview}回
               </Text>
             </Box>
           </SimpleGrid>
 
-          <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <Stack spacing={4}>
               <Heading size="md">企業別オプション</Heading>
               <Checkbox isChecked={flags.stressAnalysisEnabled} onChange={(event) => handleStressToggle(event.target.checked)}>
                 面談前コンディションチェックと緊張度スコア表示を有効にする
               </Checkbox>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="sm" color="whiteAlpha.700">
                 個人別の顔分析結果は企業管理者画面には表示せず、測定件数などの集計のみ扱います。
               </Text>
             </Stack>
           </Box>
 
-          <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <form onSubmit={handleQuotaSubmit}>
               <Stack spacing={4}>
                 <Heading size="md">面談利用回数・会話ターン制限</Heading>
@@ -434,6 +498,7 @@ function CompanyAdminHome() {
                       type="number"
                       min="0"
                       value={quotaForm.initialMonthlyLimit}
+                      {...formControlProps}
                       onChange={(event) => setQuotaForm((prev) => ({ ...prev, initialMonthlyLimit: event.target.value }))}
                     />
                   </FormControl>
@@ -443,6 +508,7 @@ function CompanyAdminHome() {
                       type="number"
                       min="0"
                       value={quotaForm.continuousMonthlyLimit}
+                      {...formControlProps}
                       onChange={(event) => setQuotaForm((prev) => ({ ...prev, continuousMonthlyLimit: event.target.value }))}
                     />
                   </FormControl>
@@ -452,6 +518,7 @@ function CompanyAdminHome() {
                       type="number"
                       min="1"
                       value={quotaForm.initialLlmCallsPerInterview}
+                      {...formControlProps}
                       onChange={(event) => setQuotaForm((prev) => ({ ...prev, initialLlmCallsPerInterview: event.target.value }))}
                     />
                   </FormControl>
@@ -461,38 +528,45 @@ function CompanyAdminHome() {
                       type="number"
                       min="1"
                       value={quotaForm.continuousLlmCallsPerInterview}
+                      {...formControlProps}
                       onChange={(event) => setQuotaForm((prev) => ({ ...prev, continuousLlmCallsPerInterview: event.target.value }))}
                     />
                   </FormControl>
                 </SimpleGrid>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color="whiteAlpha.700">
                   初回面談: 上限{initialQuota.limit}回 / 使用済み{initialQuota.used}回 / 残り{initialQuota.remaining}回、継続面談:
                   上限{continuousQuota.limit}回 / 使用済み{continuousQuota.used}回 / 残り{continuousQuota.remaining}回
                 </Text>
-                <Button type="submit" colorScheme="pink" alignSelf="flex-start">
+                <Button
+                  type="submit"
+                  alignSelf="flex-start"
+                  bgGradient="linear(to-r, #1e293b, #334155, #475569)"
+                  color="white"
+                  _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)', transform: 'translateY(-1px)' }}
+                >
                   設定を保存
                 </Button>
               </Stack>
             </form>
           </Box>
 
-          <Box bg="white" borderRadius="lg" borderWidth="1px" borderColor="gray.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <Stack spacing={5}>
               <Flex justify="space-between" align={{ base: 'stretch', lg: 'center' }} gap={4} direction={{ base: 'column', lg: 'row' }}>
                 <Stack spacing={1}>
                   <Heading size="md">自社従業員カルテ</Heading>
-                  <Text fontSize="sm" color="gray.500">
+                  <Text fontSize="sm" color="whiteAlpha.700">
                     表示中 {filteredEmployees.length}件 / 全{employees.length}件、選択中 {selectedEmployeeIds.length}件
                   </Text>
                 </Stack>
                 <Flex gap={2} wrap="wrap">
-                  <Button size="sm" variant="outline" onClick={handleSelectAll}>
+                  <Button size="sm" variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleSelectAll}>
                     {allFilteredSelected ? '表示中の選択解除' : '表示中を一括選択'}
                   </Button>
-                  <Button size="sm" colorScheme="pink" onClick={handleBatchPdf} isDisabled={selectedEmployeeIds.length === 0}>
+                  <Button size="sm" colorScheme="blue" onClick={handleBatchPdf} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテPDF
                   </Button>
-                  <Button size="sm" variant="outline" colorScheme="pink" onClick={handleBatchPrint} isDisabled={selectedEmployeeIds.length === 0}>
+                  <Button size="sm" variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleBatchPrint} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテ印刷
                   </Button>
                 </Flex>
@@ -502,9 +576,10 @@ function CompanyAdminHome() {
                 <Input
                   placeholder="名前 / メール / 会社名 / 部署 / 職種 / ID で検索"
                   value={query}
+                  {...formControlProps}
                   onChange={(event) => setQuery(event.target.value)}
                 />
-                <Select maxW={{ md: '240px' }} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <Select maxW={{ md: '240px' }} value={statusFilter} {...formControlProps} onChange={(event) => setStatusFilter(event.target.value)}>
                   <option value="all">すべてのステータス</option>
                   {statusOptions.map((status) => (
                     <option key={status} value={status}>
@@ -514,9 +589,9 @@ function CompanyAdminHome() {
                 </Select>
               </Flex>
 
-              <Box borderWidth="1px" borderColor="gray.100" borderRadius="lg" overflowX="auto">
+              <Box borderWidth="1px" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
                 <Table size="sm">
-                  <Thead bg="gray.50">
+                  <Thead bg="whiteAlpha.160">
                     <Tr>
                       <Th>選択</Th>
                       <Th><SortButton label="ID" column="id" sort={sort} onSort={handleSort} /></Th>
@@ -535,7 +610,11 @@ function CompanyAdminHome() {
                     {filteredEmployees.map((employee) => {
                       const hasKarte = Boolean(employee.latestKarte);
                       return (
-                        <Tr key={employee.id} bg={selectedEmployeeIds.includes(employee.id) ? 'pink.50' : 'transparent'}>
+                        <Tr
+                          key={employee.id}
+                          bg={selectedEmployeeIds.includes(employee.id) ? 'whiteAlpha.200' : 'transparent'}
+                          _hover={{ bg: 'whiteAlpha.160' }}
+                        >
                           <Td>
                             <Checkbox
                               isChecked={selectedEmployeeIds.includes(employee.id)}
@@ -545,7 +624,7 @@ function CompanyAdminHome() {
                           </Td>
                           <Td fontWeight="medium">{employee.id}</Td>
                           <Td>{employee.name}</Td>
-                          <Td color="gray.600">{employee.email || '未設定'}</Td>
+                          <Td color="whiteAlpha.800">{employee.email || '未設定'}</Td>
                           <Td>{employee.company || tenant?.name || '未設定'}</Td>
                           <Td>{employee.department || '未設定'}</Td>
                           <Td>{employee.jobTitle || '未設定'}</Td>
