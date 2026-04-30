@@ -52,6 +52,33 @@ const contentFadeIn = keyframes`
   100% { opacity: 1; transform: translateY(0); }
 `;
 
+const decoratedPanelProps = {
+  bg: 'transparent',
+  color: 'white',
+  borderRadius: '0',
+  borderWidth: '0',
+  p: { base: 5, md: 8 },
+  position: 'relative',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.34)',
+  sx: { backdropFilter: 'blur(14px)' },
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: { base: '5px', md: '7px' },
+    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.72), rgba(226, 232, 240, 0.88), transparent)',
+  },
+} as const;
+
+const formFieldSurfaceProps = {
+  bg: 'whiteAlpha.900',
+  color: 'gray.900',
+  borderColor: 'whiteAlpha.600',
+  _placeholder: { color: 'gray.500' },
+} as const;
+
 type FieldDefinition = {
   key: keyof DemographicData;
   label: string;
@@ -219,7 +246,7 @@ function DemographicsSetup() {
         minH="100dvh"
         h="100dvh"
         overflowY="auto"
-        bgGradient="linear(-45deg, gray.900, blue.900, purple.900, black)"
+        bgGradient="linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)"
         backgroundSize="300% 300%"
         animation={`${bgGradientAnim} 15s ease infinite`}
         py={{ base: 8, md: 12 }}
@@ -227,7 +254,22 @@ function DemographicsSetup() {
         <Container maxW="4xl" animation={`${contentFadeIn} 4s ease-out forwards`}>
           <Stack spacing={8}>
             <Stack spacing={3}>
-              <Heading size="lg" color="white" textShadow="0 2px 4px rgba(0,0,0,0.3)">
+              <Heading
+                size="lg"
+                bgGradient="linear(110deg, #f1f5f9, #cbd5e1, #f8fafc, #94a3b8)"
+                bgClip="text"
+                backgroundSize="240% 240%"
+                sx={{
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.22), 0 -1px 0 rgba(15, 23, 42, 0.55), 0 10px 24px rgba(15, 23, 42, 0.35)',
+                  animation: 'demographicsTitleGradient 12s ease-in-out infinite',
+                  '@keyframes demographicsTitleGradient': {
+                    '0%': { backgroundPosition: '0% 50%' },
+                    '50%': { backgroundPosition: '100% 50%' },
+                    '100%': { backgroundPosition: '0% 50%' },
+                  },
+                }}
+              >
                 プロフィール初期設定
               </Heading>
               <Text color="whiteAlpha.900" fontWeight="medium" textShadow="0 1px 3px rgba(0,0,0,0.2)">
@@ -235,25 +277,17 @@ function DemographicsSetup() {
               </Text>
             </Stack>
 
-            <Box
-              bg="rgba(255, 255, 255, 0.85)"
-              sx={{ backdropFilter: 'blur(16px)' }}
-              borderRadius="2xl"
-              p={{ base: 5, md: 8 }}
-              boxShadow="2xl"
-              borderWidth="1px"
-              borderColor="whiteAlpha.600"
-            >
+            <Box {...decoratedPanelProps}>
               <Stack spacing={6}>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5}>
                   {FIELD_LABELS.map((field) => (
                     <FormControl key={field.key}>
-                      <FormLabel fontSize="sm" color="gray.700" fontWeight="bold">
+                      <FormLabel fontSize="sm" color="whiteAlpha.900" fontWeight="bold">
                         {field.label}
                       </FormLabel>
                       {field.kind === 'select' ? (
                         <Select
-                          bg="white"
+                          {...formFieldSurfaceProps}
                           placeholder="選択してください"
                           value={formValues[field.key] ?? ''}
                           onChange={(event) =>
@@ -271,7 +305,7 @@ function DemographicsSetup() {
                         </Select>
                       ) : (
                         <Input
-                          bg="white"
+                          {...formFieldSurfaceProps}
                           type={field.kind === 'number' ? 'number' : 'text'}
                           inputMode={field.kind === 'number' ? 'numeric' : undefined}
                           min={field.kind === 'number' ? field.min : undefined}
@@ -295,13 +329,22 @@ function DemographicsSetup() {
                 </SimpleGrid>
 
                 <Stack direction={{ base: 'column', sm: 'row' }} justify="flex-end" spacing={3}>
-                  <Button variant="outline" bg="white" onClick={() => navigate(returnTo)}>
+                  <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate(returnTo)}>
                     キャンセル
                   </Button>
-                  <Button variant="ghost" bg="whiteAlpha.800" onClick={handleSkipForDemo}>
+                  <Button variant="ghost" color="white" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleSkipForDemo}>
                     デモ用にスキップして進む
                   </Button>
-                  <Button colorScheme="orange" boxShadow="md" onClick={handleSave}>
+                  <Button
+                    bgGradient="linear(to-r, #1e293b, #334155, #475569)"
+                    color="white"
+                    boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
+                    _hover={{
+                      bgGradient: 'linear(to-r, #334155, #475569, #64748b)',
+                      transform: 'translateY(-1px)',
+                    }}
+                    onClick={handleSave}
+                  >
                     保存して進む
                   </Button>
                 </Stack>

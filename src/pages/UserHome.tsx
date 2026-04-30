@@ -122,6 +122,35 @@ const heroContentSlide = keyframes`
   }
 `;
 
+const decoratedPanelProps = {
+  bg: 'transparent',
+  color: 'white',
+  borderRadius: '0',
+  borderWidth: '0',
+  p: 6,
+  position: 'relative',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.28)',
+  sx: { backdropFilter: 'blur(14px)' },
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '6px',
+    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.72), rgba(226, 232, 240, 0.88), transparent)',
+  },
+} as const;
+
+const translucentPanelProps = {
+  borderWidth: '1px',
+  borderColor: 'whiteAlpha.200',
+  bg: 'whiteAlpha.100',
+  borderRadius: 'md',
+} as const;
+
+const mutedTextColor = 'whiteAlpha.800';
+
 type SurveyQuestion = {
   id: string;
   index: number;
@@ -604,13 +633,19 @@ function UserHome() {
   };
 
   return (
-    <Box bgGradient="linear(to-br, gray.50, gray.100, gray.200)" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
+    <Box
+      bgGradient="linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)"
+      height="100dvh"
+      py={{ base: 6, md: 8 }}
+      overflowY="scroll"
+      color="white"
+    >
       <Container maxW="6xl">
         <Stack spacing={10}>
           <Box
             position="relative"
-            borderRadius="2xl"
-            boxShadow="xl"
+            borderRadius="0"
+            boxShadow="0 28px 80px rgba(15, 23, 42, 0.32)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
             bgImage={`linear-gradient(rgba(8, 15, 26, 0.68), rgba(8, 15, 26, 0.72)), url(${heroBackground})`}
@@ -625,6 +660,16 @@ function UserHome() {
               inset: 0,
               bg: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 30%, rgba(8,15,26,0.12) 100%)',
               pointerEvents: 'none',
+            }}
+            _after={{
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '6px',
+              bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.72), rgba(226, 232, 240, 0.88), transparent)',
+              zIndex: 1,
             }}
           >
             <Flex
@@ -728,18 +773,21 @@ function UserHome() {
           </Box>
 
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...decoratedPanelProps}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiPlayCircle /> 面談スタート
                 </Heading>
-                <Text color="gray.600">
+                <Text color={mutedTextColor}>
                   初回面談と継続面談を選択できます。未完了のセッションがある場合は、続きから再開できます。
                 </Text>
                 <Stack spacing={3}>
                   <Button
-                    colorScheme="blue"
                     size="lg"
+                    bgGradient="linear(to-r, #1e293b, #334155, #475569)"
+                    color="white"
+                    boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
+                    _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)', transform: 'translateY(-1px)' }}
                     onClick={handleStartInitial}
                   >
                     初回面談を開始
@@ -747,7 +795,9 @@ function UserHome() {
                   <Button
                     variant="outline"
                     size="lg"
-                    colorScheme="teal"
+                    color="white"
+                    borderColor="whiteAlpha.500"
+                    _hover={{ bg: 'whiteAlpha.160' }}
                     onClick={handleStartContinuous}
                   >
                     継続面談を開始
@@ -755,60 +805,60 @@ function UserHome() {
                 </Stack>
                 <Stack spacing={2}>
                   {userState.draftSessions.initial && (
-                    <Box borderWidth="1px" borderRadius="md" p={3} bg="blue.50" borderColor="blue.100">
-                      <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+                    <Box {...translucentPanelProps} p={3}>
+                      <Text fontSize="sm" fontWeight="semibold" color="white">
                         {getDraftMetaLabel('initial')}
                       </Text>
-                      <Text fontSize="xs" color="blue.700">
+                      <Text fontSize="xs" color={mutedTextColor}>
                         最終保存: {userState.draftSessions.initial.updatedAt || '未記録'}
                       </Text>
                     </Box>
                   )}
                   {userState.draftSessions.continuous && (
-                    <Box borderWidth="1px" borderRadius="md" p={3} bg="teal.50" borderColor="teal.100">
-                      <Text fontSize="sm" fontWeight="semibold" color="teal.700">
+                    <Box {...translucentPanelProps} p={3}>
+                      <Text fontSize="sm" fontWeight="semibold" color="white">
                         {getDraftMetaLabel('continuous')}
                       </Text>
-                      <Text fontSize="xs" color="teal.700">
+                      <Text fontSize="xs" color={mutedTextColor}>
                         最終保存: {userState.draftSessions.continuous.updatedAt || '未記録'}
                       </Text>
                     </Box>
                   )}
                 </Stack>
                 <SimpleGrid columns={2} spacing={3} w="full">
-                  <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="blue.400">
+                  <Box {...translucentPanelProps} p={3} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                     <Stack spacing={0}>
-                      <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                      <Text fontSize="xs" color={mutedTextColor} fontWeight="bold">
                         初回面談
                       </Text>
-                      <Text fontSize="md" color="gray.800" fontWeight="bold">
+                      <Text fontSize="md" color="white" fontWeight="bold">
                         使用済み{profile.initialInterviewUsed}回 / 残り{profile.initialInterviewRemaining}回
-                        <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
+                        <Text as="span" fontSize="xs" color={mutedTextColor} fontWeight="normal">
                           {' '}（上限{profile.initialInterviewLimit}回）
                         </Text>
                       </Text>
                     </Stack>
                   </Box>
-                  <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="teal.400">
+                  <Box {...translucentPanelProps} p={3} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                     <Stack spacing={0}>
-                      <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                      <Text fontSize="xs" color={mutedTextColor} fontWeight="bold">
                         継続面談
                       </Text>
-                      <Text fontSize="md" color="gray.800" fontWeight="bold">
+                      <Text fontSize="md" color="white" fontWeight="bold">
                         使用済み{profile.continuousInterviewUsed}回 / 残り{profile.continuousInterviewRemaining}回
-                        <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
+                        <Text as="span" fontSize="xs" color={mutedTextColor} fontWeight="normal">
                           {' '}（上限{profile.continuousInterviewLimit}回）
                         </Text>
                       </Text>
                     </Stack>
                   </Box>
                 </SimpleGrid>
-                <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={3} borderLeft="4px solid" borderLeftColor="purple.400">
+                <Box {...translucentPanelProps} p={3} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                   <Flex justify="space-between" align="center">
-                    <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                    <Text fontSize="xs" color={mutedTextColor} fontWeight="bold">
                       AI利用可能回数
                     </Text>
-                    <Text fontSize="sm" color="gray.700" fontWeight="semibold">
+                    <Text fontSize="sm" color="white" fontWeight="semibold">
                       初回面談{profile.initialLlmCallsPerInterview}回 / 継続面談{profile.continuousLlmCallsPerInterview}回
                     </Text>
                   </Flex>
@@ -816,24 +866,31 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...decoratedPanelProps}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiClipboard /> ユーザアンケート
                 </Heading>
-                <Text color="gray.600">面談体験に関するフィードバックをお聞かせください。</Text>
-                <Button variant="solid" size="lg" colorScheme="pink" onClick={surveyModalDisclosure.onOpen}>
+                <Text color={mutedTextColor}>面談体験に関するフィードバックをお聞かせください。</Text>
+                <Button
+                  variant="solid"
+                  size="lg"
+                  bgGradient="linear(to-r, #1e293b, #334155, #475569)"
+                  color="white"
+                  _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)' }}
+                  onClick={surveyModalDisclosure.onOpen}
+                >
                   アンケートを開く
                 </Button>
-                <Box border="1px solid" borderColor="blackAlpha.100" bg="gray.50" borderRadius="md" p={4} borderLeft="4px solid" borderLeftColor="pink.400">
+                <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                   <Stack spacing={4} align="center">
-                    <Text fontSize="sm" color="gray.600" fontWeight="bold" alignSelf="flex-start">
+                    <Text fontSize="sm" color={mutedTextColor} fontWeight="bold" alignSelf="flex-start">
                       前回アンケートスコア
                     </Text>
                     {hasSurvey ? (
                       <SurveyRadar labels={Object.values(SURVEY_LABELS)} values={surveyScores} size={200} />
                     ) : (
-                      <Text fontSize="sm" color="gray.400" py={8}>
+                      <Text fontSize="sm" color={mutedTextColor} py={8}>
                         未回答
                       </Text>
                     )}
@@ -842,48 +899,53 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...decoratedPanelProps}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiActivity /> 面談前コンディションチェック
                 </Heading>
                 {stressAnalysisEnabled ? (
                   <>
-                    <Text color="gray.600">
+                    <Text color={mutedTextColor}>
                       面談前の緊張傾向を参考値として保存します。現時点ではダミースコアのみを扱います。
                     </Text>
-                    <Box border="1px solid" borderColor="orange.100" bg="orange.50" borderRadius="md" p={4} borderLeft="4px solid" borderLeftColor="orange.400">
+                    <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                       {latestCondition ? (
                         <Stack spacing={1}>
-                          <Text fontSize="sm" color="gray.600" fontWeight="bold">
+                          <Text fontSize="sm" color={mutedTextColor} fontWeight="bold">
                             直近の緊張度スコア
                           </Text>
-                          <Text fontSize="xl" color="gray.800" fontWeight="bold">
+                          <Text fontSize="xl" color="white" fontWeight="bold">
                             {latestCondition.score} / 100
-                            <Text as="span" ml={2} fontSize="sm" color="gray.600">
+                            <Text as="span" ml={2} fontSize="sm" color={mutedTextColor}>
                               {latestCondition.level}
                             </Text>
                           </Text>
-                          <Text fontSize="xs" color="gray.500">
+                          <Text fontSize="xs" color={mutedTextColor}>
                             測定日時: {new Date(latestCondition.measuredAt).toLocaleString('ja-JP')}
                           </Text>
                         </Stack>
                       ) : (
-                        <Text fontSize="sm" color="gray.500">
+                        <Text fontSize="sm" color={mutedTextColor}>
                           まだ測定されていません。
                         </Text>
                       )}
                     </Box>
-                    <Button colorScheme="orange" variant="solid" onClick={() => navigate('/user/condition-check')}>
+                    <Button
+                      bgGradient="linear(to-r, #1e293b, #334155, #475569)"
+                      color="white"
+                      _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)' }}
+                      onClick={() => navigate('/user/condition-check')}
+                    >
                       チェックを開く
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Text color="gray.600">
+                    <Text color={mutedTextColor}>
                       現在の企業では契約オプションが未有効です。企業管理者画面で有効化できます。
                     </Text>
-                    <Button variant="outline" colorScheme="pink" onClick={() => navigate('/company-admin')}>
+                    <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/company-admin')}>
                       企業管理者画面へ
                     </Button>
                   </>
@@ -891,62 +953,72 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...decoratedPanelProps}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiBookOpen /> カルテ確認・出力
                 </Heading>
-                <Text color="gray.600">保存済みカルテの確認、会話ログの閲覧、出力を行います。</Text>
+                <Text color={mutedTextColor}>保存済みカルテの確認、会話ログの閲覧、出力を行います。</Text>
                 <Stack direction={{ base: 'column', sm: 'row' }} spacing={3}>
-                  <Button onClick={karteModalDisclosure.onOpen} colorScheme="teal" size="md">
+                  <Button
+                    onClick={karteModalDisclosure.onOpen}
+                    size="md"
+                    bgGradient="linear(to-r, #1e293b, #334155, #475569)"
+                    color="white"
+                    _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)' }}
+                  >
                     カルテを開く
                   </Button>
-                  <Button variant="outline" onClick={() => handleDownload('csv')}>CSV出力</Button>
-                  <Button variant="outline" onClick={() => handleDownload('pdf')}>PDF出力</Button>
+                  <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('csv')}>CSV出力</Button>
+                  <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('pdf')}>PDF出力</Button>
                 </Stack>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color={mutedTextColor}>
                   保存済み履歴: {userState.karteRecords.length}件 / 会話ログ: {profile.logs}件
                 </Text>
               </Stack>
             </Box>
 
-            <Box bg="white" borderRadius="xl" boxShadow="0 4px 12px rgba(0, 0, 0, 0.05)" p={6} border="1px solid" borderColor="blackAlpha.100">
+            <Box {...decoratedPanelProps}>
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiRefreshCw /> アカウント情報確認
                 </Heading>
-                <Text color="gray.600">登録内容とパスワードの管理が行えます。</Text>
-                <Button variant="outline" onClick={accountDisclosure.onToggle}>
+                <Text color={mutedTextColor}>登録内容とパスワードの管理が行えます。</Text>
+                <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={accountDisclosure.onToggle}>
                   {accountDisclosure.isOpen ? '情報を閉じる' : '情報を表示'}
                 </Button>
                 <Collapse in={accountDisclosure.isOpen} animateOpacity>
                   <Box pt={4}>
                     <Tabs variant="enclosed" size="sm">
-                      <TabList>
-                        <Tab>基本情報</Tab>
-                        <Tab>個人情報詳細</Tab>
+                      <TabList borderColor="whiteAlpha.300">
+                        <Tab color="whiteAlpha.800" _selected={{ color: 'white', bg: 'whiteAlpha.160' }}>
+                          基本情報
+                        </Tab>
+                        <Tab color="whiteAlpha.800" _selected={{ color: 'white', bg: 'whiteAlpha.160' }}>
+                          個人情報詳細
+                        </Tab>
                       </TabList>
                       <TabPanels>
                         <TabPanel px={0} pt={3}>
                           <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">氏名</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>氏名</Text>
                               <Text fontWeight="semibold">{profile.name}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">年齢</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>年齢</Text>
                               <Text fontWeight="semibold">{profile.age}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">所属企業</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>所属企業</Text>
                               <Text fontWeight="semibold">{profile.company}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">職種</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>職種</Text>
                               <Text fontWeight="semibold">{profile.role}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">メール</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>メール</Text>
                               <Text fontWeight="semibold">{profile.email}</Text>
                             </Stack>
                           </SimpleGrid>
@@ -954,31 +1026,31 @@ function UserHome() {
                         <TabPanel px={0} pt={3}>
                           <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">勤務地(都道府県)</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>勤務地(都道府県)</Text>
                               <Text fontWeight="semibold">{profile.workLocationPrefecture}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">転職歴(回数)</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>転職歴(回数)</Text>
                               <Text fontWeight="semibold">{profile.jobChangeCount}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">勤続年数(年)</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>勤続年数(年)</Text>
                               <Text fontWeight="semibold">{profile.yearsOfService}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">性別</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>性別</Text>
                               <Text fontWeight="semibold">{profile.gender}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">現在の婚姻関係</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>現在の婚姻関係</Text>
                               <Text fontWeight="semibold">{profile.maritalStatus}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">子供の有無(人)</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>子供の有無(人)</Text>
                               <Text fontWeight="semibold">{profile.childrenCount}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color="gray.500">末子の年齢(歳)</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>末子の年齢(歳)</Text>
                               <Text fontWeight="semibold">{profile.youngestChildAge}</Text>
                             </Stack>
                           </SimpleGrid>
@@ -986,10 +1058,10 @@ function UserHome() {
                       </TabPanels>
                     </Tabs>
                     <Flex mt={4} gap={3} wrap="wrap">
-                      <Button colorScheme="orange" variant="outline" onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
+                      <Button color="white" borderColor="whiteAlpha.500" variant="outline" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
                         プロフィールを編集
                       </Button>
-                      <Button colorScheme="red" variant="outline" onClick={resetModalDisclosure.onOpen}>
+                      <Button color="white" borderColor="whiteAlpha.500" variant="outline" _hover={{ bg: 'whiteAlpha.160' }} onClick={resetModalDisclosure.onOpen}>
                         パスワードを再設定する
                       </Button>
                     </Flex>
