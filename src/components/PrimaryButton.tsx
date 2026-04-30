@@ -1,0 +1,121 @@
+import { Button, type ButtonProps } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
+
+const gradientFlow = keyframes`
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+`;
+
+const waveDrift = keyframes`
+  0% {
+    transform: translateX(-18%) translateY(20%) rotate(0deg);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translateX(10%) translateY(-18%) rotate(8deg);
+    opacity: 0.32;
+  }
+  100% {
+    transform: translateX(-18%) translateY(20%) rotate(0deg);
+    opacity: 0.18;
+  }
+`;
+
+const sheenSweep = keyframes`
+  0% {
+    transform: translateX(-135%) skewX(-18deg);
+    opacity: 0;
+  }
+  24% {
+    opacity: 0;
+  }
+  42% {
+    opacity: 0.45;
+  }
+  60% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(135%) skewX(-18deg);
+    opacity: 0;
+  }
+`;
+
+function PrimaryButton({ children, sx, _hover, _active, _disabled, ...props }: ButtonProps) {
+  return (
+    <Button
+      color="white"
+      position="relative"
+      overflow="hidden"
+      borderRadius="md"
+      borderWidth="1px"
+      borderColor="rgba(226, 232, 240, 0.24)"
+      bgGradient="linear(115deg, #020617 0%, #0f172a 24%, #1e293b 48%, #334155 72%, #020617 100%)"
+      backgroundSize="260% 260%"
+      boxShadow="0 16px 38px rgba(2, 6, 23, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.18)"
+      animation={`${gradientFlow} 9s ease-in-out infinite`}
+      transition="transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease"
+      _before={{
+        content: '""',
+        position: 'absolute',
+        inset: '-75%',
+        bg:
+          'radial-gradient(ellipse at 20% 50%, rgba(226, 232, 240, 0.22), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(100, 116, 139, 0.28), transparent 32%)',
+        filter: 'blur(10px)',
+        animation: `${waveDrift} 6.8s ease-in-out infinite`,
+        pointerEvents: 'none',
+      }}
+      _after={{
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        width: '42%',
+        left: 0,
+        bg: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent)',
+        animation: `${sheenSweep} 4.8s ease-in-out infinite`,
+        pointerEvents: 'none',
+      }}
+      _hover={{
+        transform: 'translateY(-1px)',
+        borderColor: 'rgba(241, 245, 249, 0.42)',
+        boxShadow: '0 20px 48px rgba(2, 6, 23, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
+        filter: 'saturate(1.04)',
+        ..._hover,
+      }}
+      _active={{
+        transform: 'translateY(0)',
+        boxShadow: '0 10px 26px rgba(2, 6, 23, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.14)',
+        ..._active,
+      }}
+      _disabled={{
+        opacity: 0.48,
+        cursor: 'not-allowed',
+        transform: 'none',
+        boxShadow: 'none',
+        filter: 'grayscale(0.24)',
+        ..._disabled,
+      }}
+      sx={{
+        isolation: 'isolate',
+        '& > *': {
+          position: 'relative',
+          zIndex: 1,
+        },
+        ...sx,
+      }}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+
+export default PrimaryButton;

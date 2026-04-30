@@ -36,6 +36,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FiActivity, FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { Navigate, useNavigate } from 'react-router-dom';
 import KartePanel from '../components/KartePanel';
+import PrimaryButton from '../components/PrimaryButton';
 import SurveyRadar from '../components/SurveyRadar';
 import {
   applyDemographicsToKarte,
@@ -782,16 +783,9 @@ function UserHome() {
                   初回面談と継続面談を選択できます。未完了のセッションがある場合は、続きから再開できます。
                 </Text>
                 <Stack spacing={3}>
-                  <Button
-                    size="lg"
-                    bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                    color="white"
-                    boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
-                    _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)', transform: 'translateY(-1px)' }}
-                    onClick={handleStartInitial}
-                  >
+                  <PrimaryButton size="lg" onClick={handleStartInitial}>
                     初回面談を開始
-                  </Button>
+                  </PrimaryButton>
                   <Button
                     variant="outline"
                     size="lg"
@@ -872,16 +866,9 @@ function UserHome() {
                   <FiClipboard /> ユーザアンケート
                 </Heading>
                 <Text color={mutedTextColor}>面談体験に関するフィードバックをお聞かせください。</Text>
-                <Button
-                  variant="solid"
-                  size="lg"
-                  bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                  color="white"
-                  _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)' }}
-                  onClick={surveyModalDisclosure.onOpen}
-                >
+                <PrimaryButton size="lg" onClick={surveyModalDisclosure.onOpen}>
                   アンケートを開く
-                </Button>
+                </PrimaryButton>
                 <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                   <Stack spacing={4} align="center">
                     <Text fontSize="sm" color={mutedTextColor} fontWeight="bold" alignSelf="flex-start">
@@ -931,14 +918,9 @@ function UserHome() {
                         </Text>
                       )}
                     </Box>
-                    <Button
-                      bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                      color="white"
-                      _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)' }}
-                      onClick={() => navigate('/user/condition-check')}
-                    >
+                    <PrimaryButton onClick={() => navigate('/user/condition-check')}>
                       チェックを開く
-                    </Button>
+                    </PrimaryButton>
                   </>
                 ) : (
                   <>
@@ -960,15 +942,9 @@ function UserHome() {
                 </Heading>
                 <Text color={mutedTextColor}>保存済みカルテの確認、会話ログの閲覧、出力を行います。</Text>
                 <Stack direction={{ base: 'column', sm: 'row' }} spacing={3}>
-                  <Button
-                    onClick={karteModalDisclosure.onOpen}
-                    size="md"
-                    bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                    color="white"
-                    _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)' }}
-                  >
+                  <PrimaryButton onClick={karteModalDisclosure.onOpen} size="md">
                     カルテを開く
-                  </Button>
+                  </PrimaryButton>
                   <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('csv')}>CSV出力</Button>
                   <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => handleDownload('pdf')}>PDF出力</Button>
                 </Stack>
@@ -1212,9 +1188,9 @@ function UserHome() {
             ) : null}
             {isEditingLatest ? (
               <>
-                <Button colorScheme="blue" onClick={handleSaveEdit}>
+                <PrimaryButton onClick={handleSaveEdit}>
                   変更を保存
-                </Button>
+                </PrimaryButton>
                 <Button variant="outline" onClick={handleCancelEdit}>
                   編集をキャンセル
                 </Button>
@@ -1308,9 +1284,9 @@ function UserHome() {
             <Button variant="outline" onClick={handleEditLastSurvey}>
               前回回答を読み込む
             </Button>
-            <Button type="submit" form="survey-form" colorScheme="pink">
+            <PrimaryButton type="submit" form="survey-form">
               送信する
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1333,9 +1309,9 @@ function UserHome() {
             <Button onClick={resetModalDisclosure.onClose} variant="outline">
               キャンセル
             </Button>
-            <Button colorScheme="blue" onClick={handleResetPassword}>
+            <PrimaryButton onClick={handleResetPassword}>
               送信する
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1366,9 +1342,9 @@ function UserHome() {
             <Button variant="outline" onClick={continuousModeDisclosure.onClose}>
               キャンセル
             </Button>
-            <Button colorScheme="teal" onClick={handleConfirmContinuous}>
+            <PrimaryButton onClick={handleConfirmContinuous}>
               この設定で進む
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1403,9 +1379,9 @@ function UserHome() {
             <Button variant="outline" onClick={handleStartFresh}>
               新規開始
             </Button>
-            <Button colorScheme="blue" onClick={handleResumeDraft}>
+            <PrimaryButton onClick={handleResumeDraft}>
               続きから再開
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>

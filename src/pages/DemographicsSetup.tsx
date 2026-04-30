@@ -15,6 +15,7 @@ import {
 import { keyframes } from '@emotion/react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import PrimaryButton from '../components/PrimaryButton';
 import {
   applyDemographicsToKarte,
   createEmptyDemographics,
@@ -335,18 +336,9 @@ function DemographicsSetup() {
                   <Button variant="ghost" color="white" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleSkipForDemo}>
                     デモ用にスキップして進む
                   </Button>
-                  <Button
-                    bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                    color="white"
-                    boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
-                    _hover={{
-                      bgGradient: 'linear(to-r, #334155, #475569, #64748b)',
-                      transform: 'translateY(-1px)',
-                    }}
-                    onClick={handleSave}
-                  >
+                  <PrimaryButton onClick={handleSave}>
                     保存して進む
-                  </Button>
+                  </PrimaryButton>
                 </Stack>
               </Stack>
             </Box>

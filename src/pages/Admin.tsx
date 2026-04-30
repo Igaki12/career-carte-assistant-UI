@@ -34,6 +34,7 @@ import {
 } from '@chakra-ui/react';
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
 import { FiFileText, FiPlus, FiUpload } from 'react-icons/fi';
+import PrimaryButton from '../components/PrimaryButton';
 import {
   DEFAULT_DEMO_USER_ID,
   getTenantFeatureFlags,
@@ -959,13 +960,9 @@ function Admin() {
                   <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
                     <Text fontWeight="semibold">選択中: {selectedUserIds.length}件</Text>
                     <Flex gap={2} wrap="wrap">
-                      <Button
-                        size="sm"
-                        colorScheme="blue"
-                        onClick={() => openBulkEditModal('user')}
-                      >
+                      <PrimaryButton size="sm" onClick={() => openBulkEditModal('user')}>
                         全て編集
-                      </Button>
+                      </PrimaryButton>
                       <Button
                         size="sm"
                           {...outlineLightButtonProps}
@@ -1200,9 +1197,9 @@ function Admin() {
                                 <option value="完了">完了</option>
                               </Select>
                             </FormControl>
-                            <Button type="submit" colorScheme="blue" alignSelf="flex-start">
+                            <PrimaryButton type="submit" alignSelf="flex-start">
                               登録
-                            </Button>
+                            </PrimaryButton>
                           </Stack>
                         </form>
                       </Box>
@@ -1287,13 +1284,9 @@ function Admin() {
                   <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
                     <Text fontWeight="semibold">選択中: {selectedConsultantIds.length}件</Text>
                     <Flex gap={2} wrap="wrap">
-                      <Button
-                        size="sm"
-                        colorScheme="green"
-                        onClick={() => openBulkEditModal('consultant')}
-                      >
+                      <PrimaryButton size="sm" onClick={() => openBulkEditModal('consultant')}>
                         全て編集
-                      </Button>
+                      </PrimaryButton>
                       <Button
                         size="sm"
                         {...outlineLightButtonProps}
@@ -1519,9 +1512,9 @@ function Admin() {
                                 <option value="休止中">休止中</option>
                               </Select>
                             </FormControl>
-                            <Button type="submit" colorScheme="green" alignSelf="flex-start">
+                            <PrimaryButton type="submit" alignSelf="flex-start">
                               登録
-                            </Button>
+                            </PrimaryButton>
                           </Stack>
                         </form>
                       </Box>
@@ -1675,9 +1668,9 @@ function Admin() {
             <Button variant="ghost" onClick={csvModalDisclosure.onClose}>
               キャンセル
             </Button>
-            <Button colorScheme="blue" leftIcon={<FiFileText />} onClick={handleCsvConfirm}>
+            <PrimaryButton leftIcon={<FiFileText />} onClick={handleCsvConfirm}>
               登録を実行
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1824,9 +1817,9 @@ function Admin() {
             <Button variant="ghost" onClick={editModalDisclosure.onClose}>
               キャンセル
             </Button>
-            <Button colorScheme="blue" type="submit">
+            <PrimaryButton type="submit">
               変更を保存
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1956,9 +1949,9 @@ function Admin() {
             <Button variant="ghost" onClick={bulkEditDisclosure.onClose}>
               キャンセル
             </Button>
-            <Button colorScheme="blue" type="submit">
+            <PrimaryButton type="submit">
               一括更新を適用
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -27,6 +27,7 @@ import {
 import { type FormEvent, useEffect, useState } from 'react';
 import { FiArrowLeft, FiShield } from 'react-icons/fi';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import PrimaryButton from '../components/PrimaryButton';
 import {
   createDemoAuthSession,
   getDefaultRouteForRole,
@@ -206,25 +207,9 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
                   </Button>
                 </Flex>
               </Stack>
-              <Button
-                type="submit"
-                size="lg"
-                bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                color="white"
-                boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
-                _hover={{
-                  bgGradient: 'linear(to-r, #334155, #475569, #64748b)',
-                  boxShadow: '0 18px 42px rgba(15, 23, 42, 0.44)',
-                  transform: 'translateY(-1px)',
-                }}
-                _active={{
-                  transform: 'translateY(0)',
-                  boxShadow: '0 10px 24px rgba(15, 23, 42, 0.3)',
-                }}
-                transition="all 0.18s ease"
-              >
+              <PrimaryButton type="submit" size="lg">
                 管理者画面へログイン
-              </Button>
+              </PrimaryButton>
               <Divider borderColor="whiteAlpha.300" />
               <Link
                 as={RouterLink}
@@ -257,15 +242,14 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
             </Stack>
           </ModalBody>
           <ModalFooter gap={2}>
-            <Button
-              colorScheme="orange"
+            <PrimaryButton
               onClick={() => {
                 setAcceptedTerms(true);
                 termsDisclosure.onClose();
               }}
             >
               同意して閉じる
-            </Button>
+            </PrimaryButton>
             <Button variant="ghost" onClick={termsDisclosure.onClose}>
               閉じる
             </Button>

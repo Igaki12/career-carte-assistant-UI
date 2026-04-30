@@ -27,6 +27,7 @@ import {
 import { keyframes } from '@emotion/react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { FiCpu, FiMail, FiRefreshCw, FiUsers } from 'react-icons/fi';
+import PrimaryButton from '../components/PrimaryButton';
 import { createEmptyKarte } from '../lib/demoUserState';
 import {
   cloneShirpDetails,
@@ -770,9 +771,9 @@ function ConsultantHome() {
             <Button variant="outline" onClick={karteDisclosure.onClose}>
               閉じる
             </Button>
-            <Button colorScheme="blue" onClick={handleSaveKarte}>
+            <PrimaryButton onClick={handleSaveKarte}>
               保存する
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -807,9 +808,9 @@ function ConsultantHome() {
             <Button variant="outline" onClick={emailDisclosure.onClose}>
               閉じる
             </Button>
-            <Button type="submit" form="mail-form" colorScheme="blue">
+            <PrimaryButton type="submit" form="mail-form">
               送信
-            </Button>
+            </PrimaryButton>
           </ModalFooter>
         </ModalContent>
       </Modal>

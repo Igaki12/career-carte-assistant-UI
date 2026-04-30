@@ -35,6 +35,7 @@ import {
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import KartePanel from '../components/KartePanel';
+import PrimaryButton from '../components/PrimaryButton';
 import {
   getCompanyAdminEmployees,
   getTenantFeatureFlags,
@@ -537,15 +538,9 @@ function CompanyAdminHome() {
                   初回面談: 上限{initialQuota.limit}回 / 使用済み{initialQuota.used}回 / 残り{initialQuota.remaining}回、継続面談:
                   上限{continuousQuota.limit}回 / 使用済み{continuousQuota.used}回 / 残り{continuousQuota.remaining}回
                 </Text>
-                <Button
-                  type="submit"
-                  alignSelf="flex-start"
-                  bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                  color="white"
-                  _hover={{ bgGradient: 'linear(to-r, #334155, #475569, #64748b)', transform: 'translateY(-1px)' }}
-                >
+                <PrimaryButton type="submit" alignSelf="flex-start">
                   設定を保存
-                </Button>
+                </PrimaryButton>
               </Stack>
             </form>
           </Box>
@@ -563,9 +558,9 @@ function CompanyAdminHome() {
                   <Button size="sm" variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleSelectAll}>
                     {allFilteredSelected ? '表示中の選択解除' : '表示中を一括選択'}
                   </Button>
-                  <Button size="sm" colorScheme="blue" onClick={handleBatchPdf} isDisabled={selectedEmployeeIds.length === 0}>
+                  <PrimaryButton size="sm" onClick={handleBatchPdf} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテPDF
-                  </Button>
+                  </PrimaryButton>
                   <Button size="sm" variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleBatchPrint} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテ印刷
                   </Button>
@@ -678,9 +673,9 @@ function CompanyAdminHome() {
             <Button variant="outline" onClick={() => viewingEmployee && handleEmployeePrint(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
               印刷
             </Button>
-            <Button colorScheme="pink" onClick={() => viewingEmployee && handleEmployeePdf(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
+            <PrimaryButton onClick={() => viewingEmployee && handleEmployeePdf(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
               PDF
-            </Button>
+            </PrimaryButton>
             <Button variant="ghost" onClick={() => setViewingEmployee(null)}>
               閉じる
             </Button>

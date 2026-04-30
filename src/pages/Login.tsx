@@ -28,6 +28,7 @@ import {
 import { type FormEvent, useEffect, useState } from 'react';
 import { FiSettings } from 'react-icons/fi';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import PrimaryButton from '../components/PrimaryButton';
 import {
   createDemoAuthSession,
   getDefaultRouteForRole,
@@ -230,25 +231,9 @@ function Login({ session, onLogin }: LoginProps) {
                     </Button>
                   </Flex>
                 </Stack>
-                <Button
-                  type="submit"
-                  size="lg"
-                  bgGradient="linear(to-r, #1e293b, #334155, #475569)"
-                  color="white"
-                  boxShadow="0 14px 34px rgba(15, 23, 42, 0.34)"
-                  _hover={{
-                    bgGradient: 'linear(to-r, #334155, #475569, #64748b)',
-                    boxShadow: '0 18px 42px rgba(15, 23, 42, 0.44)',
-                    transform: 'translateY(-1px)',
-                  }}
-                  _active={{
-                    transform: 'translateY(0)',
-                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.3)',
-                  }}
-                  transition="all 0.18s ease"
-                >
+                <PrimaryButton type="submit" size="lg">
                   ログイン
-                </Button>
+                </PrimaryButton>
                 <Divider borderColor="whiteAlpha.300" />
                 <Text fontSize="xs" color="whiteAlpha.700">
                   本番実装ではサーバー側認証、権限、テナント紐付け、パスワード再発行を接続します。
@@ -286,15 +271,14 @@ function Login({ session, onLogin }: LoginProps) {
             </Stack>
           </ModalBody>
           <ModalFooter gap={2}>
-            <Button
-              colorScheme="teal"
+            <PrimaryButton
               onClick={() => {
                 setAcceptedTerms(true);
                 termsDisclosure.onClose();
               }}
             >
               同意して閉じる
-            </Button>
+            </PrimaryButton>
             <Button variant="ghost" onClick={termsDisclosure.onClose}>
               閉じる
             </Button>
