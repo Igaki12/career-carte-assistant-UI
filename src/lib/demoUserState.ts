@@ -1,4 +1,5 @@
 import type {
+  CompanyEmployeeRecord,
   ConditionRecord,
   ConditionSummary,
   DemoUserState,
@@ -209,6 +210,165 @@ export const createEmptyKarte = (): KarteData => ({
   conditionSummary: null,
 });
 
+const createSampleKarte = (
+  demographics: Partial<DemographicData>,
+  shirp: Partial<KarteData['shirp']>,
+): KarteData => {
+  const details = createEmptyShirpDetails();
+  details.S.jobContent.summary = '現在の役割で顧客対応と業務改善を担当し、成果が見える場面にやりがいを感じている。';
+  details.H.workStylePreferences.summary = '家庭や学習時間との両立を意識し、柔軟な働き方を希望している。';
+  details.I.capabilityExperienceIssues.summary = '次の役割に向けて専門知識と言語化の経験を増やす必要がある。';
+  details.R.interpersonalResources.summary = '上司や同僚に相談できる関係があり、社内制度も一部活用できる。';
+
+  return {
+    ...createEmptyKarte(),
+    demographics: {
+      ...createEmptyDemographics(),
+      ...demographics,
+    },
+    shirp: {
+      ...createEmptyShirp(),
+      ...shirp,
+    },
+    shirpDetails: details,
+  };
+};
+
+const createSampleKarteRecord = (
+  id: string,
+  atCreated: string,
+  data: KarteData,
+  feedback: string,
+): CompanyEmployeeRecord['karteRecords'][number] => ({
+  id,
+  atCreated,
+  atUpdated: atCreated,
+  statusLabel: '保存済み',
+  data,
+  meetingType: 'initial',
+  continuousMode: null,
+  feedback,
+  conversationLog: [
+    { role: 'user', content: '今の仕事の整理をしたいです。' },
+    { role: 'assistant', content: '現在の役割で感じていることから一緒に整理しましょう。' },
+  ],
+});
+
+export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
+  const employeeAkarte = createSampleKarte(
+    {
+      name: '佐伯 美咲',
+      age: '34',
+      company: 'Career Carte Inc.',
+      jobTitle: 'カスタマーサクセス',
+      workLocationPrefecture: '東京都',
+      yearsOfService: '5',
+    },
+    {
+      S: '顧客対応とチーム内調整にやりがいを感じる一方、業務量の波に負担がある。',
+      H: '顧客支援の専門性を高め、柔軟な働き方も維持したい。',
+      I: '次の役割に必要なデータ活用経験と自己PRの整理が課題。',
+      R: '上司への相談機会と顧客理解の蓄積が強み。',
+      P: '実績整理とデータ分析の学習を進め、次回面談で方向性を確認する。',
+      '#': '管理者画面の一括出力確認用データ。',
+    },
+  );
+  const employeeBkarte = createSampleKarte(
+    {
+      name: '井上 健太',
+      age: '41',
+      company: 'Career Carte Inc.',
+      jobTitle: '営業企画',
+      workLocationPrefecture: '大阪府',
+      yearsOfService: '8',
+    },
+    {
+      S: '営業企画として数値管理を担い、部門横断の調整に手応えがある。',
+      H: 'マネジメントだけでなく企画専門性も伸ばせる役割を希望している。',
+      I: '管理職志向と専門職志向の優先順位を整理する必要がある。',
+      R: '営業現場との関係性と過去の改善実績を活用できる。',
+      P: '希望役割の条件を整理し、社内面談で相談する準備を進める。',
+      '#': null,
+    },
+  );
+  const otherTenantKarte = createSampleKarte(
+    {
+      name: '田中 太郎',
+      age: '38',
+      company: 'Connect Systems',
+      jobTitle: 'Engineering Manager',
+      workLocationPrefecture: '福岡県',
+    },
+    {
+      S: '技術組織の運営に責任を持ち、採用と育成に課題を感じている。',
+      H: '組織開発と技術戦略の両面に関われる役割を希望している。',
+      I: '事業視点での意思決定経験を増やす必要がある。',
+      R: '開発経験とチームからの信頼を活用できる。',
+      P: '経営視点の学習と上長への相談を進める。',
+      '#': null,
+    },
+  );
+
+  return [
+    {
+      id: 'USR-2026-101',
+      tenantId: DEFAULT_TENANT_ID,
+      name: '佐伯 美咲',
+      email: 'misaki.saeki@example.com',
+      company: 'Career Carte Inc.',
+      department: 'Customer Success',
+      jobTitle: 'カスタマーサクセス',
+      status: '完了',
+      latestKarte: employeeAkarte,
+      karteRecords: [createSampleKarteRecord('karte-2026-101', '2026-04-12T10:00:00.000Z', employeeAkarte, '強みと希望条件の接点が明確になっています。次回は優先順位を絞ると実行計画に移しやすくなります。')],
+      createdAt: '2026-04-01T09:00:00.000Z',
+      updatedAt: '2026-04-12T10:00:00.000Z',
+    },
+    {
+      id: 'USR-2026-102',
+      tenantId: DEFAULT_TENANT_ID,
+      name: '井上 健太',
+      email: 'kenta.inoue@example.com',
+      company: 'Career Carte Inc.',
+      department: 'Sales Planning',
+      jobTitle: '営業企画',
+      status: '完了',
+      latestKarte: employeeBkarte,
+      karteRecords: [createSampleKarteRecord('karte-2026-102', '2026-04-18T14:30:00.000Z', employeeBkarte, '役割希望の整理が進んでいます。社内で相談する材料として、成果と希望条件を短くまとめるとよいです。')],
+      createdAt: '2026-04-02T09:00:00.000Z',
+      updatedAt: '2026-04-18T14:30:00.000Z',
+    },
+    {
+      id: 'USR-2026-103',
+      tenantId: DEFAULT_TENANT_ID,
+      name: '小林 真央',
+      email: 'mao.kobayashi@example.com',
+      company: 'Career Carte Inc.',
+      department: 'Human Resources',
+      jobTitle: '人事',
+      status: '未作成',
+      latestKarte: null,
+      karteRecords: [],
+      createdAt: '2026-04-05T09:00:00.000Z',
+      updatedAt: '2026-04-05T09:00:00.000Z',
+    },
+    {
+      id: 'USR-2026-201',
+      tenantId: 'tenant-connect-systems',
+      name: '田中 太郎',
+      email: 'taro.tanaka@example.com',
+      company: 'Connect Systems',
+      department: 'Engineering',
+      jobTitle: 'Engineering Manager',
+      status: '完了',
+      latestKarte: otherTenantKarte,
+      karteRecords: [createSampleKarteRecord('karte-2026-201', '2026-04-20T11:00:00.000Z', otherTenantKarte, '組織開発と技術戦略の両面を扱える点が強みです。次回は事業視点の経験づくりを具体化しましょう。')],
+      createdAt: '2026-04-04T09:00:00.000Z',
+      updatedAt: '2026-04-20T11:00:00.000Z',
+    },
+  ];
+};
+
 export const createEmptyDemoUserState = (): DemoUserState => ({
   tenantId: DEFAULT_TENANT_ID,
   tenants: createDefaultTenants(),
@@ -219,6 +379,7 @@ export const createEmptyDemoUserState = (): DemoUserState => ({
   demographicsSavedAt: null,
   latestKarte: null,
   karteRecords: [],
+  companyEmployees: createDefaultCompanyEmployees(),
   draftSessions: {
     initial: null,
     continuous: null,
@@ -263,6 +424,51 @@ export const applyDemographicsToKarte = (
     survey: nextKarte.survey ?? createEmptySurvey(),
     conditionSummary: nextKarte.conditionSummary ?? null,
   };
+};
+
+export const normalizeCompanyEmployees = (value: unknown): CompanyEmployeeRecord[] => {
+  if (!Array.isArray(value)) {
+    return createDefaultCompanyEmployees();
+  }
+
+  return value
+    .filter(isRecord)
+    .map((employee) => {
+      const latestKarte = isRecord(employee.latestKarte)
+        ? applyDemographicsToKarte(employee.latestKarte as KarteData, (employee.latestKarte as KarteData).demographics)
+        : null;
+      const karteRecords = Array.isArray(employee.karteRecords)
+        ? employee.karteRecords
+            .filter(isRecord)
+            .map((record) => ({
+              ...(record as CompanyEmployeeRecord['karteRecords'][number]),
+              data: applyDemographicsToKarte(
+                (record as CompanyEmployeeRecord['karteRecords'][number]).data,
+                (record as CompanyEmployeeRecord['karteRecords'][number]).data?.demographics,
+              ),
+              continuousMode: (record as CompanyEmployeeRecord['karteRecords'][number]).continuousMode ?? null,
+              feedback: (record as CompanyEmployeeRecord['karteRecords'][number]).feedback ?? null,
+              conversationLog: Array.isArray((record as CompanyEmployeeRecord['karteRecords'][number]).conversationLog)
+                ? (record as CompanyEmployeeRecord['karteRecords'][number]).conversationLog
+                : [],
+            }))
+        : [];
+
+      return {
+        id: typeof employee.id === 'string' ? employee.id : `employee-${Date.now()}`,
+        tenantId: typeof employee.tenantId === 'string' ? employee.tenantId : DEFAULT_TENANT_ID,
+        name: typeof employee.name === 'string' ? employee.name : latestKarte?.demographics.name ?? '未設定',
+        email: typeof employee.email === 'string' ? employee.email : '',
+        company: typeof employee.company === 'string' ? employee.company : latestKarte?.demographics.company ?? '',
+        department: typeof employee.department === 'string' ? employee.department : '',
+        jobTitle: typeof employee.jobTitle === 'string' ? employee.jobTitle : latestKarte?.demographics.jobTitle ?? '',
+        status: typeof employee.status === 'string' ? employee.status : latestKarte ? '完了' : '未作成',
+        latestKarte,
+        karteRecords,
+        createdAt: typeof employee.createdAt === 'string' ? employee.createdAt : '',
+        updatedAt: typeof employee.updatedAt === 'string' ? employee.updatedAt : '',
+      };
+    });
 };
 
 export const getConditionLevel = (score: number) => {
@@ -343,6 +549,33 @@ export const getLatestConditionRecord = (
   );
 };
 
+export const getCompanyAdminEmployees = (
+  state: DemoUserState,
+  tenantId = resolveTenantId(state),
+): CompanyEmployeeRecord[] => {
+  const tenant = state.tenants.find((entry) => entry.id === tenantId);
+  const latestRecord = state.karteRecords[0] ?? null;
+  const demoKarte = state.latestKarte ? applyDemographicsToKarte(state.latestKarte, state.demographics) : null;
+  const demoEmployee: CompanyEmployeeRecord = {
+    id: DEFAULT_DEMO_USER_ID,
+    tenantId,
+    name: state.demographics.name || demoKarte?.demographics.name || 'デモユーザー',
+    email: 'demo.user@example.com',
+    company: state.demographics.company || demoKarte?.demographics.company || tenant?.name || 'デモ企業',
+    department: 'Demo',
+    jobTitle: state.demographics.jobTitle || demoKarte?.demographics.jobTitle || '未設定',
+    status: demoKarte ? '完了' : state.demographicsSavedAt || state.demographicsSkipped ? '面談準備中' : '未設定',
+    latestKarte: demoKarte,
+    karteRecords: state.karteRecords,
+    createdAt: state.demographicsSavedAt ?? latestRecord?.atCreated ?? '',
+    updatedAt: latestRecord?.atUpdated ?? state.demographicsSavedAt ?? '',
+  };
+  const tenantEmployees = state.companyEmployees.filter(
+    (employee) => employee.tenantId === tenantId && employee.id !== DEFAULT_DEMO_USER_ID,
+  );
+  return [demoEmployee, ...tenantEmployees];
+};
+
 export const upsertConditionRecord = (
   state: DemoUserState,
   summary: ConditionSummary,
@@ -393,6 +626,7 @@ const normalizeState = (value: Partial<DemoUserState> | null | undefined): DemoU
   const featureFlags = Array.isArray(value?.featureFlags) && value!.featureFlags.length > 0 ? value!.featureFlags : empty.featureFlags;
   const conditionRecords = Array.isArray(value?.conditionRecords) ? value!.conditionRecords : [];
   const latestKarte = value?.latestKarte ? applyDemographicsToKarte(value.latestKarte, value.latestKarte.demographics) : null;
+  const companyEmployees = normalizeCompanyEmployees(value?.companyEmployees);
   const demographicsSavedAt = typeof value?.demographicsSavedAt === 'string' ? value.demographicsSavedAt : null;
   const demographicsSkipped = value?.demographicsSkipped === true && !demographicsSavedAt && !hasConfiguredDemographics(value?.demographics);
   const demographics = demographicsSavedAt || hasConfiguredDemographics(value?.demographics)
@@ -416,6 +650,7 @@ const normalizeState = (value: Partial<DemoUserState> | null | undefined): DemoU
           data: applyDemographicsToKarte(record.data, record.data.demographics),
         }))
       : [],
+    companyEmployees,
     draftSessions: {
       initial: normalizeDraftSession('initial', value?.draftSessions?.initial),
       continuous: normalizeDraftSession('continuous', value?.draftSessions?.continuous),

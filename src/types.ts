@@ -115,6 +115,21 @@ export type StoredKarteRecord = {
   conversationLog: ConversationMessage[];
 };
 
+export type CompanyEmployeeRecord = {
+  id: string;
+  tenantId: string;
+  name: string;
+  email: string;
+  company: string;
+  department: string;
+  jobTitle: string;
+  status: string;
+  latestKarte: KarteData | null;
+  karteRecords: StoredKarteRecord[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type DraftSession = {
   meetingType: MeetingType;
   continuousMode: ContinuousMode | null;
@@ -137,6 +152,7 @@ export type DemoUserState = {
   demographicsSavedAt: string | null;
   latestKarte: KarteData | null;
   karteRecords: StoredKarteRecord[];
+  companyEmployees: CompanyEmployeeRecord[];
   draftSessions: Record<MeetingType, DraftSession | null>;
 };
 

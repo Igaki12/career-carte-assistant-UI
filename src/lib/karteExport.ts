@@ -44,6 +44,11 @@ export type KarteExportPayload = {
   meta: ExportMeta;
 };
 
+export type KarteBatchExportPayload = KarteExportPayload & {
+  employeeName?: string;
+  employeeId?: string;
+};
+
 type CsvRow = {
   section: string;
   item: string;
@@ -74,7 +79,7 @@ const toDateSuffix = () =>
     day: '2-digit',
   }).replaceAll('/', '-');
 
-const buildFileName = (extension: 'csv' | 'pdf') => `career-karte-${toDateSuffix()}.${extension}`;
+const buildFileName = (extension: 'csv' | 'pdf', prefix = 'career-karte') => `${prefix}-${toDateSuffix()}.${extension}`;
 
 const formatMeetingType = (meetingType: MeetingType | null) => {
   if (meetingType === 'initial') return '初回面談';
@@ -257,7 +262,7 @@ const setFont = (context: CanvasRenderingContext2D, weight: 400 | 600 | 700, siz
   context.font = `${weight} ${size}px ${FONT_FAMILY}`;
 };
 
-const drawTitleBlock = (pages: CanvasPage[], payload: KarteExportPayload) => {
+const drawTitleBlock = (pages: CanvasPage[], payload: KarteBatchExportPayload) => {
   const page = pages[pages.length - 1];
   const { context } = page;
 
@@ -267,6 +272,7 @@ const drawTitleBlock = (pages: CanvasPage[], payload: KarteExportPayload) => {
   page.cursorY += 56;
 
   const metaRows = [
+    ...(payload.employeeName ? [`対象者: ${payload.employeeName}${payload.employeeId ? ` (${payload.employeeId})` : ''}`] : []),
     `面談種別: ${formatMeetingType(payload.meta.meetingType)}`,
     `作成日: ${formatPlainValue(payload.meta.createdAt, '未保存')}`,
     `最終更新日: ${formatPlainValue(payload.meta.updatedAt, '未保存')}`,
@@ -353,7 +359,7 @@ const drawSurveySection = (pages: CanvasPage[], karte: KarteData) => {
   });
 };
 
-export const downloadKartePdf = async (payload: KarteExportPayload) => {
+const buildKartePdfPages = (payload: KarteBatchExportPayload) => {
   const pages = [createCanvasPage()];
   const { karte, meta } = payload;
 
@@ -408,13 +414,82 @@ export const downloadKartePdf = async (payload: KarteExportPayload) => {
   drawField(pages, 'レベル', formatConditionValue(karte.conditionSummary?.level));
   drawField(pages, '測定日時', formatConditionValue(karte.conditionSummary?.measuredAt));
 
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  return pages;
+};
+
+const addCanvasPagesToPdf = (pdf: jsPDF, pages: CanvasPage[], hasExistingPage: boolean) => {
   pages.forEach((page, index) => {
-    if (index > 0) {
+    if (hasExistingPage || index > 0) {
       pdf.addPage();
     }
     pdf.addImage(page.canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297, undefined, 'FAST');
   });
+};
+
+export const downloadKartePdf = async (payload: KarteExportPayload) => {
+  const pages = buildKartePdfPages(payload);
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  addCanvasPagesToPdf(pdf, pages, false);
 
   pdf.save(buildFileName('pdf'));
+};
+
+export const downloadKartePdfBatch = async (payloads: KarteBatchExportPayload[]) => {
+  if (payloads.length === 0) return;
+
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  payloads.forEach((payload, index) => {
+    addCanvasPagesToPdf(pdf, buildKartePdfPages(payload), index > 0);
+  });
+
+  pdf.save(buildFileName('pdf', 'career-karte-batch'));
+};
+
+export const printKartePayloads = async (payloads: KarteBatchExportPayload[]) => {
+  if (payloads.length === 0) return;
+
+  const printWindow = window.open('', '_blank', 'width=960,height=720');
+  if (!printWindow) {
+    throw new Error('印刷用ウィンドウを開けませんでした。ポップアップブロックを確認してください。');
+  }
+
+  const imageTags = payloads
+    .flatMap((payload) => buildKartePdfPages(payload).map((page) => page.canvas.toDataURL('image/png')))
+    .map((src) => `<img class="page" src="${src}" alt="キャリアカルテ" />`)
+    .join('');
+
+  printWindow.document.open();
+  printWindow.document.write(`
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>キャリアカルテ印刷</title>
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f1f5f9; }
+      .page {
+        display: block;
+        width: 210mm;
+        height: 297mm;
+        margin: 0 auto;
+        page-break-after: always;
+        background: white;
+      }
+      .page:last-child { page-break-after: auto; }
+      @media print {
+        body { background: white; }
+        .page { margin: 0; }
+      }
+    </style>
+  </head>
+  <body>${imageTags}</body>
+</html>
+`);
+  printWindow.document.close();
+  printWindow.focus();
+  window.setTimeout(() => {
+    printWindow.print();
+  }, 300);
 };
