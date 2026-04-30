@@ -26,6 +26,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { type FormEvent, useEffect, useState } from 'react';
+import { FiSettings } from 'react-icons/fi';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   createDemoAuthSession,
@@ -98,14 +99,30 @@ function Login({ session, onLogin }: LoginProps) {
     <Box
       height="100dvh"
       overflowY="auto"
-      bgGradient="linear(135deg, #111827 0%, #123b3d 48%, #284f7a 100%)"
+      bgGradient="linear(135deg, #071f1a 0%, #0f3d33 48%, #1f6b4f 100%)"
       color="white"
     >
       <Container maxW="5xl" minH="100dvh" py={{ base: 10, md: 16 }} display="flex" flexDirection="column">
         <Flex direction={{ base: 'column', lg: 'row' }} gap={10} align="stretch" flex="1">
           <Stack flex="1" spacing={6} justify="center">
             <Box>
-              <Heading size="2xl" lineHeight="short">
+              <Heading
+                size="2xl"
+                lineHeight="short"
+                bgGradient="linear(110deg, #f8fafc, #b6c4cf, #e5edf2, #8fa2af)"
+                bgClip="text"
+                backgroundSize="240% 240%"
+                sx={{
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.32), 0 -1px 0 rgba(2, 44, 34, 0.55), 0 10px 24px rgba(2, 44, 34, 0.24)',
+                  animation: 'loginTitleGradient 12s ease-in-out infinite',
+                  '@keyframes loginTitleGradient': {
+                    '0%': { backgroundPosition: '0% 50%' },
+                    '50%': { backgroundPosition: '100% 50%' },
+                    '100%': { backgroundPosition: '0% 50%' },
+                  },
+                }}
+              >
                 Career Karte Assistant
               </Heading>
               <Text mt={4} color="gray.200" fontSize="lg">
@@ -123,38 +140,78 @@ function Login({ session, onLogin }: LoginProps) {
 
           <Box
             flex="1"
-            bg="rgba(255, 255, 255, 0.96)"
-            color="gray.800"
+            bg="transparent"
+            color="white"
             borderRadius="0"
-            borderTopWidth={{ base: '6px', md: '8px' }}
-            borderBottomWidth={{ base: '6px', md: '8px' }}
+            borderTopWidth="0"
+            borderBottomWidth="0"
             borderLeftWidth="0"
             borderRightWidth="0"
-            borderTopColor="teal.300"
-            borderBottomColor="blue.500"
             p={{ base: 6, md: 8 }}
-            boxShadow="0 28px 80px rgba(8, 47, 73, 0.32)"
+            position="relative"
+            _before={{
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: { base: '5px', md: '7px' },
+              bgGradient: 'linear(to-r, transparent, rgba(94, 234, 212, 0.92), rgba(16, 185, 129, 0.95), transparent)',
+            }}
+            _after={{
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: { base: '5px', md: '7px' },
+              bgGradient: 'linear(to-r, transparent, rgba(20, 184, 166, 0.82), rgba(34, 197, 94, 0.92), transparent)',
+            }}
+            boxShadow="0 28px 80px rgba(2, 44, 34, 0.28)"
             backdropFilter="blur(14px)"
           >
             <form onSubmit={handleSubmit}>
               <Stack spacing={5}>
                 <Stack spacing={1}>
                   <Heading size="lg">ログイン</Heading>
-                  <Text color="gray.500" fontSize="sm">
+                  <Text color="whiteAlpha.800" fontSize="sm">
                     所属ロールを選択して進んでください。
                   </Text>
                 </Stack>
                 <FormControl isRequired>
                   <FormLabel>アカウントID / メールアドレス</FormLabel>
-                  <Input value={accountId} onChange={(event) => setAccountId(event.target.value)} placeholder="demo@example.com" />
+                  <Input
+                    value={accountId}
+                    onChange={(event) => setAccountId(event.target.value)}
+                    placeholder="demo@example.com"
+                    bg="whiteAlpha.900"
+                    color="gray.900"
+                    borderColor="whiteAlpha.600"
+                    _placeholder={{ color: 'gray.500' }}
+                  />
                 </FormControl>
                 <FormControl isRequired>
                   <FormLabel>パスワード</FormLabel>
-                  <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="任意の値" />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="任意の値"
+                    bg="whiteAlpha.900"
+                    color="gray.900"
+                    borderColor="whiteAlpha.600"
+                    _placeholder={{ color: 'gray.500' }}
+                  />
                 </FormControl>
                 <FormControl>
                   <FormLabel>ログイン種別</FormLabel>
-                  <Select value={role} onChange={(event) => setRole(event.target.value as Exclude<DemoAuthRole, 'admin'>)}>
+                  <Select
+                    value={role}
+                    onChange={(event) => setRole(event.target.value as Exclude<DemoAuthRole, 'admin'>)}
+                    bg="whiteAlpha.900"
+                    color="gray.900"
+                    borderColor="whiteAlpha.600"
+                  >
                     <option value="user">一般ユーザー</option>
                     <option value="company-admin">企業管理者</option>
                     <option value="consultant">キャリアコンサルタント</option>
@@ -168,7 +225,7 @@ function Login({ session, onLogin }: LoginProps) {
                     <Checkbox isChecked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)}>
                       利用条件に同意する
                     </Checkbox>
-                    <Button variant="link" colorScheme="teal" onClick={termsDisclosure.onOpen} ml="auto">
+                    <Button variant="link" color="green.200" onClick={termsDisclosure.onOpen} ml="auto">
                       利用条件を確認する
                     </Button>
                   </Flex>
@@ -176,24 +233,24 @@ function Login({ session, onLogin }: LoginProps) {
                 <Button
                   type="submit"
                   size="lg"
-                  bgGradient="linear(to-r, teal.500, cyan.500, blue.500)"
+                  bgGradient="linear(to-r, green.700, teal.600, green.500)"
                   color="white"
-                  boxShadow="0 14px 34px rgba(14, 116, 144, 0.35)"
+                  boxShadow="0 14px 34px rgba(21, 128, 61, 0.34)"
                   _hover={{
-                    bgGradient: 'linear(to-r, teal.400, cyan.400, blue.400)',
-                    boxShadow: '0 18px 42px rgba(14, 116, 144, 0.45)',
+                    bgGradient: 'linear(to-r, green.600, teal.500, green.400)',
+                    boxShadow: '0 18px 42px rgba(21, 128, 61, 0.44)',
                     transform: 'translateY(-1px)',
                   }}
                   _active={{
                     transform: 'translateY(0)',
-                    boxShadow: '0 10px 24px rgba(14, 116, 144, 0.32)',
+                    boxShadow: '0 10px 24px rgba(21, 128, 61, 0.3)',
                   }}
                   transition="all 0.18s ease"
                 >
                   ログイン
                 </Button>
-                <Divider />
-                <Text fontSize="xs" color="gray.500">
+                <Divider borderColor="whiteAlpha.300" />
+                <Text fontSize="xs" color="whiteAlpha.700">
                   本番実装ではサーバー側認証、権限、テナント紐付け、パスワード再発行を接続します。
                 </Text>
               </Stack>
@@ -201,7 +258,16 @@ function Login({ session, onLogin }: LoginProps) {
           </Box>
         </Flex>
         <Box pt={8} textAlign="right">
-          <Link as={RouterLink} to="/admin/login" color="orange.200" fontWeight="semibold">
+          <Link
+            as={RouterLink}
+            to="/admin/login"
+            color="orange.200"
+            fontWeight="semibold"
+            display="inline-flex"
+            alignItems="center"
+            gap={2}
+          >
+            <FiSettings />
             システム管理者はこちら
           </Link>
         </Box>
