@@ -91,7 +91,7 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
   };
 
   return (
-    <Box minH="100dvh" bgGradient="linear(to-br, gray.950, orange.900, gray.900)" color="white">
+    <Box height="100dvh" overflowY="auto" bgGradient="linear(to-br, gray.950, orange.900, gray.900)" color="white">
       <Container maxW="md" py={{ base: 10, md: 16 }}>
         <Box bg="white" color="gray.800" borderRadius="lg" p={{ base: 6, md: 8 }} boxShadow="xl">
           <form onSubmit={handleSubmit}>

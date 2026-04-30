@@ -95,9 +95,14 @@ function Login({ session, onLogin }: LoginProps) {
   };
 
   return (
-    <Box minH="100dvh" bgGradient="linear(to-br, gray.900, teal.900, gray.800)" color="white">
-      <Container maxW="5xl" py={{ base: 10, md: 16 }}>
-        <Flex direction={{ base: 'column', lg: 'row' }} gap={10} align="stretch">
+    <Box
+      height="100dvh"
+      overflowY="auto"
+      bgGradient="linear(135deg, #111827 0%, #123b3d 48%, #284f7a 100%)"
+      color="white"
+    >
+      <Container maxW="5xl" minH="100dvh" py={{ base: 10, md: 16 }} display="flex" flexDirection="column">
+        <Flex direction={{ base: 'column', lg: 'row' }} gap={10} align="stretch" flex="1">
           <Stack flex="1" spacing={6} justify="center">
             <Box>
               <Heading size="2xl" lineHeight="short">
@@ -114,12 +119,23 @@ function Login({ session, onLogin }: LoginProps) {
             <Text color="gray.300" fontSize="sm">
               ユーザー自身による新規登録は用意せず、管理者が作成したアカウントを配布する前提の画面構成です。
             </Text>
-            <Link as={RouterLink} to="/admin/login" color="orange.200" fontWeight="semibold">
-              システム管理者はこちら
-            </Link>
           </Stack>
 
-          <Box flex="1" bg="white" color="gray.800" borderRadius="lg" p={{ base: 6, md: 8 }} boxShadow="xl">
+          <Box
+            flex="1"
+            bg="rgba(255, 255, 255, 0.96)"
+            color="gray.800"
+            borderRadius="0"
+            borderTopWidth={{ base: '6px', md: '8px' }}
+            borderBottomWidth={{ base: '6px', md: '8px' }}
+            borderLeftWidth="0"
+            borderRightWidth="0"
+            borderTopColor="teal.300"
+            borderBottomColor="blue.500"
+            p={{ base: 6, md: 8 }}
+            boxShadow="0 28px 80px rgba(8, 47, 73, 0.32)"
+            backdropFilter="blur(14px)"
+          >
             <form onSubmit={handleSubmit}>
               <Stack spacing={5}>
                 <Stack spacing={1}>
@@ -148,14 +164,32 @@ function Login({ session, onLogin }: LoginProps) {
                   <Checkbox isChecked={remember} onChange={(event) => setRemember(event.target.checked)}>
                     常にログインした状態にしておく
                   </Checkbox>
-                  <Checkbox isChecked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)}>
-                    利用条件に同意する
-                  </Checkbox>
-                  <Button variant="link" colorScheme="teal" alignSelf="flex-start" onClick={termsDisclosure.onOpen}>
-                    利用条件を確認する
-                  </Button>
+                  <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+                    <Checkbox isChecked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)}>
+                      利用条件に同意する
+                    </Checkbox>
+                    <Button variant="link" colorScheme="teal" onClick={termsDisclosure.onOpen} ml="auto">
+                      利用条件を確認する
+                    </Button>
+                  </Flex>
                 </Stack>
-                <Button type="submit" colorScheme="teal" size="lg">
+                <Button
+                  type="submit"
+                  size="lg"
+                  bgGradient="linear(to-r, teal.500, cyan.500, blue.500)"
+                  color="white"
+                  boxShadow="0 14px 34px rgba(14, 116, 144, 0.35)"
+                  _hover={{
+                    bgGradient: 'linear(to-r, teal.400, cyan.400, blue.400)',
+                    boxShadow: '0 18px 42px rgba(14, 116, 144, 0.45)',
+                    transform: 'translateY(-1px)',
+                  }}
+                  _active={{
+                    transform: 'translateY(0)',
+                    boxShadow: '0 10px 24px rgba(14, 116, 144, 0.32)',
+                  }}
+                  transition="all 0.18s ease"
+                >
                   ログイン
                 </Button>
                 <Divider />
@@ -166,6 +200,11 @@ function Login({ session, onLogin }: LoginProps) {
             </form>
           </Box>
         </Flex>
+        <Box pt={8} textAlign="right">
+          <Link as={RouterLink} to="/admin/login" color="orange.200" fontWeight="semibold">
+            システム管理者はこちら
+          </Link>
+        </Box>
       </Container>
 
       <Modal isOpen={termsDisclosure.isOpen} onClose={termsDisclosure.onClose} size="lg">
