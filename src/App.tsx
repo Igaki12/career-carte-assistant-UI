@@ -7,7 +7,6 @@ import ConditionCheck from './pages/ConditionCheck';
 import ContinuousMeetingRoom from './pages/ContinuousMeetingRoom';
 import ConsultantHome from './pages/ConsultantHome';
 import DemographicsSetup from './pages/DemographicsSetup';
-import Home from './pages/Home';
 import InitialMeetingRoom from './pages/InitialMeetingRoom';
 import Login from './pages/Login';
 import UserHome from './pages/UserHome';
@@ -98,14 +97,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login session={session} onLogin={setSession} />} />
         <Route path="/admin/login" element={<AdminLogin session={session} onLogin={setSession} />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin', 'consultant']} onLogout={handleLogout}>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<Navigate to={session ? getDefaultRouteForRole(session.role) : '/login'} replace />} />
         <Route
           path="/user"
           element={

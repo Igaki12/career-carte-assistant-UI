@@ -39,6 +39,7 @@ npm run build
 
 ## Main Routes
 
+- `/#/`: 表示用ホーム画面ではなく、ログイン状態とロールに応じて既定ページへリダイレクト
 - `/#/user`: 一般ユーザーホーム
 - `/#/user/demographics`: プロフィール設定
 - `/#/app/initial`: 初回面談
@@ -46,6 +47,8 @@ npm run build
 - `/#/company-admin`: 企業管理者ホーム
 - `/#/admin`: システム管理者画面
 - `/#/consultant`: コンサルタント画面
+
+旧ホーム画面 `src/pages/Home.tsx` は廃止済みです。プロフィール設定、初回面談、継続面談の導線は一般ユーザーの `/#/user` に集約しています。
 
 ## Demo Storage
 

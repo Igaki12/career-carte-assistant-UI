@@ -430,8 +430,8 @@ function CompanyAdminHome() {
                   <Badge colorScheme="purple">一般ユーザーと同一ログイン入口想定</Badge>
                 </Flex>
               </Stack>
-              <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/')}>
-                ホームへ戻る
+              <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/company-admin')}>
+                企業管理トップを再表示
               </Button>
             </Flex>
           </Box>
