@@ -9,7 +9,7 @@
 - Frontend: React (Vite), Chakra UI, Three.js + @pixiv/three-vrm
 - Routing: React Router DOM (v6)
 - Hosting (Current): GitHub Pages (Static /docs) + HashRouter
-- Hosting (Future): VPS (Ubuntu) + Node.js (Express) + Apache2 (Reverse Proxy) + DB + BrowserRouter
+- Hosting (Future): VPS (Ubuntu 26.04 LTS) + Node.js (Express) + Apache2 (Reverse Proxy) + DB (PostgreSQL) + BrowserRouter
 
 ### 2.2 役割別ページ構成とルーティング
 - Login (`/login`): 一般ユーザー・企業管理者・キャリアコンサルタント共通のダミーログイン画面。任意のID/パスワードで認証を通し、ロール選択により `/user`、`/company-admin`、`/consultant` へ遷移する。利用条件モーダル、利用条件同意チェック、常にログインした状態にしておくチェックを持つ。

@@ -7,25 +7,25 @@
 現在の GitHub Pages デモ版を、以下の構成のウェブアプリへ移行する。
 
 - Hosting: XServer VPS
-- OS: Ubuntu 25.04
+- OS: Ubuntu 26.04 LTS
 - Frontend: React + Vite + Chakra UI + BrowserRouter
 - Backend: Node.js + Express
 - Reverse Proxy / HTTPS: Apache2
 - DB: PostgreSQL
-- Deploy: Git管理による pull / build / migration / restart
+- Deploy / Backup: XServer VPS のイメージ保存を正とする手動バックアップ運用
 - AI APIキー管理: サーバー環境変数
 
 本番MVPでは、ブラウザに API キーや本番データを保存しない。OpenAI / Gemini の呼び出し、認証、ロール、テナント、カルテ、下書き、会話ログ、利用回数、機能フラグはサーバー側で管理する。
 
 ## 2. 重要な前提と注意
 
-### 2.1 Ubuntu 25.04 について
+### 2.1 Ubuntu 26.04 LTS について
 
-ユーザー指定により Ubuntu 25.04 を前提にする。ただし Ubuntu 25.04 は 2026-01-15 に EOL 済みであり、セキュリティ更新対象外である。本番MVPの作業では暫定環境として扱い、早期に Ubuntu 24.04 LTS または利用可能な最新 LTS へ移行する計画を必ず残す。
+VPS は Ubuntu 26.04 LTS でインストール済みとする。Ubuntu 26.04 LTS は 2026-04-23 にリリースされた LTS 版であり、本番MVPの標準OSとして扱う。
 
 根拠:
 
-- Ubuntu 25.04 EOL announcement: https://lists.ubuntu.com/archives/ubuntu-announce/2026-January/000320.html
+- Ubuntu 26.04 LTS release announcement: https://lists.ubuntu.com/archives/ubuntu-announce/2026-April/000323.html
 - Ubuntu Releases: https://releases.ubuntu.com/releases/
 
 ### 2.2 既存デモ版から置き換えるもの
@@ -73,15 +73,15 @@ VPS上の配置例:
 
 ```text
 /var/www/career-carte-assistant/
-  app/                  # Git cloneしたリポジトリ
-  releases/             # 必要ならリリース単位の退避先
+  app/                  # アプリ本体。VPS上で直接編集または手動配置する
+  releases/             # 必要なら手動配置したリリース単位の退避先
   shared/
-    .env                # サーバー環境変数。Git管理しない
+    .env                # サーバー環境変数。外部公開・共有しない
     logs/
     backups/
 ```
 
-実際の配置は運用者の既存ルールに合わせてよい。ただし `.env`、DB dump、ログ、秘密鍵は Git に含めない。
+実際の配置は運用者の既存ルールに合わせてよい。ただし `.env`、DB dump、ログ、秘密鍵は外部公開・共有しない。
 
 ## 4. 環境変数
 
@@ -101,7 +101,7 @@ COOKIE_SECURE=true
 ルール:
 
 - `OPENAI_API_KEY` と `GEMINI_API_KEY` はサーバー環境変数で管理し、フロントエンドへ渡さない。
-- `.env` は VPS 上のみに置き、Git 管理しない。
+- `.env` は VPS 上のみに置き、外部公開・共有しない。
 - `SESSION_SECRET` は十分に長いランダム値を使う。
 - 本番HTTPSでは `COOKIE_SECURE=true` を必須にする。
 - `APP_ORIGIN` は実ドメインに置き換える。
@@ -287,7 +287,7 @@ Express は以下を実装し、外部AI APIへのリクエストをサーバー
 
 ## 7. PostgreSQL データ設計方針
 
-初期MVPでは、以下のテーブル群を目安にする。ORMの採用有無は実装時に決めてよいが、migration は必ず Git 管理する。
+初期MVPでは、以下のテーブル群を目安にする。ORMの採用有無は実装時に決めてよいが、migration はアプリ本体と同じ場所で管理し、適用前に必ず XServer VPS のイメージ保存を行う。
 
 - `tenants`
 - `users`
@@ -386,13 +386,14 @@ WantedBy=multi-user.target
 
 実装で TypeScript サーバーを使う場合は、`npm run build:server` などで JS にビルドし、systemd はビルド後のエントリを起動する。
 
-## 10. デプロイ手順
+## 10. デプロイ・バックアップ手順
+
+Git 管理は行わず、XServer VPS のイメージ保存を正とする。変更作業の前に必ずイメージを保存し、復旧点を確保してからアプリ更新、migration、service restart を行う。
 
 標準手順:
 
 ```bash
 cd /var/www/career-carte-assistant/app
-git pull
 npm ci
 npm run lint
 npm run build
@@ -404,22 +405,26 @@ sudo systemctl reload apache2
 
 ルール:
 
-- Git を正として変更履歴を管理する。
+- 変更前に XServer VPS 管理画面でイメージ保存を行う。
+- イメージ名には日付、作業目的、作業者が分かる名前を付ける。
+- アプリファイル更新は、VPS上での直接編集または手動アップロードで行う。
 - migration は build / restart 前後の順序を実装に合わせて固定する。
-- 失敗時に戻せるよう、DB backup と直前 commit hash を記録する。
-- 重要変更前には XServer VPS のイメージ保存も検討する。ただし日常の差分管理は Git を優先する。
+- 失敗時に戻せるよう、DB backup、イメージ名、作業日時、変更内容を記録する。
+- 大きな変更では、作業前イメージに加えて、動作確認後の安定版イメージも保存する。
 
 ## 11. バックアップと運用
 
 最低限の運用要件:
 
+- XServer VPS のイメージ保存
+  - 変更作業前に必ず作成する。
+  - 大きな機能追加後、動作確認済みの安定版も保存する。
 - PostgreSQL の定期 `pg_dump`
 - `.env` の安全な別保管
 - Apache / Express ログのローテーション
 - systemd の死活確認
 - SSL証明書の自動更新確認
 - OSセキュリティ更新の確認
-- Ubuntu 25.04 から LTS への移行計画
 
 バックアップ例:
 
@@ -503,4 +508,4 @@ sudo systemctl status apache2
 - VPS移行・本番化の技術方針は本ファイルを優先する。
 - APIキーや個人情報をブラウザに保存する実装は採用しない。
 - テナント境界とロール制御は必ずサーバー側で保証する。
-- Ubuntu 25.04 固有の問題に遭遇した場合は、回避策より LTS 移行を優先して検討する。
+- 変更前バックアップは XServer VPS のイメージ保存を優先する。
