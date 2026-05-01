@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Collapse, Flex, Icon, IconButton, Text } from '@chakra-ui/react';
-import { RepeatIcon, ViewIcon } from '@chakra-ui/icons';
-import { FiChevronUp } from 'react-icons/fi';
+import { RepeatIcon } from '@chakra-ui/icons';
+import { FiChevronUp, FiUser } from 'react-icons/fi';
 import {
   AmbientLight,
   Clock,
@@ -1166,7 +1166,7 @@ const VrmStage = ({
     >
       <IconButton
         aria-label="モデルを切り替え"
-        icon={<ViewIcon />}
+        icon={<FiUser />}
         size="sm"
         onClick={handleNextModel}
         position="absolute"
@@ -1186,8 +1186,8 @@ const VrmStage = ({
         size="sm"
         onClick={handleNextBackground}
         position="absolute"
-        top={3}
-        right={3}
+        top={14}
+        left={3}
         zIndex={2}
         variant="solid"
         colorScheme="whiteAlpha"
