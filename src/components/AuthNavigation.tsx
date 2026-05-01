@@ -11,12 +11,10 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  FiActivity,
   FiBriefcase,
   FiEdit3,
   FiLogOut,
   FiPlayCircle,
-  FiRepeat,
   FiSettings,
   FiShield,
   FiUser,
@@ -58,9 +56,7 @@ const getNavigationItems = (role: DemoAuthRole): NavigationItem[] => {
   return [
     { label: 'マイページ', to: '/user', pathname: '/user', icon: <FiUser /> },
     { label: 'プロフィール設定', to: '/user/demographics?returnTo=%2Fuser', pathname: '/user/demographics', icon: <FiEdit3 /> },
-    { label: 'コンディションチェック', to: '/user/condition-check', pathname: '/user/condition-check', icon: <FiActivity /> },
     { label: '初回面談', to: '/app/initial', pathname: '/app/initial', icon: <FiPlayCircle /> },
-    { label: '継続面談', to: '/app/continuous', pathname: '/app/continuous', icon: <FiRepeat /> },
   ];
 };
 

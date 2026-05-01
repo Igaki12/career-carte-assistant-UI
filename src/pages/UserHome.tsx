@@ -780,7 +780,7 @@ function UserHome() {
                   <FiPlayCircle /> 面談スタート
                 </Heading>
                 <Text color={mutedTextColor}>
-                  初回面談と継続面談を選択できます。未完了のセッションがある場合は、続きから再開できます。
+                  初期版では初回面談を利用できます。継続面談は今後の実装対象です。
                 </Text>
                 <Stack spacing={3}>
                   <PrimaryButton size="lg" onClick={handleStartInitial}>
@@ -792,9 +792,9 @@ function UserHome() {
                     color="white"
                     borderColor="whiteAlpha.500"
                     _hover={{ bg: 'whiteAlpha.160' }}
-                    onClick={handleStartContinuous}
+                    isDisabled
                   >
-                    継続面談を開始
+                    継続面談を開始（準備中）
                   </Button>
                 </Stack>
                 <Stack spacing={2}>
@@ -819,44 +819,6 @@ function UserHome() {
                     </Box>
                   )}
                 </Stack>
-                <SimpleGrid columns={2} spacing={3} w="full">
-                  <Box {...translucentPanelProps} p={3} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
-                    <Stack spacing={0}>
-                      <Text fontSize="xs" color={mutedTextColor} fontWeight="bold">
-                        初回面談
-                      </Text>
-                      <Text fontSize="md" color="white" fontWeight="bold">
-                        使用済み{profile.initialInterviewUsed}回 / 残り{profile.initialInterviewRemaining}回
-                        <Text as="span" fontSize="xs" color={mutedTextColor} fontWeight="normal">
-                          {' '}（上限{profile.initialInterviewLimit}回）
-                        </Text>
-                      </Text>
-                    </Stack>
-                  </Box>
-                  <Box {...translucentPanelProps} p={3} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
-                    <Stack spacing={0}>
-                      <Text fontSize="xs" color={mutedTextColor} fontWeight="bold">
-                        継続面談
-                      </Text>
-                      <Text fontSize="md" color="white" fontWeight="bold">
-                        使用済み{profile.continuousInterviewUsed}回 / 残り{profile.continuousInterviewRemaining}回
-                        <Text as="span" fontSize="xs" color={mutedTextColor} fontWeight="normal">
-                          {' '}（上限{profile.continuousInterviewLimit}回）
-                        </Text>
-                      </Text>
-                    </Stack>
-                  </Box>
-                </SimpleGrid>
-                <Box {...translucentPanelProps} p={3} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
-                  <Flex justify="space-between" align="center">
-                    <Text fontSize="xs" color={mutedTextColor} fontWeight="bold">
-                      AI利用可能回数
-                    </Text>
-                    <Text fontSize="sm" color="white" fontWeight="semibold">
-                      初回面談{profile.initialLlmCallsPerInterview}回 / 継続面談{profile.continuousLlmCallsPerInterview}回
-                    </Text>
-                  </Flex>
-                </Box>
               </Stack>
             </Box>
 
@@ -865,9 +827,9 @@ function UserHome() {
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiClipboard /> ユーザアンケート
                 </Heading>
-                <Text color={mutedTextColor}>面談体験に関するフィードバックをお聞かせください。</Text>
-                <PrimaryButton size="lg" onClick={surveyModalDisclosure.onOpen}>
-                  アンケートを開く
+                <Text color={mutedTextColor}>ユーザーアンケートは初期版では準備中です。</Text>
+                <PrimaryButton size="lg" isDisabled>
+                  アンケートを開く（準備中）
                 </PrimaryButton>
                 <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                   <Stack spacing={4} align="center">
@@ -894,7 +856,7 @@ function UserHome() {
                 {stressAnalysisEnabled ? (
                   <>
                     <Text color={mutedTextColor}>
-                      面談前の緊張傾向を参考値として保存します。現時点ではダミースコアのみを扱います。
+                      面談前コンディションチェックは初期版では準備中です。
                     </Text>
                     <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="whiteAlpha.500">
                       {latestCondition ? (
@@ -918,8 +880,8 @@ function UserHome() {
                         </Text>
                       )}
                     </Box>
-                    <PrimaryButton onClick={() => navigate('/user/condition-check')}>
-                      チェックを開く
+                    <PrimaryButton isDisabled>
+                      チェックを開く（準備中）
                     </PrimaryButton>
                   </>
                 ) : (
