@@ -48,28 +48,39 @@ const sheenSweep = keyframes`
   }
 `;
 
-function PrimaryButton({ children, sx, _hover, _active, _disabled, ...props }: ButtonProps) {
+function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, disabled, ...props }: ButtonProps) {
+  const isButtonDisabled = Boolean(isDisabled || disabled);
+
   return (
     <Button
-      color="white"
+      color={isButtonDisabled ? 'whiteAlpha.560' : 'white'}
       position="relative"
       overflow="hidden"
       borderRadius="md"
       borderWidth="1px"
-      borderColor="rgba(226, 232, 240, 0.24)"
-      bgGradient="linear(115deg, #020617 0%, #0f172a 24%, #1e293b 48%, #334155 72%, #020617 100%)"
+      borderColor={isButtonDisabled ? 'rgba(148, 163, 184, 0.2)' : 'rgba(226, 232, 240, 0.24)'}
+      bgGradient={
+        isButtonDisabled
+          ? 'linear(115deg, rgba(2, 6, 23, 0.72), rgba(15, 23, 42, 0.66), rgba(30, 41, 59, 0.58))'
+          : 'linear(115deg, #020617 0%, #0f172a 24%, #1e293b 48%, #334155 72%, #020617 100%)'
+      }
       backgroundSize="260% 260%"
-      boxShadow="0 16px 38px rgba(2, 6, 23, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.18)"
-      animation={`${gradientFlow} 9s ease-in-out infinite`}
+      boxShadow={
+        isButtonDisabled
+          ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+          : '0 16px 38px rgba(2, 6, 23, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
+      }
+      animation={isButtonDisabled ? 'none' : `${gradientFlow} 9s ease-in-out infinite`}
       transition="transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease"
       _before={{
         content: '""',
         position: 'absolute',
         inset: '-75%',
-        bg:
-          'radial-gradient(ellipse at 20% 50%, rgba(226, 232, 240, 0.22), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(100, 116, 139, 0.28), transparent 32%)',
-        filter: 'blur(10px)',
-        animation: `${waveDrift} 6.8s ease-in-out infinite`,
+        bg: isButtonDisabled
+          ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.08), transparent 44%, rgba(15, 23, 42, 0.14))'
+          : 'radial-gradient(ellipse at 20% 50%, rgba(226, 232, 240, 0.22), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(100, 116, 139, 0.28), transparent 32%)',
+        filter: isButtonDisabled ? 'none' : 'blur(10px)',
+        animation: isButtonDisabled ? 'none' : `${waveDrift} 6.8s ease-in-out infinite`,
         pointerEvents: 'none',
       }}
       _after={{
@@ -79,8 +90,8 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, ...props }: B
         bottom: 0,
         width: '42%',
         left: 0,
-        bg: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent)',
-        animation: `${sheenSweep} 4.8s ease-in-out infinite`,
+        bg: isButtonDisabled ? 'transparent' : 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent)',
+        animation: isButtonDisabled ? 'none' : `${sheenSweep} 4.8s ease-in-out infinite`,
         pointerEvents: 'none',
       }}
       _hover={{
@@ -96,11 +107,11 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, ...props }: B
         ..._active,
       }}
       _disabled={{
-        opacity: 0.48,
+        opacity: 1,
         cursor: 'not-allowed',
         transform: 'none',
-        boxShadow: 'none',
-        filter: 'grayscale(0.24)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+        filter: 'grayscale(0.28)',
         ..._disabled,
       }}
       sx={{
@@ -111,6 +122,8 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, ...props }: B
         },
         ...sx,
       }}
+      isDisabled={isDisabled}
+      disabled={disabled}
       {...props}
     >
       {children}

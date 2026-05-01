@@ -208,8 +208,8 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 bg="rgba(2, 6, 23, 0.86)"
                 borderWidth="1px"
                 borderColor="whiteAlpha.400"
-                borderRadius="full"
-                boxShadow="0 16px 42px rgba(2, 6, 23, 0.44), 0 0 0 6px rgba(148, 163, 184, 0.1)"
+                borderRadius="2px"
+                boxShadow="0 16px 42px rgba(2, 6, 23, 0.44), 0 0 0 5px rgba(148, 163, 184, 0.1)"
                 backdropFilter="blur(14px)"
                 _hover={{ bg: 'rgba(15, 23, 42, 0.94)', transform: 'translateY(-1px)' }}
                 sx={
@@ -218,15 +218,8 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                     : {
                         animation: 'navPulse 2.8s ease-in-out infinite',
                         '@keyframes navPulse': {
-                          '0%, 100%': { boxShadow: '0 16px 42px rgba(2, 6, 23, 0.44), 0 0 0 5px rgba(148, 163, 184, 0.08)' },
-                          '50%': { boxShadow: '0 20px 50px rgba(2, 6, 23, 0.54), 0 0 0 9px rgba(148, 163, 184, 0.15)' },
-                        },
-                        '& svg': {
-                          animation: 'navGear 8s linear infinite',
-                        },
-                        '@keyframes navGear': {
-                          from: { transform: 'rotate(0deg)' },
-                          to: { transform: 'rotate(360deg)' },
+                          '0%, 100%': { boxShadow: '0 16px 42px rgba(2, 6, 23, 0.44), 0 0 0 4px rgba(148, 163, 184, 0.08)' },
+                          '50%': { boxShadow: '0 20px 50px rgba(2, 6, 23, 0.54), 0 0 0 7px rgba(148, 163, 184, 0.15)' },
                         },
                       }
                 }

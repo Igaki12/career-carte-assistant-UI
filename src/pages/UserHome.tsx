@@ -792,6 +792,7 @@ function UserHome() {
                     color="white"
                     borderColor="whiteAlpha.500"
                     _hover={{ bg: 'whiteAlpha.160' }}
+                    onClick={handleStartContinuous}
                     isDisabled
                   >
                     継続面談を開始（準備中）
