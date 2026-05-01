@@ -7,9 +7,11 @@ type Props = {
   values: number[];
   max?: number;
   size?: number;
+  labelColor?: string;
+  labelStroke?: string;
 };
 
-const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
+const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#475569', labelStroke = 'transparent' }: Props) => {
   const gradientId = useId();
   const { canvasSize, center, points, gridPolygons, axisLines, labels: positionedLabels } = createSurveyRadarModel(
     labels,
@@ -64,7 +66,11 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260 }: Props) => {
               textAnchor={anchor}
               fontSize="11"
               fontFamily="'Helvetica Neue', Arial, sans-serif"
-              fill="#475569"
+              fontWeight="700"
+              fill={labelColor}
+              stroke={labelStroke}
+              strokeWidth={labelStroke === 'transparent' ? 0 : 3}
+              paintOrder="stroke fill"
               dy={label.dy}
             >
               {label.text}

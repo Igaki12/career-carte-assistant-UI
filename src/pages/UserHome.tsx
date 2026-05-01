@@ -838,7 +838,13 @@ function UserHome() {
                       前回アンケートスコア
                     </Text>
                     {hasSurvey ? (
-                      <SurveyRadar labels={Object.values(SURVEY_LABELS)} values={surveyScores} size={200} />
+                      <SurveyRadar
+                        labels={Object.values(SURVEY_LABELS)}
+                        values={surveyScores}
+                        size={200}
+                        labelColor="rgba(248, 250, 252, 0.94)"
+                        labelStroke="rgba(15, 23, 42, 0.72)"
+                      />
                     ) : (
                       <Text fontSize="sm" color={mutedTextColor} py={8}>
                         未回答
