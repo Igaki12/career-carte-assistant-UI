@@ -1,5 +1,6 @@
-import { Badge, Box, Button, Flex, Text } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import AuthNavigation from './components/AuthNavigation';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import CompanyAdminHome from './pages/CompanyAdminHome';
@@ -13,7 +14,6 @@ import UserHome from './pages/UserHome';
 import {
   clearDemoAuthSession,
   getDefaultRouteForRole,
-  getRoleLabel,
   loadDemoAuthSession,
   type DemoAuthRole,
   type DemoAuthSession,
@@ -26,39 +26,6 @@ type ProtectedRouteProps = {
   onLogout: () => void;
   children: JSX.Element;
 };
-
-const AuthStatusBar = ({ session, onLogout }: { session: DemoAuthSession; onLogout: () => void }) => (
-  <Flex
-    position="fixed"
-    top="12px"
-    right="12px"
-    zIndex={20}
-    gap={2}
-    align="center"
-    bg="white"
-    borderWidth="1px"
-    borderColor="gray.200"
-    borderRadius="lg"
-    boxShadow="md"
-    px={3}
-    py={2}
-  >
-    <Box display={{ base: 'none', md: 'block' }}>
-      <Text fontSize="xs" color="gray.500">
-        ログイン中
-      </Text>
-      <Text fontSize="sm" color="gray.700" fontWeight="semibold">
-        {session.accountId}
-      </Text>
-    </Box>
-    <Badge colorScheme={session.role === 'admin' ? 'orange' : session.role === 'company-admin' ? 'pink' : 'teal'}>
-      {getRoleLabel(session.role)}
-    </Badge>
-    <Button size="sm" variant="outline" onClick={onLogout}>
-      ログアウト
-    </Button>
-  </Flex>
-);
 
 const ProtectedRoute = ({ session, allowedRoles, onLogout, children }: ProtectedRouteProps) => {
   const location = useLocation();
@@ -75,7 +42,7 @@ const ProtectedRoute = ({ session, allowedRoles, onLogout, children }: Protected
 
   return (
     <>
-      <AuthStatusBar session={session} onLogout={onLogout} />
+      <AuthNavigation session={session} onLogout={onLogout} />
       {children}
     </>
   );

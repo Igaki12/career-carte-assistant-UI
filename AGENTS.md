@@ -29,7 +29,9 @@
 - 未ログイン状態で保護ページへアクセスした場合、通常ページは `/login?returnTo=...`、管理者ページは `/admin/login?returnTo=...` へ必ずリダイレクトする。
 - `/` は表示ページではなく、未ログインなら `/login`、ログイン済みなら `getDefaultRouteForRole(session.role)` の返すロール別既定ページへリダイレクトする。
 - ロール別にアクセス可能画面を分離する。`user` は `/user`, `/user/demographics`, `/user/condition-check`, `/app/initial`, `/app/continuous`、`company-admin` は `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を対象とする。
-- ログイン済みの保護ページ右上にはアカウントID、ロール、ログアウトボタンを表示する。
+- ログイン済みの保護ページ右上には `src/components/AuthNavigation.tsx` の開閉式ナビゲーションを表示する。デフォルトは歯車アイコンボタンの縮小表示とし、初回表示時は展開状態から短時間で縮小して、ナビゲーションの存在が分かるアニメーションを入れる。展開時は `Career Karte Assistant`、アカウントID、ロール、権限内ページリンク、ログアウトボタンを表示する。
+- AuthNavigation のページリンクは権限内のみ表示する。`user` は `/user`, `/user/demographics?returnTo=%2Fuser`, `/user/condition-check`, `/app/initial`, `/app/continuous`、`company-admin` は `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を表示対象とする。旧 `Home.tsx` は廃止済みのため `/` へのリンクは追加しない。
+- AuthNavigation の展開/縮小には `framer-motion` を使う。ただし `prefers-reduced-motion` が有効な場合は自動展開プレビューや大きな動きを抑制する。
 - 通常ログイン画面は一般ユーザー・企業管理者・キャリアコンサルタント共通入口とし、管理者ログイン画面は別入口にする。企業管理者は一般ユーザーと同じ入口を使う。
 - 「常にログインした状態にしておく」がONの場合は `localStorage`、OFFの場合は `sessionStorage` に `cca-demo-auth-session` を保存する。ログアウト時は両方を削除する。
 - 本番実装ではサーバー側セッション/JWT、パスワード検証、ロール、テナントID、監査ログへ置き換える前提とする。
