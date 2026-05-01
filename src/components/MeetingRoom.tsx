@@ -674,7 +674,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
   const isBusy = Boolean(processingText);
   const stressAnalysisEnabled = isStressAnalysisEnabled(userState);
-  const latestCondition = useMemo(() => getLatestConditionRecord(userState), [userState]);
   const textareaPlaceholder = useMemo(() => {
     if (apiUsageCount === 0) {
       return 'テキスト入力はこちら...';
@@ -1712,25 +1711,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                     API設定
                   </Button>
                 </Flex>
-                {stressAnalysisEnabled && (
-                  <Box w="full" bg="orange.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="orange.200">
-                    <Flex justify="space-between" align={{ base: 'flex-start', sm: 'center' }} gap={3} direction={{ base: 'column', sm: 'row' }}>
-                      <Stack spacing={0}>
-                        <Text fontSize="xs" color="orange.700" fontWeight="bold">
-                          面談前コンディション
-                        </Text>
-                        <Text fontSize="xs" color="orange.700">
-                          {latestCondition
-                            ? `緊張度スコア ${latestCondition.score} / 100 (${latestCondition.level})`
-                            : '緊張度スコア 未測定'}
-                        </Text>
-                      </Stack>
-                      <Button size="xs" variant="outline" colorScheme="orange" onClick={() => navigate('/user/condition-check')}>
-                        チェックへ
-                      </Button>
-                    </Flex>
-                  </Box>
-                )}
                 {!isInitialMeeting && !hasStoredKarte && (
                   <Box bg="orange.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="orange.200">
                     <Text fontSize="xs" color="orange.700">
