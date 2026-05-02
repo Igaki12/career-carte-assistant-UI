@@ -230,18 +230,38 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
       </Container>
 
       <Modal isOpen={termsDisclosure.isOpen} onClose={termsDisclosure.onClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>管理者利用条件</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Stack spacing={3} color="gray.700">
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(6px)" />
+        <ModalContent
+          bg="rgba(15, 23, 42, 0.96)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="whiteAlpha.200"
+          boxShadow="0 30px 90px rgba(0, 0, 0, 0.56)"
+          overflow="hidden"
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.7), rgba(226, 232, 240, 0.92), transparent)',
+          }}
+        >
+          <ModalHeader borderBottomWidth="1px" borderColor="whiteAlpha.160" pt={8}>
+            管理者利用条件
+          </ModalHeader>
+          <ModalCloseButton color="whiteAlpha.800" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalBody py={6}>
+            <Stack spacing={3} color="rgba(255, 255, 255, 0.84)">
               <Text>管理者画面ではアカウント、企業設定、カルテ出力など強い権限を扱います。</Text>
               <Text>本番実装では管理者専用の認証、監査ログ、操作権限をサーバー側で管理します。</Text>
               <Text>デモ版では操作確認用のため、実データや機密情報は入力しないでください。</Text>
             </Stack>
           </ModalBody>
-          <ModalFooter gap={2}>
+          <ModalFooter gap={2} borderTopWidth="1px" borderColor="whiteAlpha.160">
             <PrimaryButton
               onClick={() => {
                 setAcceptedTerms(true);
@@ -250,7 +270,7 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
             >
               同意して閉じる
             </PrimaryButton>
-            <Button variant="ghost" onClick={termsDisclosure.onClose}>
+            <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={termsDisclosure.onClose}>
               閉じる
             </Button>
           </ModalFooter>

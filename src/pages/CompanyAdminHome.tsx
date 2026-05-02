@@ -100,15 +100,6 @@ const linePanelProps = {
     height: { base: '4px', md: '6px' },
     bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(203, 213, 225, 0.88), transparent)',
   },
-  _after: {
-    content: '""',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.66), rgba(148, 163, 184, 0.8), transparent)',
-  },
   sx: {
     '& th': { color: 'rgba(255, 255, 255, 0.76)', borderColor: 'rgba(255, 255, 255, 0.14)' },
     '& td': { color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(255, 255, 255, 0.1)' },
@@ -131,6 +122,18 @@ const formControlProps = {
   color: 'gray.900',
   borderColor: 'whiteAlpha.600',
   _placeholder: { color: 'gray.500' },
+} as const;
+
+const tableActionButtonProps = {
+  variant: 'outline',
+  color: 'whiteAlpha.900',
+  borderColor: 'whiteAlpha.600',
+  _hover: { bg: 'whiteAlpha.180', color: 'white', borderColor: 'whiteAlpha.800' },
+  _disabled: {
+    color: 'whiteAlpha.400',
+    borderColor: 'whiteAlpha.300',
+    opacity: 0.55,
+  },
 } as const;
 
 const SortButton = ({
@@ -632,13 +635,20 @@ function CompanyAdminHome() {
                           </Td>
                           <Td>
                             <Stack direction="row" spacing={2}>
-                              <Button size="xs" variant="outline" onClick={() => setViewingEmployee(employee)} isDisabled={!hasKarte}>
+                              <Button size="xs" {...tableActionButtonProps} onClick={() => setViewingEmployee(employee)} isDisabled={!hasKarte}>
                                 表示
                               </Button>
-                              <Button size="xs" variant="outline" onClick={() => handleEmployeePrint(employee)} isDisabled={!hasKarte}>
+                              <Button size="xs" {...tableActionButtonProps} onClick={() => handleEmployeePrint(employee)} isDisabled={!hasKarte}>
                                 印刷
                               </Button>
-                              <Button size="xs" colorScheme="pink" variant="outline" onClick={() => handleEmployeePdf(employee)} isDisabled={!hasKarte}>
+                              <Button
+                                size="xs"
+                                {...tableActionButtonProps}
+                                borderColor={hasKarte ? 'pink.400' : 'whiteAlpha.300'}
+                                _hover={hasKarte ? { bg: 'pink.500', color: 'white', borderColor: 'pink.300' } : tableActionButtonProps._hover}
+                                onClick={() => handleEmployeePdf(employee)}
+                                isDisabled={!hasKarte}
+                              >
                                 PDF
                               </Button>
                             </Stack>

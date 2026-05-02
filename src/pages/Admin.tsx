@@ -147,15 +147,6 @@ const linePanelProps = {
     height: { base: '4px', md: '6px' },
     bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(203, 213, 225, 0.88), transparent)',
   },
-  _after: {
-    content: '""',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.66), rgba(148, 163, 184, 0.8), transparent)',
-  },
   sx: {
     '& th': { color: 'rgba(255, 255, 255, 0.76)', borderColor: 'rgba(255, 255, 255, 0.14)' },
     '& td': { color: 'rgba(255, 255, 255, 0.9)', borderColor: 'rgba(255, 255, 255, 0.1)' },
@@ -173,6 +164,18 @@ const outlineLightButtonProps = {
   color: 'white',
   borderColor: 'whiteAlpha.500',
   _hover: { bg: 'whiteAlpha.160' },
+} as const;
+
+const tableActionButtonProps = {
+  variant: 'outline',
+  color: 'whiteAlpha.900',
+  borderColor: 'whiteAlpha.600',
+  _hover: { bg: 'whiteAlpha.180', color: 'white', borderColor: 'whiteAlpha.800' },
+  _disabled: {
+    color: 'whiteAlpha.400',
+    borderColor: 'whiteAlpha.300',
+    opacity: 0.55,
+  },
 } as const;
 
 function Admin() {
@@ -1097,14 +1100,14 @@ function Admin() {
                           <Stack direction="row" spacing={2}>
                             <Button
                               size="xs"
-                              variant="outline"
+                              {...tableActionButtonProps}
                               onClick={() => openEditModal('user', account)}
                             >
                               編集
                             </Button>
                             <Button
                               size="xs"
-                              variant="outline"
+                              {...tableActionButtonProps}
                               onClick={() => handlePasswordReset(account)}
                             >
                               再発行
@@ -1414,14 +1417,14 @@ function Admin() {
                           <Stack direction="row" spacing={2}>
                             <Button
                               size="xs"
-                              variant="outline"
+                              {...tableActionButtonProps}
                               onClick={() => openEditModal('consultant', account)}
                             >
                               編集
                             </Button>
                             <Button
                               size="xs"
-                              variant="outline"
+                              {...tableActionButtonProps}
                               onClick={() => handlePasswordReset(account)}
                             >
                               再発行

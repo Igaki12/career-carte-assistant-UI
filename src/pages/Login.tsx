@@ -259,18 +259,38 @@ function Login({ session, onLogin }: LoginProps) {
       </Container>
 
       <Modal isOpen={termsDisclosure.isOpen} onClose={termsDisclosure.onClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>利用条件</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Stack spacing={3} color="gray.700">
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(6px)" />
+        <ModalContent
+          bg="rgba(15, 23, 42, 0.96)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="whiteAlpha.200"
+          boxShadow="0 30px 90px rgba(0, 0, 0, 0.56)"
+          overflow="hidden"
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.7), rgba(226, 232, 240, 0.92), transparent)',
+          }}
+        >
+          <ModalHeader borderBottomWidth="1px" borderColor="whiteAlpha.160" pt={8}>
+            利用条件
+          </ModalHeader>
+          <ModalCloseButton color="whiteAlpha.800" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalBody py={6}>
+            <Stack spacing={3} color="rgba(255, 255, 255, 0.84)">
               <Text>このシステムはキャリア面談の事前準備とカルテ作成を支援するデモです。</Text>
               <Text>AIの応答は参考情報であり、実際の面談や専門家の判断を置き換えるものではありません。</Text>
               <Text>デモ版では入力情報がブラウザ内に保存されます。共有端末での利用時はログアウトしてください。</Text>
             </Stack>
           </ModalBody>
-          <ModalFooter gap={2}>
+          <ModalFooter gap={2} borderTopWidth="1px" borderColor="whiteAlpha.160">
             <PrimaryButton
               onClick={() => {
                 setAcceptedTerms(true);
@@ -279,7 +299,7 @@ function Login({ session, onLogin }: LoginProps) {
             >
               同意して閉じる
             </PrimaryButton>
-            <Button variant="ghost" onClick={termsDisclosure.onClose}>
+            <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={termsDisclosure.onClose}>
               閉じる
             </Button>
           </ModalFooter>
