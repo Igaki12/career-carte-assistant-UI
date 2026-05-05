@@ -149,6 +149,22 @@ const whiteOutlineButtonProps = {
   _hover: { bg: 'whiteAlpha.160' },
 } as const;
 
+const modalOutlineButtonProps = {
+  variant: 'outline',
+  color: 'whiteAlpha.900',
+  borderColor: 'whiteAlpha.500',
+  _hover: { bg: 'whiteAlpha.160', color: 'white', borderColor: 'whiteAlpha.800' },
+} as const;
+
+const darkTextareaProps = {
+  bg: 'rgba(15, 23, 42, 0.74)',
+  color: 'white',
+  borderColor: 'rgba(255, 255, 255, 0.22)',
+  _placeholder: { color: 'rgba(255, 255, 255, 0.42)' },
+  _hover: { borderColor: 'rgba(255, 255, 255, 0.36)' },
+  _focus: { borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' },
+} as const;
+
 function ConsultantHome() {
   const toast = useToast();
   const profileDisclosure = useDisclosure();
@@ -619,34 +635,74 @@ function ConsultantHome() {
         </Stack>
       </Container>
 
-      <Modal isOpen={karteDisclosure.isOpen} onClose={karteDisclosure.onClose} size="xl" scrollBehavior="inside">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>カルテ閲覧・編集</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
+      <Modal isOpen={karteDisclosure.isOpen} onClose={karteDisclosure.onClose} size="full" scrollBehavior="inside">
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalContent
+          bg="rgba(15, 23, 42, 0.98)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="rgba(255, 255, 255, 0.18)"
+          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          overflow="hidden"
+          maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
+          maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
+          my={{ base: 0, md: 4 }}
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(241, 245, 249, 0.92), transparent)',
+            zIndex: 1,
+          }}
+        >
+          <ModalHeader
+            pt={8}
+            pb={5}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderBottomWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
+            カルテ閲覧・編集
+          </ModalHeader>
+          <ModalCloseButton color="rgba(255, 255, 255, 0.85)" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalBody bg="rgba(2, 6, 23, 0.82)" px={0} py={0}>
             {selectedRecord ? (
-              <Stack spacing={4}>
-                <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+              <Stack spacing={5} p={{ base: 4, md: 6 }}>
+                <Flex
+                  justify="space-between"
+                  align="center"
+                  wrap="wrap"
+                  gap={2}
+                  borderWidth="1px"
+                  borderColor="rgba(255, 255, 255, 0.16)"
+                  borderRadius="0"
+                  p={{ base: 4, md: 5 }}
+                  bg="rgba(15, 23, 42, 0.74)"
+                >
                   <Stack spacing={1}>
-                    <Text fontSize="sm" color="gray.500">作成日: {selectedRecord.atCreated}</Text>
-                    <Text fontSize="sm" color="gray.500">最終更新日: {selectedRecord.atUpdated}</Text>
+                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">作成日: {selectedRecord.atCreated}</Text>
+                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">最終更新日: {selectedRecord.atUpdated}</Text>
                   </Stack>
                   <Badge colorScheme="green">{selectedRecord.statusLabel}</Badge>
                 </Flex>
-                <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
-                        プロフィール
-                      </Text>
+                <Box borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(15, 23, 42, 0.48)">
+                  <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
+                    プロフィール
+                  </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                    <Text fontSize="sm">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
-                    <Text fontSize="sm">年齢: {selectedRecord.data.demographics.age ?? '未入力'}</Text>
-                    <Text fontSize="sm">所属企業: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
-                    <Text fontSize="sm">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">年齢: {selectedRecord.data.demographics.age ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">所属企業: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>
                   </SimpleGrid>
                 </Box>
-                <Box borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                  <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
+                <Box borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(15, 23, 42, 0.48)">
+                  <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
                     ユーザーアンケート結果
                   </Text>
                   {Object.values(selectedRecord.data.survey.factors).some((score) => (score ?? 0) > 0) ? (
@@ -656,18 +712,20 @@ function ConsultantHome() {
                         (key) => selectedRecord.data.survey.factors[key as keyof KarteData['survey']['factors']] ?? 0,
                       )}
                       size={200}
+                      labelColor="#f8fafc"
+                      labelStroke="#0f172a"
                     />
                   ) : (
-                    <Text fontSize="sm" color="gray.500">未回答</Text>
+                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.65)">未回答</Text>
                   )}
                 </Box>
                 {SHIRP_KEYS.map((key) => (
                   <Stack key={key} spacing={3}>
                     <Box>
-                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                      <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={1}>
                         {SHIRP_LABELS[key]}
                       </Text>
-                      <Text fontSize="xs" color="gray.400" mb={1}>
+                      <Text fontSize="xs" color="rgba(255, 255, 255, 0.56)" mb={1}>
                         {SHIRP_HINTS[key]}
                       </Text>
                       <Textarea
@@ -682,20 +740,20 @@ function ConsultantHome() {
                           }))
                         }
                         rows={3}
-                        bg="white"
+                        {...darkTextareaProps}
                       />
                     </Box>
                     {isShirpDetailCategoryKey(key) && (
                       <Box pl={{ base: 0, md: 4 }}>
-                        <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
+                        <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
                           {SHIRP_LABELS[key]} の詳細
                         </Text>
                         <Stack spacing={4}>
                           {getShirpDetailFieldEntries(key).map(([field, definition]) => {
                             const fieldValue = karteDraft.shirpDetails[key]?.[field];
                             return (
-                              <Box key={`${key}-${field}`} borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                                <Text fontSize="xs" color="gray.500" mb={1}>
+                              <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={3} bg="rgba(15, 23, 42, 0.48)">
+                                <Text fontSize="xs" color="rgba(255, 255, 255, 0.65)" mb={1}>
                                   {definition.label}
                                 </Text>
                                 <Textarea
@@ -718,13 +776,13 @@ function ConsultantHome() {
                                     }))
                                   }
                                   rows={3}
-                                  bg="white"
+                                  {...darkTextareaProps}
                                   placeholder="二段目の要約"
                                 />
                                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={3}>
                                   {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => (
                                     <Box key={`${key}-${field}-${itemKey}`}>
-                                      <Text fontSize="xs" color="gray.500" mb={1}>
+                                      <Text fontSize="xs" color="rgba(255, 255, 255, 0.65)" mb={1}>
                                         {itemLabel}
                                       </Text>
                                       <Textarea
@@ -748,7 +806,7 @@ function ConsultantHome() {
                                           }))
                                         }
                                         rows={2}
-                                        bg="white"
+                                        {...darkTextareaProps}
                                         placeholder="三段目の具体項目"
                                       />
                                     </Box>
@@ -764,11 +822,16 @@ function ConsultantHome() {
                 ))}
               </Stack>
             ) : (
-              <Text fontSize="sm" color="gray.500">カルテが選択されていません。</Text>
+              <Text fontSize="sm" color="rgba(255, 255, 255, 0.65)" p={6}>カルテが選択されていません。</Text>
             )}
           </ModalBody>
-          <ModalFooter gap={3}>
-            <Button variant="outline" onClick={karteDisclosure.onClose}>
+          <ModalFooter
+            gap={3}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderTopWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
+            <Button {...modalOutlineButtonProps} onClick={karteDisclosure.onClose}>
               閉じる
             </Button>
             <PrimaryButton onClick={handleSaveKarte}>

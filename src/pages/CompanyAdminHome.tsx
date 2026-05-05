@@ -729,7 +729,7 @@ function CompanyAdminHome() {
               印刷
             </Button>
             <PrimaryButton onClick={() => viewingEmployee && handleEmployeePdf(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
-              PDF
+              PDFとして保存
             </PrimaryButton>
             <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={() => setViewingEmployee(null)}>
               閉じる
