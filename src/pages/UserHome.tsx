@@ -1024,19 +1024,56 @@ function UserHome() {
         </Stack>
       </Container>
 
-      <Modal isOpen={karteModalDisclosure.isOpen} onClose={karteModalDisclosure.onClose} size="4xl" scrollBehavior="inside">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>カルテ確認</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody overflowY="auto" maxH="75dvh">
+      <Modal isOpen={karteModalDisclosure.isOpen} onClose={karteModalDisclosure.onClose} size="full" scrollBehavior="inside">
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalContent
+          bg="rgba(15, 23, 42, 0.98)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="rgba(255, 255, 255, 0.18)"
+          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          overflow="hidden"
+          maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
+          maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
+          my={{ base: 0, md: 4 }}
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(241, 245, 249, 0.92), transparent)',
+            zIndex: 1,
+          }}
+        >
+          <ModalHeader
+            pt={8}
+            pb={5}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderBottomWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
+            カルテ確認
+          </ModalHeader>
+          <ModalCloseButton color="rgba(255, 255, 255, 0.85)" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalBody overflowY="auto" bg="rgba(2, 6, 23, 0.82)" px={0} py={0}>
             <Stack spacing={4}>
-              <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.50">
+              <Box
+                borderWidth="1px"
+                borderColor="rgba(255, 255, 255, 0.16)"
+                borderRadius="0"
+                p={{ base: 4, md: 5 }}
+                bg="rgba(15, 23, 42, 0.74)"
+                m={{ base: 3, md: 5 }}
+              >
                 <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
                   <Stack spacing={1}>
-                    <Text fontSize="sm" color="gray.500">作成日: {latestRecord?.atCreated ?? '未保存'}</Text>
-                    <Text fontSize="sm" color="gray.500">最終更新日: {latestRecord?.atUpdated ?? profile.updatedAt}</Text>
-                    <Text fontSize="sm" color="gray.500">面談種別: {latestRecord ? (latestRecord.meetingType === 'initial' ? '初回面談' : '継続面談') : '未開始'}</Text>
+                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">作成日: {latestRecord?.atCreated ?? '未保存'}</Text>
+                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">最終更新日: {latestRecord?.atUpdated ?? profile.updatedAt}</Text>
+                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">面談種別: {latestRecord ? (latestRecord.meetingType === 'initial' ? '初回面談' : '継続面談') : '未開始'}</Text>
                   </Stack>
                   <Badge colorScheme={latestRecord ? 'green' : 'gray'}>
                     {latestRecord?.statusLabel ?? '下書き'}
@@ -1045,11 +1082,11 @@ function UserHome() {
               </Box>
 
               {latestRecord?.feedback && (
-                <Box bg="teal.50" borderRadius="lg" borderWidth="1px" borderColor="teal.200" p={4}>
-                  <Text fontSize="sm" fontWeight="bold" color="teal.700" mb={2}>
+                <Box bg="rgba(19, 78, 74, 0.42)" borderRadius="0" borderWidth="1px" borderColor="teal.300" p={4} mx={{ base: 3, md: 5 }}>
+                  <Text fontSize="sm" fontWeight="bold" color="teal.100" mb={2}>
                     面談フィードバック
                   </Text>
-                  <Text fontSize="sm" color="teal.800">
+                  <Text fontSize="sm" color="whiteAlpha.900">
                     {latestRecord.feedback}
                   </Text>
                 </Box>
@@ -1060,10 +1097,10 @@ function UserHome() {
                   {SHIRP_KEYS.map((key) => (
                     <Stack key={key} spacing={3}>
                       <Box>
-                        <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                        <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={1}>
                           {SHIRP_LABELS[key]}
                         </Text>
-                        <Text fontSize="xs" color="gray.400" mb={1}>
+                        <Text fontSize="xs" color="rgba(255, 255, 255, 0.56)" mb={1}>
                           {SHIRP_HINTS[key]}
                         </Text>
                         <Textarea
@@ -1075,20 +1112,24 @@ function UserHome() {
                             }))
                           }
                           rows={3}
-                          bg="white"
+                          bg="rgba(15, 23, 42, 0.74)"
+                          color="white"
+                          borderColor="rgba(255, 255, 255, 0.22)"
+                          _hover={{ borderColor: 'rgba(255, 255, 255, 0.36)' }}
+                          _focus={{ borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' }}
                         />
                       </Box>
                       {isShirpDetailCategoryKey(key) && (
                         <Box pl={{ base: 0, md: 4 }}>
-                          <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={2}>
+                          <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
                             {SHIRP_LABELS[key]} の詳細
                           </Text>
                           <Stack spacing={4}>
                             {getShirpDetailFieldEntries(key).map(([field, definition]) => {
                               const fieldValue = latestDetailDraft[key]?.[field];
                               return (
-                                <Box key={`${key}-${field}`} borderWidth="1px" borderRadius="md" p={3} bg="gray.50">
-                                  <Text fontSize="xs" color="gray.500" mb={1}>
+                                <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={3} bg="rgba(15, 23, 42, 0.48)">
+                                  <Text fontSize="xs" color="rgba(255, 255, 255, 0.65)" mb={1}>
                                     {definition.label}
                                   </Text>
                                   <Textarea
@@ -1108,13 +1149,17 @@ function UserHome() {
                                       }))
                                     }
                                     rows={3}
-                                    bg="white"
+                                    bg="rgba(15, 23, 42, 0.74)"
+                                    color="white"
+                                    borderColor="rgba(255, 255, 255, 0.22)"
+                                    _hover={{ borderColor: 'rgba(255, 255, 255, 0.36)' }}
+                                    _focus={{ borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' }}
                                     placeholder="二段目の要約"
                                   />
                                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={3}>
                                     {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => (
                                       <Box key={`${key}-${field}-${itemKey}`}>
-                                        <Text fontSize="xs" color="gray.500" mb={1}>
+                                        <Text fontSize="xs" color="rgba(255, 255, 255, 0.65)" mb={1}>
                                           {itemLabel}
                                         </Text>
                                         <Textarea
@@ -1135,7 +1180,11 @@ function UserHome() {
                                             }))
                                           }
                                           rows={2}
-                                          bg="white"
+                                          bg="rgba(15, 23, 42, 0.74)"
+                                          color="white"
+                                          borderColor="rgba(255, 255, 255, 0.22)"
+                                          _hover={{ borderColor: 'rgba(255, 255, 255, 0.36)' }}
+                                          _focus={{ borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' }}
                                           placeholder="三段目の具体項目"
                                         />
                                       </Box>
@@ -1155,9 +1204,15 @@ function UserHome() {
               )}
             </Stack>
           </ModalBody>
-          <ModalFooter gap={3} flexWrap="wrap">
+          <ModalFooter
+            gap={3}
+            flexWrap="wrap"
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderTopWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
             {latestRecord?.conversationLog.length ? (
-              <Button variant="outline" colorScheme="purple" onClick={conversationLogDisclosure.onOpen}>
+              <Button variant="outline" color="whiteAlpha.900" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160', color: 'white', borderColor: 'whiteAlpha.800' }} onClick={conversationLogDisclosure.onOpen}>
                 会話ログを見る
               </Button>
             ) : null}
@@ -1166,16 +1221,16 @@ function UserHome() {
                 <PrimaryButton onClick={handleSaveEdit}>
                   変更を保存
                 </PrimaryButton>
-                <Button variant="outline" onClick={handleCancelEdit}>
+                <Button variant="outline" color="whiteAlpha.900" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160', color: 'white', borderColor: 'whiteAlpha.800' }} onClick={handleCancelEdit}>
                   編集をキャンセル
                 </Button>
               </>
             ) : (
-              <Button variant="outline" onClick={handleStartEdit}>
+              <Button variant="outline" color="whiteAlpha.900" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160', color: 'white', borderColor: 'whiteAlpha.800' }} onClick={handleStartEdit}>
                 最新カルテを編集
               </Button>
             )}
-            <Button onClick={karteModalDisclosure.onClose}>閉じる</Button>
+            <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={karteModalDisclosure.onClose}>閉じる</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

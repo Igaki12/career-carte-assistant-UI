@@ -99,15 +99,6 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
       position="relative"
       overflow="hidden"
       boxShadow="0 26px 80px rgba(2, 6, 23, 0.36)"
-      _before={{
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '5px',
-        bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.72), rgba(241, 245, 249, 0.9), transparent)',
-      }}
       _after={{
         content: '""',
         position: 'absolute',
@@ -115,17 +106,6 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
         pointerEvents: 'none',
         bg: 'radial-gradient(circle at 84% 10%, rgba(148, 163, 184, 0.14), transparent 30%)',
         opacity: 0.85,
-      }}
-      sx={{
-        '@keyframes karte-panel-line': {
-          '0%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-          '100%': { backgroundPosition: '0% 50%' },
-        },
-        '&::before': {
-          backgroundSize: '200% 100%',
-          animation: 'karte-panel-line 8s ease-in-out infinite',
-        },
       }}
     >
       <Stack spacing={6}>

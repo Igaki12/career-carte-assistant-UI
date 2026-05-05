@@ -664,29 +664,74 @@ function CompanyAdminHome() {
         </Stack>
       </Container>
 
-      <Modal isOpen={Boolean(viewingEmployee)} onClose={() => setViewingEmployee(null)} size="5xl" scrollBehavior="inside">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
+      <Modal isOpen={Boolean(viewingEmployee)} onClose={() => setViewingEmployee(null)} size="full" scrollBehavior="inside">
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalContent
+          bg="rgba(15, 23, 42, 0.98)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="rgba(255, 255, 255, 0.18)"
+          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          overflow="hidden"
+          maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
+          maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
+          my={{ base: 0, md: 4 }}
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(241, 245, 249, 0.92), transparent)',
+            zIndex: 1,
+          }}
+        >
+          <ModalHeader
+            pt={8}
+            pb={5}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderBottomWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
             <Stack spacing={1}>
               <Text>{viewingEmployee?.name ?? '従業員'} のキャリアカルテ</Text>
-              <Text fontSize="sm" color="gray.500" fontWeight="normal">
+              <Text fontSize="sm" color="rgba(255, 255, 255, 0.62)" fontWeight="normal">
                 {viewingEmployee?.department || '部署未設定'} / {viewingEmployee?.email || 'メール未設定'}
               </Text>
             </Stack>
           </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
+          <ModalCloseButton color="rgba(255, 255, 255, 0.85)" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalBody
+            bg="rgba(2, 6, 23, 0.82)"
+            px={0}
+            py={0}
+            position="relative"
+          >
             {viewingEmployee?.latestKarte && <KartePanel data={viewingEmployee.latestKarte} showCondition={flags.stressAnalysisEnabled} />}
           </ModalBody>
-          <ModalFooter gap={2}>
-            <Button variant="outline" onClick={() => viewingEmployee && handleEmployeePrint(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
+          <ModalFooter
+            gap={2}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderTopWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
+            <Button
+              variant="outline"
+              color="whiteAlpha.900"
+              borderColor="whiteAlpha.500"
+              _hover={{ bg: 'whiteAlpha.160', color: 'white', borderColor: 'whiteAlpha.800' }}
+              onClick={() => viewingEmployee && handleEmployeePrint(viewingEmployee)}
+              isDisabled={!viewingEmployee?.latestKarte}
+            >
               印刷
             </Button>
             <PrimaryButton onClick={() => viewingEmployee && handleEmployeePdf(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
               PDF
             </PrimaryButton>
-            <Button variant="ghost" onClick={() => setViewingEmployee(null)}>
+            <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={() => setViewingEmployee(null)}>
               閉じる
             </Button>
           </ModalFooter>
