@@ -165,6 +165,15 @@ const darkTextareaProps = {
   _focus: { borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' },
 } as const;
 
+const darkInputProps = {
+  bg: 'rgba(15, 23, 42, 0.74)',
+  color: 'white',
+  borderColor: 'rgba(255, 255, 255, 0.22)',
+  _placeholder: { color: 'rgba(255, 255, 255, 0.42)' },
+  _hover: { borderColor: 'rgba(255, 255, 255, 0.36)' },
+  _focus: { borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' },
+} as const;
+
 function ConsultantHome() {
   const toast = useToast();
   const profileDisclosure = useDisclosure();
@@ -841,34 +850,69 @@ function ConsultantHome() {
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={emailDisclosure.isOpen} onClose={emailDisclosure.onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>メール問い合わせ</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
+      <Modal isOpen={emailDisclosure.isOpen} onClose={emailDisclosure.onClose} size="full">
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalContent
+          bg="rgba(15, 23, 42, 0.98)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="rgba(255, 255, 255, 0.18)"
+          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          overflow="hidden"
+          maxW={{ base: '100vw', lg: '72vw', '2xl': '1120px' }}
+          maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
+          my={{ base: 0, md: 4 }}
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(241, 245, 249, 0.92), transparent)',
+            zIndex: 1,
+          }}
+        >
+          <ModalHeader
+            pt={8}
+            pb={5}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderBottomWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
+            メール問い合わせ
+          </ModalHeader>
+          <ModalCloseButton color="rgba(255, 255, 255, 0.85)" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalBody bg="rgba(2, 6, 23, 0.82)" px={0} py={0}>
             <Box as="form" id="mail-form" onSubmit={handleSendMail}>
-              <Stack spacing={3}>
+              <Stack spacing={4} p={{ base: 4, md: 6 }}>
                 <FormControl>
-                  <FormLabel>宛先</FormLabel>
-                  <Select defaultValue="admin">
+                  <FormLabel color="rgba(255, 255, 255, 0.86)">宛先</FormLabel>
+                  <Select defaultValue="admin" {...darkInputProps}>
                     <option value="admin">管理者</option>
                     <option value="user">担当ユーザー</option>
                   </Select>
                 </FormControl>
                 <FormControl>
-                  <FormLabel>件名</FormLabel>
-                  <Input placeholder="件名を入力" />
+                  <FormLabel color="rgba(255, 255, 255, 0.86)">件名</FormLabel>
+                  <Input placeholder="件名を入力" {...darkInputProps} />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>本文</FormLabel>
-                  <Textarea rows={4} placeholder="問い合わせ内容を入力" />
+                  <FormLabel color="rgba(255, 255, 255, 0.86)">本文</FormLabel>
+                  <Textarea rows={7} placeholder="問い合わせ内容を入力" {...darkTextareaProps} />
                 </FormControl>
               </Stack>
             </Box>
           </ModalBody>
-          <ModalFooter gap={3}>
-            <Button variant="outline" onClick={emailDisclosure.onClose}>
+          <ModalFooter
+            gap={3}
+            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            borderTopWidth="1px"
+            borderColor="rgba(255, 255, 255, 0.16)"
+          >
+            <Button {...modalOutlineButtonProps} onClick={emailDisclosure.onClose}>
               閉じる
             </Button>
             <PrimaryButton type="submit" form="mail-form">
