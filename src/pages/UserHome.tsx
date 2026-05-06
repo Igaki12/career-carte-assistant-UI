@@ -51,8 +51,8 @@ import {
   saveDemoUserState,
 } from '../lib/demoUserState';
 import {
+  getCompanyApiUsageSummary,
   getDemoUsageQuota,
-  getMeetingQuotaSummary,
   subscribeDemoUsageQuota,
   type DemoUsageQuota,
 } from '../lib/demoUsageQuota';
@@ -183,14 +183,12 @@ type ProfileView = {
   createdAt: string;
   updatedAt: string;
   logs: number;
-  initialInterviewLimit: number;
-  initialInterviewUsed: number;
-  initialInterviewRemaining: number;
-  continuousInterviewLimit: number;
-  continuousInterviewUsed: number;
-  continuousInterviewRemaining: number;
-  initialLlmCallsPerInterview: number;
-  continuousLlmCallsPerInterview: number;
+  companyApiLimit: number;
+  companyApiUsed: number;
+  companyApiRemaining: number;
+  companyApiUsageLabel: string;
+  perMeetingTurnLimit: number;
+  canStartMeeting: boolean;
 };
 
 type PendingStart = {
@@ -303,8 +301,7 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
           : userState.demographicsSkipped
             ? 'デモスキップ中'
           : '面談準備中';
-  const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
-  const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+  const apiUsage = getCompanyApiUsageSummary(usageQuota);
 
   return {
     id: 'USR-2024-021',
@@ -332,14 +329,12 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
       latestRecord?.atUpdated ||
       '未更新',
     logs: userState.karteRecords.reduce((sum, record) => sum + record.conversationLog.length, 0),
-    initialInterviewLimit: initialQuota.limit,
-    initialInterviewUsed: initialQuota.used,
-    initialInterviewRemaining: initialQuota.remaining,
-    continuousInterviewLimit: continuousQuota.limit,
-    continuousInterviewUsed: continuousQuota.used,
-    continuousInterviewRemaining: continuousQuota.remaining,
-    initialLlmCallsPerInterview: initialQuota.llmCallsPerInterview,
-    continuousLlmCallsPerInterview: continuousQuota.llmCallsPerInterview,
+    companyApiLimit: apiUsage.totalLimit,
+    companyApiUsed: apiUsage.used,
+    companyApiRemaining: apiUsage.remaining,
+    companyApiUsageLabel: apiUsage.usageLabel,
+    perMeetingTurnLimit: apiUsage.perMeetingTurnLimit,
+    canStartMeeting: apiUsage.canStartMeeting,
   };
 };
 
@@ -419,10 +414,10 @@ function UserHome() {
   };
 
   const handleStartInitial = () => {
-    if (!userState.draftSessions.initial && profile.initialInterviewRemaining <= 0) {
+    if (!profile.canStartMeeting) {
       toast({
-        title: '初回面談の利用回数がありません',
-        description: '管理者画面または企業管理者画面で利用回数を追加してください。',
+        title: '企業のAPI残枠が不足しています',
+        description: `面談開始には企業API残枠が${profile.perMeetingTurnLimit}回以上必要です。現在の使用状況は${profile.companyApiUsageLabel}です。`,
         status: 'warning',
         duration: 3000,
         isClosable: true,
@@ -437,10 +432,10 @@ function UserHome() {
   };
 
   const handleStartContinuous = () => {
-    if (!userState.draftSessions.continuous && profile.continuousInterviewRemaining <= 0) {
+    if (!profile.canStartMeeting) {
       toast({
-        title: '継続面談の利用回数がありません',
-        description: '管理者画面または企業管理者画面で利用回数を追加してください。',
+        title: '企業のAPI残枠が不足しています',
+        description: `面談開始には企業API残枠が${profile.perMeetingTurnLimit}回以上必要です。現在の使用状況は${profile.companyApiUsageLabel}です。`,
         status: 'warning',
         duration: 3000,
         isClosable: true,

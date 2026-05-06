@@ -45,8 +45,8 @@ import {
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
 import {
+  getCompanyApiUsageSummary,
   getDemoUsageQuota,
-  getMeetingQuotaSummary,
   subscribeDemoUsageQuota,
   updateDemoUsageQuota,
   type DemoUsageQuota,
@@ -62,10 +62,7 @@ type EmployeeSortState = {
 };
 
 const quotaToForm = (quota: DemoUsageQuota) => ({
-  initialMonthlyLimit: quota.initialMonthlyLimit.toString(),
-  continuousMonthlyLimit: quota.continuousMonthlyLimit.toString(),
-  initialLlmCallsPerInterview: quota.initialLlmCallsPerInterview.toString(),
-  continuousLlmCallsPerInterview: quota.continuousLlmCallsPerInterview.toString(),
+  totalLimit: quota.totalLimit.toString(),
 });
 
 const formatDateTime = (value: string | null | undefined) => {
@@ -198,8 +195,7 @@ function CompanyAdminHome() {
   const latestMeasuredAt = tenantConditionRecords[0]?.measuredAt
     ? new Date(tenantConditionRecords[0].measuredAt).toLocaleString('ja-JP')
     : '未測定';
-  const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
-  const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+  const apiUsage = getCompanyApiUsageSummary(usageQuota);
   const employeesWithKarte = employees.filter((employee) => employee.latestKarte).length;
 
   useEffect(() => {
@@ -369,20 +365,11 @@ function CompanyAdminHome() {
 
   const handleQuotaSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const initialMonthlyLimit = Number(quotaForm.initialMonthlyLimit);
-    const continuousMonthlyLimit = Number(quotaForm.continuousMonthlyLimit);
-    const initialLlmCallsPerInterview = Number(quotaForm.initialLlmCallsPerInterview);
-    const continuousLlmCallsPerInterview = Number(quotaForm.continuousLlmCallsPerInterview);
+    const totalLimit = Number(quotaForm.totalLimit);
 
     if (
-      Number.isNaN(initialMonthlyLimit) ||
-      Number.isNaN(continuousMonthlyLimit) ||
-      Number.isNaN(initialLlmCallsPerInterview) ||
-      Number.isNaN(continuousLlmCallsPerInterview) ||
-      initialMonthlyLimit < 0 ||
-      continuousMonthlyLimit < 0 ||
-      initialLlmCallsPerInterview <= 0 ||
-      continuousLlmCallsPerInterview <= 0
+      Number.isNaN(totalLimit) ||
+      totalLimit < 0
     ) {
       toast({
         title: '入力値が正しくありません',
@@ -394,13 +381,10 @@ function CompanyAdminHome() {
     }
 
     updateDemoUsageQuota({
-      initialMonthlyLimit,
-      continuousMonthlyLimit,
-      initialLlmCallsPerInterview,
-      continuousLlmCallsPerInterview,
+      totalLimit,
     });
     toast({
-      title: '面談利用回数を更新しました',
+      title: '企業API使用枠を更新しました',
       status: 'success',
       duration: 2200,
       isClosable: true,
@@ -452,11 +436,11 @@ function CompanyAdminHome() {
             </Box>
             <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel color="whiteAlpha.700">今月の残り使用回数</StatLabel>
-                <StatNumber>{initialQuota.remaining + continuousQuota.remaining}</StatNumber>
+                <StatLabel color="whiteAlpha.700">企業API使用状況</StatLabel>
+                <StatNumber>{apiUsage.usageLabel}</StatNumber>
               </Stat>
               <Text mt={2} fontSize="xs" color="whiteAlpha.700">
-                初回{initialQuota.remaining}回 / 継続{continuousQuota.remaining}回
+                残り{apiUsage.remaining}回
               </Text>
             </Box>
             <Box {...translucentPanelProps} p={5}>
@@ -474,7 +458,7 @@ function CompanyAdminHome() {
                 <StatNumber>{flags.stressAnalysisEnabled ? 'ON' : 'OFF'}</StatNumber>
               </Stat>
               <Text mt={2} fontSize="xs" color="whiteAlpha.700">
-                AI使用可能回数: 初回面談{initialQuota.llmCallsPerInterview}回 / 継続面談{continuousQuota.llmCallsPerInterview}回
+                面談1回あたり最大{apiUsage.perMeetingTurnLimit}ターン
               </Text>
             </Box>
           </SimpleGrid>
@@ -494,52 +478,27 @@ function CompanyAdminHome() {
           <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <form onSubmit={handleQuotaSubmit}>
               <Stack spacing={4}>
-                <Heading size="md">面談利用回数・会話ターン制限</Heading>
-                <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
+                <Heading size="md">企業API使用枠・会話ターン制限</Heading>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <FormControl isRequired>
-                    <FormLabel>初回面談月間上限</FormLabel>
+                    <FormLabel>企業API総回数</FormLabel>
                     <Input
                       type="number"
                       min="0"
-                      value={quotaForm.initialMonthlyLimit}
+                      value={quotaForm.totalLimit}
                       {...formControlProps}
-                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, initialMonthlyLimit: event.target.value }))}
+                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, totalLimit: event.target.value }))}
                     />
                   </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>継続面談月間上限</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={quotaForm.continuousMonthlyLimit}
-                      {...formControlProps}
-                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, continuousMonthlyLimit: event.target.value }))}
-                    />
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>初回面談1回あたりのAI使用可能回数</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={quotaForm.initialLlmCallsPerInterview}
-                      {...formControlProps}
-                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, initialLlmCallsPerInterview: event.target.value }))}
-                    />
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>継続面談1回あたりのAI使用可能回数</FormLabel>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={quotaForm.continuousLlmCallsPerInterview}
-                      {...formControlProps}
-                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, continuousLlmCallsPerInterview: event.target.value }))}
-                    />
-                  </FormControl>
+                  <Box {...translucentPanelProps} p={4}>
+                    <Text fontSize="sm" color="whiteAlpha.700">面談1回あたりの最大ターン数</Text>
+                    <Text fontSize="2xl" fontWeight="bold">{apiUsage.perMeetingTurnLimit}</Text>
+                    <Text fontSize="xs" color="whiteAlpha.700">固定値。初回・継続とも同じ制限を適用します。</Text>
+                  </Box>
                 </SimpleGrid>
                 <Text fontSize="sm" color="whiteAlpha.700">
-                  初回面談: 上限{initialQuota.limit}回 / 使用済み{initialQuota.used}回 / 残り{initialQuota.remaining}回、継続面談:
-                  上限{continuousQuota.limit}回 / 使用済み{continuousQuota.used}回 / 残り{continuousQuota.remaining}回
+                  企業API使用状況: {apiUsage.usageLabel}、残り{apiUsage.remaining}回。面談開始には残り
+                  {apiUsage.perMeetingTurnLimit}回以上が必要です。
                 </Text>
                 <PrimaryButton type="submit" alignSelf="flex-start">
                   設定を保存

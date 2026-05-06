@@ -36,7 +36,7 @@ import {
   saveDemoUserState,
 } from '../lib/demoUserState';
 import {
-  consumeMeetingQuota,
+  consumeCompanyApiUsage,
   getDemoUsageQuota,
   getMeetingQuotaSummary,
   subscribeDemoUsageQuota,
@@ -284,7 +284,7 @@ ${AI_RESPONSE_GUIDELINES}
 4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
 5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まり、P(計画)を生成した時だけ true にしてください。それまでは false にしてください。
 6. 必須詳細項目がすべて埋まった場合は、P(計画)のトップレベル要約と詳細計画を生成し、面談のまとめを返してください。
-7. 6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
+7. カルテは50%以上完成していれば保存可能です。6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
 8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
 9. 三段目項目は会話から自然に読み取れるものだけ埋め、判断できないものは null のままにしてください。S〜Pに当てはまらない内容は#に記録してください。
 10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
@@ -637,13 +637,12 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [feedbackText, setFeedbackText] = useState('');
   const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
-  const [hasConsumedMeetingQuota, setHasConsumedMeetingQuota] = useState(false);
+  const [hasPassedStartGate, setHasPassedStartGate] = useState(() => getMeetingQuotaSummary(getDemoUsageQuota(), meetingType).canStartMeeting);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
   const [speechMotion, setSpeechMotion] = useState<SpeechMotionFrame>(createSilentSpeechMotion);
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesRef = useRef<ConversationMessage[]>(messages);
-  const quotaSessionIdRef = useRef(`meeting-${meetingType}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const hasShownQuotaBlockToastRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -665,10 +664,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const isTurnTakingMode = !isInitialMeeting && continuousMode === 'turn';
   const draftAction = searchParams.get('draft');
   const meetingQuota = getMeetingQuotaSummary(usageQuota, meetingType);
-  const canUseMeetingQuota = hasConsumedMeetingQuota || meetingQuota.remaining > 0;
   const maxApiCalls = meetingQuota.llmCallsPerInterview;
   const conversationQuotaLimit = maxApiCalls;
-  const hasConversationQuota = canUseMeetingQuota && apiUsageCount < conversationQuotaLimit;
+  const hasCompanyApiQuota = meetingQuota.remaining > 0;
+  const hasConversationQuota = hasCompanyApiQuota && apiUsageCount < conversationQuotaLimit;
   const hasApiBudget = apiUsageCount < maxApiCalls;
   const hasUsedApi = hasSessionStarted || apiUsageCount > 0;
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
@@ -695,6 +694,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     [nextInitialStep],
   );
   const initialProgressCountLabel = `${initialProgressCount} / ${INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length} 項目完了`;
+  const canSubmitKarte = !isInitialMeeting || initialProgress >= 50;
 
   const saveUserState = useCallback((nextState: DemoUserState) => {
     setUserState(nextState);
@@ -702,6 +702,12 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, []);
 
   useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
+
+  useEffect(() => {
+    if (meetingQuota.canStartMeeting) {
+      setHasPassedStartGate(true);
+    }
+  }, [meetingQuota.canStartMeeting]);
 
   const resetSpeechMotion = useCallback(() => {
     setSpeechMotion(createSilentSpeechMotion());
@@ -963,16 +969,14 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     setTextValue('');
     setTextareaExpanded(false);
     setHasStoredKarte(Boolean(nextUserState.latestKarte));
-    quotaSessionIdRef.current = `meeting-${meetingType}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     if (shouldResumeDraft) {
       setMessages(currentDraft.messages);
       messagesRef.current = currentDraft.messages;
       setKarte(currentDraft.karte);
-      setApiUsageCount(currentDraft.apiUsageCount);
+      setApiUsageCount(0);
       setConversationStarted(currentDraft.conversationStarted);
       setSessionStarted(currentDraft.hasSessionStarted);
-      setHasConsumedMeetingQuota(currentDraft.apiUsageCount > 0);
       setFeedbackText(currentDraft.feedbackText);
     } else {
       if (draftAction === 'fresh' && currentDraft) {
@@ -990,7 +994,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setConversationStarted(false);
       setApiUsageCount(0);
       setSessionStarted(false);
-      setHasConsumedMeetingQuota(false);
       setFeedbackText('');
     }
 
@@ -1288,6 +1291,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         : finalize
           ? buildContinuousFinalizePrompt(karte)
           : buildContinuousPrompt(karte);
+      if (!consumeCompanyApiUsage(1)) {
+        notifyApiLimit('企業のAPI残枠がないため、AIを呼び出せません。');
+        return;
+      }
 
       setProcessingText(finalize ? 'カルテとフィードバックを整理しています...' : 'AI思考中...');
       setApiUsageCount((prev) => Math.min(prev + 1, maxApiCalls));
@@ -1354,7 +1361,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [ensureApiKey, isInitialMeeting, karte, maxApiCalls, openAiApiKey, playTextToSpeech, toast],
+    [ensureApiKey, isInitialMeeting, karte, maxApiCalls, notifyApiLimit, openAiApiKey, playTextToSpeech, toast],
   );
 
   const handleUserMessage = useCallback(
@@ -1362,24 +1369,13 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       if (!content.trim()) return;
       if (!hasConversationQuota) {
         notifyApiLimit(
-          isInitialMeeting ? undefined : `継続面談は${conversationQuotaLimit}回までメッセージを送信できます。`,
+          meetingQuota.remaining <= 0
+            ? '企業のAPI残枠がないため、これ以上メッセージを送信できません。'
+            : `${isInitialMeeting ? '初回面談' : '継続面談'}は1セッション${conversationQuotaLimit}ターンまで送信できます。`,
         );
         return;
       }
       if (!ensureApiKey()) return;
-      if (!hasConsumedMeetingQuota) {
-        const consumed = consumeMeetingQuota(meetingType, quotaSessionIdRef.current);
-        if (!consumed) {
-          toast({
-            title: isInitialMeeting ? '初回面談の利用回数がありません' : '継続面談の利用回数がありません',
-            description: '管理者画面または企業管理者画面で利用回数を追加してください。',
-            status: 'warning',
-            duration: 4000,
-          });
-          return;
-        }
-        setHasConsumedMeetingQuota(true);
-      }
       const nextUsageCount = apiUsageCount + 1;
       if (conversationQuotaLimit > 0 && nextUsageCount === conversationQuotaLimit) {
         notifyApiLimit('今回の送信が最後のメッセージです。');
@@ -1399,13 +1395,11 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       apiUsageCount,
       conversationQuotaLimit,
       ensureApiKey,
-      hasConsumedMeetingQuota,
       hasConversationQuota,
       isInitialMeeting,
-      meetingType,
+      meetingQuota.remaining,
       notifyApiLimit,
       runLLMProcess,
-      toast,
     ],
   );
 
@@ -1555,6 +1549,63 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     setKarteModalOpen(false);
   }, []);
 
+  const handleSaveDraft = useCallback(
+    (returnHome = false) => {
+      if (returnHome) {
+        disposeActiveAudio();
+      }
+      const currentState = loadDemoUserState();
+      const nextState: DemoUserState = {
+        ...currentState,
+        demographics: karte.demographics,
+        latestKarte:
+          meetingType === 'continuous'
+            ? applyDemographicsToKarte(karte, karte.demographics)
+            : currentState.latestKarte,
+        draftSessions: {
+          ...currentState.draftSessions,
+          [meetingType]: {
+            meetingType,
+            continuousMode: isInitialMeeting ? null : continuousMode,
+            messages: messagesRef.current,
+            karte,
+            apiUsageCount,
+            feedbackText,
+            conversationStarted,
+            hasSessionStarted,
+            updatedAt: formatDraftTimestamp(),
+          },
+        },
+      };
+
+      saveUserState(nextState);
+      toast({
+        title: '下書きを一時保存しました',
+        description: returnHome ? 'ユーザホームから続きの面談を再開できます。' : '現在の会話とカルテを下書きに保存しました。',
+        status: 'success',
+        duration: 2600,
+        isClosable: true,
+      });
+      if (returnHome) {
+        navigate('/user');
+      }
+    },
+    [
+      apiUsageCount,
+      continuousMode,
+      conversationStarted,
+      disposeActiveAudio,
+      feedbackText,
+      hasSessionStarted,
+      isInitialMeeting,
+      karte,
+      meetingType,
+      navigate,
+      saveUserState,
+      toast,
+    ],
+  );
+
   const handleFinalizeContinuous = useCallback(async () => {
     if (isInitialMeeting) return;
     if (!hasApiBudget) {
@@ -1568,6 +1619,16 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [ensureApiKey, getTurnTakingConversationHistory, hasApiBudget, isInitialMeeting, isTurnTakingMode, notifyApiLimit, runLLMProcess]);
 
   const handleSubmitKarte = useCallback(() => {
+    if (!canSubmitKarte) {
+      toast({
+        title: 'カルテ保存には50%以上の完成が必要です',
+        description: `現在の完成度は${initialProgress}%です。下書きとして一時保存できます。`,
+        status: 'warning',
+        duration: 3500,
+        isClosable: true,
+      });
+      return;
+    }
     disposeActiveAudio();
     const currentState = loadDemoUserState();
     const timestamp = formatDraftTimestamp();
@@ -1606,7 +1667,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       duration: 2500,
     });
     navigate('/user');
-  }, [continuousMode, disposeActiveAudio, feedbackText, isInitialMeeting, karte, meetingType, navigate, saveUserState, toast]);
+  }, [canSubmitKarte, continuousMode, disposeActiveAudio, feedbackText, initialProgress, isInitialMeeting, karte, meetingType, navigate, saveUserState, toast]);
 
   const apiStatusLabel = openAiApiKey
     ? geminiApiKey
@@ -1616,31 +1677,32 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const apiStatusColor = openAiApiKey ? 'green' : 'gray';
 
   useEffect(() => {
-    if (canUseMeetingQuota) {
+    if (hasPassedStartGate) {
       hasShownQuotaBlockToastRef.current = false;
       return;
     }
     if (hasShownQuotaBlockToastRef.current) return;
     hasShownQuotaBlockToastRef.current = true;
     toast({
-      title: isInitialMeeting ? '初回面談の利用回数がありません' : '継続面談の利用回数がありません',
-      description: '残り利用回数が0回のため開始できません。管理者画面または企業管理者画面で利用回数を追加してください。',
+      title: '企業のAPI残枠が不足しています',
+      description: `面談開始には企業API残枠が${meetingQuota.perMeetingTurnLimit}回以上必要です。現在の残枠は${meetingQuota.remaining}回です。`,
       status: 'warning',
       duration: 5000,
       isClosable: true,
     });
-  }, [canUseMeetingQuota, isInitialMeeting, toast]);
+  }, [hasPassedStartGate, meetingQuota.perMeetingTurnLimit, meetingQuota.remaining, toast]);
 
-  if (!canUseMeetingQuota) {
+  if (!hasPassedStartGate) {
     return (
       <Box bg="gray.100" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
         <Box maxW="640px" mx="auto" bg="white" borderRadius="2xl" borderWidth="1px" borderColor="gray.200" boxShadow="sm" p={{ base: 6, md: 8 }}>
           <Stack spacing={4}>
             <Heading size="md">
-              {isInitialMeeting ? '初回面談の利用回数がありません' : '継続面談の利用回数がありません'}
+              企業のAPI残枠が不足しています
             </Heading>
             <Text color="gray.600">
-              管理者画面または企業管理者画面で利用回数を追加してから、もう一度開始してください。
+              面談開始には企業API残枠が{meetingQuota.perMeetingTurnLimit}回以上必要です。現在の使用状況は
+              {meetingQuota.usageLabel}、残枠は{meetingQuota.remaining}回です。
             </Text>
             <Button colorScheme="blue" alignSelf="flex-start" onClick={() => navigate('/user')}>
               ユーザホームへ戻る
@@ -1872,6 +1934,12 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                     </Flex>
                   )}
                   <Stack spacing={2}>
+                    <Button variant="outline" colorScheme="blue" onClick={() => handleSaveDraft(false)} isDisabled={isBusy}>
+                      下書きとして一時保存
+                    </Button>
+                    <Button variant="ghost" colorScheme="gray" onClick={() => handleSaveDraft(true)} isDisabled={isBusy}>
+                      一時保存して中断
+                    </Button>
                     {!isTurnTakingMode && (
                       <Button leftIcon={<FaWandMagicSparkles />} variant="ghost" colorScheme="purple" onClick={handleOpenKarteModal} isDisabled={messages.length <= 1 || isBusy}>
                         カルテを確認
@@ -1928,10 +1996,26 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             <Button w="full" colorScheme="blue" onClick={handleCloseKarteModal}>
               トークに戻る
             </Button>
-            <Button w="full" variant="outline" colorScheme="purple" onClick={handleSubmitKarte}>
+            <Button w="full" variant="outline" colorScheme="blue" onClick={() => handleSaveDraft(false)}>
+              下書きとして一時保存
+            </Button>
+            <Button
+              w="full"
+              variant="outline"
+              colorScheme="purple"
+              onClick={handleSubmitKarte}
+              isDisabled={!canSubmitKarte}
+            >
               このカルテを保存
             </Button>
           </ModalFooter>
+          {isInitialMeeting && !canSubmitKarte && (
+            <Box px={6} pb={4}>
+              <Text fontSize="xs" color="gray.500">
+                初回カルテの正式保存には50%以上の完成が必要です。現在は{initialProgress}%のため、下書きとして一時保存してください。
+              </Text>
+            </Box>
+          )}
         </ModalContent>
       </Modal>
     </Box>

@@ -43,8 +43,8 @@ import {
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
 import {
+  getCompanyApiUsageSummary,
   getDemoUsageQuota,
-  getMeetingQuotaSummary,
   subscribeDemoUsageQuota,
   updateDemoUsageQuota,
   type DemoUsageQuota,
@@ -368,20 +368,18 @@ function Admin() {
 
   const getQuotaBackedAccount = (account: AccountRecord): AccountRecord => {
     if (account.id !== DEFAULT_DEMO_USER_ID) return account;
-    const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
-    const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+    const apiUsage = getCompanyApiUsageSummary(usageQuota);
     return {
       ...account,
-      initialInterviewRemaining: initialQuota.remaining,
-      continuousInterviewRemaining: continuousQuota.remaining,
-      initialLlmCallsPerInterview: initialQuota.llmCallsPerInterview,
-      continuousLlmCallsPerInterview: continuousQuota.llmCallsPerInterview,
+      initialInterviewRemaining: apiUsage.totalLimit,
+      continuousInterviewRemaining: apiUsage.remaining,
+      initialLlmCallsPerInterview: apiUsage.perMeetingTurnLimit,
+      continuousLlmCallsPerInterview: apiUsage.perMeetingTurnLimit,
     };
   };
 
   const buildEditForm = (account: AccountRecord): AccountEditForm => {
-    const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
-    const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+    const apiUsage = getCompanyApiUsageSummary(usageQuota);
     const isDemoUser = account.id === DEFAULT_DEMO_USER_ID;
     return {
       name: account.name,
@@ -389,14 +387,14 @@ function Admin() {
       company: account.company,
       role: account.role,
       status: account.status,
-      initialInterviewRemaining: (isDemoUser ? initialQuota.limit : account.initialInterviewRemaining).toString(),
-      continuousInterviewRemaining: (isDemoUser ? continuousQuota.limit : account.continuousInterviewRemaining).toString(),
+      initialInterviewRemaining: (isDemoUser ? apiUsage.totalLimit : account.initialInterviewRemaining).toString(),
+      continuousInterviewRemaining: (isDemoUser ? apiUsage.used : account.continuousInterviewRemaining).toString(),
       initialLlmCallsPerInterview: (isDemoUser
-        ? initialQuota.llmCallsPerInterview
+        ? apiUsage.perMeetingTurnLimit
         : account.initialLlmCallsPerInterview
       ).toString(),
       continuousLlmCallsPerInterview: (isDemoUser
-        ? continuousQuota.llmCallsPerInterview
+        ? apiUsage.perMeetingTurnLimit
         : account.continuousLlmCallsPerInterview
       ).toString(),
     };
@@ -699,10 +697,9 @@ function Admin() {
 
     if (editTarget === 'user' && editingAccount.id === DEFAULT_DEMO_USER_ID) {
       updateDemoUsageQuota({
-        initialMonthlyLimit: initialRemainingValue,
-        continuousMonthlyLimit: continuousRemainingValue,
-        initialLlmCallsPerInterview: initialLlmValue,
-        continuousLlmCallsPerInterview: continuousLlmValue,
+        totalLimit: initialRemainingValue,
+        used: continuousRemainingValue,
+        perMeetingTurnLimit: initialLlmValue,
       });
     }
 
@@ -780,10 +777,9 @@ function Admin() {
 
     if (bulkTarget === 'user' && selectedIds.includes(DEFAULT_DEMO_USER_ID)) {
       updateDemoUsageQuota({
-        ...(initialRemainingValue !== null ? { initialMonthlyLimit: initialRemainingValue } : {}),
-        ...(continuousRemainingValue !== null ? { continuousMonthlyLimit: continuousRemainingValue } : {}),
-        ...(llmValue !== null ? { initialLlmCallsPerInterview: llmValue } : {}),
-        ...(continuousLlmValue !== null ? { continuousLlmCallsPerInterview: continuousLlmValue } : {}),
+        ...(initialRemainingValue !== null ? { totalLimit: initialRemainingValue } : {}),
+        ...(continuousRemainingValue !== null ? { used: continuousRemainingValue } : {}),
+        ...(llmValue !== null ? { perMeetingTurnLimit: llmValue } : {}),
       });
     }
 
@@ -1011,12 +1007,12 @@ function Admin() {
                         <SortButton onSort={handleSort} label="更新日時" target="user" column="updatedAt" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="初回面談残り" target="user" column="initialInterviewRemaining" />
+                        <SortButton onSort={handleSort} label="企業API使用状況" target="user" column="initialInterviewRemaining" />
                       </Th>
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="継続面談残り"
+                          label="企業API残り"
                           target="user"
                           column="continuousInterviewRemaining"
                         />
@@ -1024,7 +1020,7 @@ function Admin() {
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="AI使用可能回数/面談"
+                          label="最大ターン/面談"
                           target="user"
                           column="initialLlmCallsPerInterview"
                         />
@@ -1038,8 +1034,7 @@ function Admin() {
                   <Tbody>
                     {filteredUserAccounts.map((rawAccount) => {
                       const account = getQuotaBackedAccount(rawAccount);
-                      const initialQuota = getMeetingQuotaSummary(usageQuota, 'initial');
-                      const continuousQuota = getMeetingQuotaSummary(usageQuota, 'continuous');
+                      const apiUsage = getCompanyApiUsageSummary(usageQuota);
                       return (
                       <Tr
                         key={account.id}
@@ -1084,16 +1079,16 @@ function Admin() {
                         <Td fontSize="sm">{account.updatedAt}</Td>
                         <Td fontSize="sm">
                           {account.id === DEFAULT_DEMO_USER_ID
-                            ? `上限${initialQuota.limit} / 使用${initialQuota.used} / 残${initialQuota.remaining}`
+                            ? apiUsage.usageLabel
                             : `${account.initialInterviewRemaining}回`}
                         </Td>
                         <Td fontSize="sm">
                           {account.id === DEFAULT_DEMO_USER_ID
-                            ? `上限${continuousQuota.limit} / 使用${continuousQuota.used} / 残${continuousQuota.remaining}`
+                            ? `${apiUsage.remaining}回`
                             : `${account.continuousInterviewRemaining}回`}
                         </Td>
                         <Td fontSize="sm">
-                          初回面談{account.initialLlmCallsPerInterview}回 / 継続面談{account.continuousLlmCallsPerInterview}回
+                          {account.initialLlmCallsPerInterview}ターン
                         </Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
@@ -1337,7 +1332,7 @@ function Admin() {
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="初回面談残り"
+                          label="API総枠メモ"
                           target="consultant"
                           column="initialInterviewRemaining"
                         />
@@ -1345,7 +1340,7 @@ function Admin() {
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="継続面談残り"
+                          label="API残枠メモ"
                           target="consultant"
                           column="continuousInterviewRemaining"
                         />
@@ -1353,7 +1348,7 @@ function Admin() {
                       <Th>
                         <SortButton
                           onSort={handleSort}
-                          label="AI使用可能回数/面談"
+                          label="最大ターン/面談"
                           target="consultant"
                           column="initialLlmCallsPerInterview"
                         />
@@ -1410,7 +1405,7 @@ function Admin() {
                         <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
                         <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
                         <Td fontSize="sm">
-                          初回面談{account.initialLlmCallsPerInterview}回 / 継続面談{account.continuousLlmCallsPerInterview}回
+                          {account.initialLlmCallsPerInterview}ターン
                         </Td>
                         <Td fontSize="sm">{account.logs}件</Td>
                         <Td>
@@ -1752,7 +1747,7 @@ function Admin() {
                   <Divider />
                   <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
                     <FormControl isRequired>
-                      <FormLabel>初回面談月間上限</FormLabel>
+                      <FormLabel>企業API総回数</FormLabel>
                       <Input
                         type="number"
                         min="0"
@@ -1766,7 +1761,7 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>継続面談月間上限</FormLabel>
+                      <FormLabel>企業API使用済み回数</FormLabel>
                       <Input
                         type="number"
                         min="0"
@@ -1780,7 +1775,7 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>初回面談1回あたりのAI使用可能回数</FormLabel>
+                      <FormLabel>面談1回あたり最大ターン数</FormLabel>
                       <Input
                         type="number"
                         min="1"
@@ -1794,7 +1789,7 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>継続面談1回あたりのAI使用可能回数</FormLabel>
+                      <FormLabel>面談1回あたり最大ターン数（同値）</FormLabel>
                       <Input
                         type="number"
                         min="1"
@@ -1886,7 +1881,7 @@ function Admin() {
               <Divider />
               <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
                 <FormControl>
-                  <FormLabel>初回面談月間上限</FormLabel>
+                  <FormLabel>企業API総回数</FormLabel>
                   <Input
                     type="number"
                     min="0"
@@ -1901,7 +1896,7 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>継続面談月間上限</FormLabel>
+                  <FormLabel>企業API使用済み回数</FormLabel>
                   <Input
                     type="number"
                     min="0"
@@ -1916,7 +1911,7 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>初回面談1回あたりのAI使用可能回数</FormLabel>
+                  <FormLabel>面談1回あたり最大ターン数</FormLabel>
                   <Input
                     type="number"
                     min="1"
@@ -1931,7 +1926,7 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>継続面談1回あたりのAI使用可能回数</FormLabel>
+                  <FormLabel>面談1回あたり最大ターン数（同値）</FormLabel>
                   <Input
                     type="number"
                     min="1"
