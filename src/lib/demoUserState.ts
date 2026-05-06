@@ -178,10 +178,14 @@ export const createDefaultFeatureFlags = (): TenantFeatureFlags[] => [
 ];
 
 export const createEmptyDemographics = (): DemographicData => ({
+  accountId: null,
   name: null,
+  email: null,
   age: null,
   company: null,
+  department: null,
   jobTitle: null,
+  permission: null,
   workLocationPrefecture: null,
   jobChangeCount: null,
   yearsOfService: null,
@@ -257,10 +261,14 @@ const createSampleKarteRecord = (
 export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
   const employeeAkarte = createSampleKarte(
     {
+      accountId: 'USR-2026-101',
       name: '佐伯 美咲',
+      email: 'misaki.saeki@example.com',
       age: '34',
       company: 'Career Carte Inc.',
+      department: 'Customer Success',
       jobTitle: 'カスタマーサクセス',
+      permission: '一般ユーザー',
       workLocationPrefecture: '東京都',
       yearsOfService: '5',
     },
@@ -275,10 +283,14 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
   );
   const employeeBkarte = createSampleKarte(
     {
+      accountId: 'USR-2026-102',
       name: '井上 健太',
+      email: 'kenta.inoue@example.com',
       age: '41',
       company: 'Career Carte Inc.',
+      department: 'Sales Planning',
       jobTitle: '営業企画',
+      permission: '一般ユーザー',
       workLocationPrefecture: '大阪府',
       yearsOfService: '8',
     },
@@ -293,10 +305,14 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
   );
   const otherTenantKarte = createSampleKarte(
     {
+      accountId: 'USR-2026-201',
       name: '田中 太郎',
+      email: 'taro.tanaka@example.com',
       age: '38',
       company: 'Connect Systems',
+      department: 'Engineering',
       jobTitle: 'Engineering Manager',
+      permission: '一般ユーザー',
       workLocationPrefecture: '福岡県',
     },
     {
@@ -318,6 +334,7 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
       company: 'Career Carte Inc.',
       department: 'Customer Success',
       jobTitle: 'カスタマーサクセス',
+      permission: '一般ユーザー',
       status: '完了',
       latestKarte: employeeAkarte,
       karteRecords: [createSampleKarteRecord('karte-2026-101', '2026-04-12T10:00:00.000Z', employeeAkarte, '強みと希望条件の接点が明確になっています。次回は優先順位を絞ると実行計画に移しやすくなります。')],
@@ -332,6 +349,7 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
       company: 'Career Carte Inc.',
       department: 'Sales Planning',
       jobTitle: '営業企画',
+      permission: '一般ユーザー',
       status: '完了',
       latestKarte: employeeBkarte,
       karteRecords: [createSampleKarteRecord('karte-2026-102', '2026-04-18T14:30:00.000Z', employeeBkarte, '役割希望の整理が進んでいます。社内で相談する材料として、成果と希望条件を短くまとめるとよいです。')],
@@ -346,6 +364,7 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
       company: 'Career Carte Inc.',
       department: 'Human Resources',
       jobTitle: '人事',
+      permission: '一般ユーザー',
       status: '未作成',
       latestKarte: null,
       karteRecords: [],
@@ -360,6 +379,7 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
       company: 'Connect Systems',
       department: 'Engineering',
       jobTitle: 'Engineering Manager',
+      permission: '一般ユーザー',
       status: '完了',
       latestKarte: otherTenantKarte,
       karteRecords: [createSampleKarteRecord('karte-2026-201', '2026-04-20T11:00:00.000Z', otherTenantKarte, '組織開発と技術戦略の両面を扱える点が強みです。次回は事業視点の経験づくりを具体化しましょう。')],
@@ -462,6 +482,7 @@ export const normalizeCompanyEmployees = (value: unknown): CompanyEmployeeRecord
         company: typeof employee.company === 'string' ? employee.company : latestKarte?.demographics.company ?? '',
         department: typeof employee.department === 'string' ? employee.department : '',
         jobTitle: typeof employee.jobTitle === 'string' ? employee.jobTitle : latestKarte?.demographics.jobTitle ?? '',
+        permission: typeof employee.permission === 'string' ? employee.permission : '一般ユーザー',
         status: typeof employee.status === 'string' ? employee.status : latestKarte ? '完了' : '未作成',
         latestKarte,
         karteRecords,
@@ -560,10 +581,11 @@ export const getCompanyAdminEmployees = (
     id: DEFAULT_DEMO_USER_ID,
     tenantId,
     name: state.demographics.name || demoKarte?.demographics.name || 'デモユーザー',
-    email: 'demo.user@example.com',
+    email: state.demographics.email || demoKarte?.demographics.email || 'demo.user@example.com',
     company: state.demographics.company || demoKarte?.demographics.company || tenant?.name || 'デモ企業',
-    department: 'Demo',
+    department: state.demographics.department || demoKarte?.demographics.department || 'Demo',
     jobTitle: state.demographics.jobTitle || demoKarte?.demographics.jobTitle || '未設定',
+    permission: state.demographics.permission || demoKarte?.demographics.permission || '一般ユーザー',
     status: demoKarte ? '完了' : state.demographicsSavedAt || state.demographicsSkipped ? '面談準備中' : '未設定',
     latestKarte: demoKarte,
     karteRecords: state.karteRecords,

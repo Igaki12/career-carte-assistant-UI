@@ -136,21 +136,33 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
               <TabPanel px={0}>
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                   <Box>
+                    <Text {...labelTextProps}>ID</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.accountId ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
                     <Text {...labelTextProps}>氏名</Text>
                     <Text {...valueTextProps}>
                       {data.demographics.name ?? '未入力'}
                     </Text>
                   </Box>
                   <Box>
-                    <Text {...labelTextProps}>年齢</Text>
+                    <Text {...labelTextProps}>メール</Text>
                     <Text {...valueTextProps}>
-                      {data.demographics.age ?? '未入力'}
+                      {data.demographics.email ?? '未入力'}
                     </Text>
                   </Box>
                   <Box>
-                    <Text {...labelTextProps}>所属企業</Text>
+                    <Text {...labelTextProps}>会社名</Text>
                     <Text {...valueTextProps}>
                       {data.demographics.company ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text {...labelTextProps}>部署</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.department ?? '未入力'}
                     </Text>
                   </Box>
                   <Box>
@@ -159,10 +171,22 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                       {data.demographics.jobTitle ?? '未入力'}
                     </Text>
                   </Box>
+                  <Box>
+                    <Text {...labelTextProps}>権限</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.permission ?? '未入力'}
+                    </Text>
+                  </Box>
                 </SimpleGrid>
               </TabPanel>
               <TabPanel px={0}>
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
+                  <Box>
+                    <Text {...labelTextProps}>年齢</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.age ?? '未入力'}
+                    </Text>
+                  </Box>
                   <Box>
                     <Text {...labelTextProps}>勤務地(都道府県)</Text>
                     <Text {...valueTextProps}>

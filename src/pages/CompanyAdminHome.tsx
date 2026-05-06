@@ -56,7 +56,7 @@ import {
 import { downloadKarteCsv, downloadKarteCsvBatch, printKartePayloads, type KarteBatchExportPayload } from '../lib/karteExport';
 import type { CompanyEmployeeRecord, DemoUserState } from '../types';
 
-type EmployeeSortColumn = 'id' | 'name' | 'email' | 'company' | 'department' | 'jobTitle' | 'status' | 'updatedAt';
+type EmployeeSortColumn = 'id' | 'name' | 'email' | 'company' | 'department' | 'jobTitle' | 'permission' | 'status' | 'updatedAt';
 
 type EmployeeSortState = {
   column: EmployeeSortColumn;
@@ -218,6 +218,7 @@ function CompanyAdminHome() {
           employee.company,
           employee.department,
           employee.jobTitle,
+          employee.permission,
         ].join(' ').toLowerCase();
         const matchesQuery = normalizedQuery ? haystack.includes(normalizedQuery) : true;
         const matchesStatus = statusFilter === 'all' ? true : employee.status === statusFilter;
@@ -541,7 +542,7 @@ function CompanyAdminHome() {
 
               <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                 <Input
-                  placeholder="名前 / メール / 会社名 / 部署 / 職種 / ID で検索"
+                  placeholder="ID / 氏名 / メール / 会社名 / 部署 / 職種 / 権限 で検索"
                   value={query}
                   {...formControlProps}
                   onChange={(event) => setQuery(event.target.value)}
@@ -567,6 +568,7 @@ function CompanyAdminHome() {
                       <Th><SortButton label="会社名" column="company" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="部署" column="department" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="職種" column="jobTitle" sort={sort} onSort={handleSort} /></Th>
+                      <Th><SortButton label="権限" column="permission" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="ステータス" column="status" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="更新日時" column="updatedAt" sort={sort} onSort={handleSort} /></Th>
                       <Th>カルテ</Th>
@@ -595,6 +597,7 @@ function CompanyAdminHome() {
                           <Td>{employee.company || tenant?.name || '未設定'}</Td>
                           <Td>{employee.department || '未設定'}</Td>
                           <Td>{employee.jobTitle || '未設定'}</Td>
+                          <Td><Badge colorScheme="blue">{employee.permission || '一般ユーザー'}</Badge></Td>
                           <Td>
                             <Badge colorScheme={getStatusColor(employee.status)}>{employee.status}</Badge>
                           </Td>

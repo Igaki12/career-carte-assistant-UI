@@ -176,7 +176,7 @@ function Login({ session, onLogin }: LoginProps) {
                 <Stack spacing={1}>
                   <Heading size="lg">ログイン</Heading>
                   <Text color="whiteAlpha.800" fontSize="sm">
-                    所属ロールを選択して進んでください。
+                    権限を選択して進んでください。
                   </Text>
                 </Stack>
                 <FormControl isRequired>
@@ -205,7 +205,7 @@ function Login({ session, onLogin }: LoginProps) {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>ログイン種別</FormLabel>
+                  <FormLabel>権限</FormLabel>
                   <Select
                     value={role}
                     onChange={(event) => setRole(event.target.value as Exclude<DemoAuthRole, 'admin'>)}

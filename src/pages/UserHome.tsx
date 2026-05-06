@@ -165,7 +165,9 @@ type ProfileView = {
   name: string;
   email: string;
   company: string;
-  role: string;
+  department: string;
+  jobTitle: string;
+  permission: string;
   age: string;
   workLocationPrefecture: string;
   jobChangeCount: string;
@@ -304,11 +306,13 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
   const apiUsage = getCompanyApiUsageSummary(usageQuota);
 
   return {
-    id: 'USR-2024-021',
+    id: demographics.accountId || 'USR-2024-021',
     name: demographics.name || '未設定',
-    email: 'hanako.yamada@example.com',
+    email: demographics.email || 'hanako.yamada@example.com',
     company: demographics.company || 'Career Carte Assistant Demo',
-    role: demographics.jobTitle || '未設定',
+    department: demographics.department || '未設定',
+    jobTitle: demographics.jobTitle || '未設定',
+    permission: demographics.permission || '一般ユーザー',
     age: demographics.age || '未設定',
     workLocationPrefecture: demographics.workLocationPrefecture || '未設定',
     jobChangeCount: demographics.jobChangeCount || '未設定',
@@ -319,7 +323,7 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
     youngestChildAge: demographics.youngestChildAge || '未設定',
     statusSummary,
     statusDetails,
-    tags: [demographics.company, demographics.jobTitle, demographics.workLocationPrefecture].filter(
+    tags: [demographics.company, demographics.department, demographics.jobTitle, demographics.workLocationPrefecture].filter(
       (value): value is string => Boolean(value),
     ),
     createdAt: '2024-09-05 10:20',
@@ -680,7 +684,7 @@ function UserHome() {
                 <Heading size="lg" color="white">
                   {profile.name} さんのマイページ
                 </Heading>
-                <Text color="whiteAlpha.900">{profile.company} / {profile.role}</Text>
+                <Text color="whiteAlpha.900">{profile.company} / {profile.department} / {profile.jobTitle}</Text>
                 <Text color="whiteAlpha.800">ID: {profile.id}</Text>
                 <Box
                   mt={3}
@@ -732,10 +736,13 @@ function UserHome() {
                     <TabPanels>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                          <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
-                          <Text fontSize="sm" color="whiteAlpha.900">年齢: {profile.age}</Text>
-                          <Text fontSize="sm" color="whiteAlpha.900">所属企業: {profile.company}</Text>
-                          <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.role}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.jobTitle}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">権限: {profile.permission}</Text>
                         </SimpleGrid>
                       </TabPanel>
                       <TabPanel px={0} pt={3}>
@@ -948,24 +955,32 @@ function UserHome() {
                         <TabPanel px={0} pt={3}>
                           <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                             <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>ID</Text>
+                              <Text fontWeight="semibold">{profile.id}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>氏名</Text>
                               <Text fontWeight="semibold">{profile.name}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>年齢</Text>
-                              <Text fontWeight="semibold">{profile.age}</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>メール</Text>
+                              <Text fontWeight="semibold">{profile.email}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>所属企業</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>会社名</Text>
                               <Text fontWeight="semibold">{profile.company}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>職種</Text>
-                              <Text fontWeight="semibold">{profile.role}</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>部署</Text>
+                              <Text fontWeight="semibold">{profile.department}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>メール</Text>
-                              <Text fontWeight="semibold">{profile.email}</Text>
+                              <Text fontSize="sm" color={mutedTextColor}>職種</Text>
+                              <Text fontWeight="semibold">{profile.jobTitle}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>権限</Text>
+                              <Text fontWeight="semibold">{profile.permission}</Text>
                             </Stack>
                           </SimpleGrid>
                         </TabPanel>

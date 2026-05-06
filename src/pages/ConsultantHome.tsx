@@ -45,8 +45,9 @@ type ConsultantProfile = {
   id: string;
   name: string;
   company: string;
+  department: string;
   title: string;
-  role: string;
+  permission: string;
   status: 'アクティブ' | '休止中';
   tags: string[];
   email: string;
@@ -186,8 +187,9 @@ function ConsultantHome() {
       id: 'CNS-401',
       name: '佐藤 陽介',
       company: 'Career Carte Inc.',
+      department: 'Career Consulting',
       title: 'Lead Career Consultant',
-      role: 'Consultant',
+      permission: 'キャリアコンサルタント',
       status: 'アクティブ',
       tags: ['Tech領域', 'マネジメント', 'メンタリング'],
       email: 'yosuke.sato@example.com',
@@ -239,10 +241,14 @@ function ConsultantHome() {
         data: {
           ...empty,
           demographics: {
+            accountId: 'USR-2024-021',
             name: '山田 花子',
+            email: 'hanako.yamada@example.com',
             age: '32',
             company: 'Career Carte Inc.',
+            department: 'Product Division',
             jobTitle: 'Product Manager',
+            permission: '一般ユーザー',
             workLocationPrefecture: '東京都',
             jobChangeCount: '2',
             yearsOfService: '4',
@@ -514,7 +520,7 @@ function ConsultantHome() {
             >
               <Stack spacing={1} flex="1">
                 <Heading size="lg" color="white">{profile.name} さんのコンサルタント画面</Heading>
-                <Text color="whiteAlpha.900">{profile.company} / {profile.title}</Text>
+                <Text color="whiteAlpha.900">{profile.company} / {profile.department} / {profile.title}</Text>
                 <Text color="whiteAlpha.800">ID: {profile.id}</Text>
                 <Box
                   mt={3}
@@ -530,10 +536,14 @@ function ConsultantHome() {
                     コンサルタント概要
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                    <Text fontSize="sm" color="whiteAlpha.900">役割: {profile.role}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">ステータス: {profile.status}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">担当ユーザー数: {assignedUsers.length} 名</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.title}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">権限: {profile.permission}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">担当ユーザー数: {assignedUsers.length} 名</Text>
                   </SimpleGrid>
                 </Box>
               </Stack>
@@ -704,10 +714,13 @@ function ConsultantHome() {
                     プロフィール
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                    <Text fontSize="sm" color="whiteAlpha.900">ID: {selectedRecord.data.demographics.accountId ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">年齢: {selectedRecord.data.demographics.age ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">所属企業: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">メール: {selectedRecord.data.demographics.email ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">会社名: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">部署: {selectedRecord.data.demographics.department ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">権限: {selectedRecord.data.demographics.permission ?? '未入力'}</Text>
                   </SimpleGrid>
                 </Box>
                 <Box borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(15, 23, 42, 0.48)">

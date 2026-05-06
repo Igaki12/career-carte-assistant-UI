@@ -56,7 +56,9 @@ type AccountRecord = {
   name: string;
   email: string;
   company: string;
+  department: string;
   role: string;
+  permission: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -76,7 +78,10 @@ type CsvPreviewRecord = {
   id: string;
   name: string;
   email: string;
+  company: string;
+  department: string;
   role: string;
+  permission: string;
 };
 
 type CsvState = {
@@ -85,25 +90,28 @@ type CsvState = {
 };
 
 type AccountEditForm = {
+  id: string;
   name: string;
   email: string;
   company: string;
+  department: string;
   role: string;
+  permission: string;
   status: string;
   initialInterviewRemaining: string;
   continuousInterviewRemaining: string;
   initialLlmCallsPerInterview: string;
-  continuousLlmCallsPerInterview: string;
 };
 
 type BulkEditForm = {
   company: string;
+  department: string;
   role: string;
+  permission: string;
   status: string;
   initialInterviewRemaining: string;
   continuousInterviewRemaining: string;
   initialLlmCallsPerInterview: string;
-  continuousLlmCallsPerInterview: string;
 };
 
 type AccountTarget = 'user' | 'consultant';
@@ -192,7 +200,9 @@ function Admin() {
       name: '山田 花子',
       email: 'hanako.yamada@example.com',
       company: 'Career Carte Inc.',
+      department: 'Product Division',
       role: 'Product Manager',
+      permission: '一般ユーザー',
       status: '面談準備中',
       createdAt: '2024-09-05 10:20',
       updatedAt: '2024-11-30 14:02',
@@ -207,7 +217,9 @@ function Admin() {
       name: '田中 太郎',
       email: 'taro.tanaka@example.com',
       company: 'Connect Systems',
+      department: 'Engineering',
       role: 'Engineering Manager',
+      permission: '一般ユーザー',
       status: '進行中',
       createdAt: '2024-08-12 09:50',
       updatedAt: '2024-11-18 16:35',
@@ -222,7 +234,9 @@ function Admin() {
       name: '鈴木 未来',
       email: 'mirai.suzuki@example.com',
       company: 'Alpha Robotics',
+      department: 'Research',
       role: 'AI Researcher',
+      permission: '一般ユーザー',
       status: '完了',
       createdAt: '2024-07-25 11:05',
       updatedAt: '2024-10-28 13:12',
@@ -240,7 +254,9 @@ function Admin() {
       name: '佐藤 陽介',
       email: 'yosuke.sato@example.com',
       company: 'Career Carte Inc.',
+      department: 'Career Consulting',
       role: 'Lead Career Consultant',
+      permission: 'キャリアコンサルタント',
       status: 'アクティブ',
       createdAt: '2024-05-10 08:45',
       updatedAt: '2024-11-28 17:25',
@@ -255,7 +271,9 @@ function Admin() {
       name: '井上 彩',
       email: 'aya.inoue@example.com',
       company: 'Career Carte Inc.',
+      department: 'Career Consulting',
       role: 'Senior Consultant',
+      permission: 'キャリアコンサルタント',
       status: 'アクティブ',
       createdAt: '2024-06-02 11:30',
       updatedAt: '2024-11-15 12:05',
@@ -270,7 +288,9 @@ function Admin() {
       name: '木村 隼人',
       email: 'hayato.kimura@example.com',
       company: 'Career Carte Inc.',
+      department: 'Career Consulting',
       role: 'Consultant',
+      permission: 'キャリアコンサルタント',
       status: '休止中',
       createdAt: '2024-04-22 14:20',
       updatedAt: '2024-09-01 09:15',
@@ -286,66 +306,73 @@ function Admin() {
   const [editTarget, setEditTarget] = useState<'user' | 'consultant' | null>(null);
   const [editingAccount, setEditingAccount] = useState<AccountRecord | null>(null);
   const [editForm, setEditForm] = useState<AccountEditForm>({
+    id: '',
     name: '',
     email: '',
     company: '',
+    department: '',
     role: '',
+    permission: '',
     status: '',
     initialInterviewRemaining: '',
     continuousInterviewRemaining: '',
     initialLlmCallsPerInterview: '',
-    continuousLlmCallsPerInterview: '',
   });
   const [bulkTarget, setBulkTarget] = useState<'user' | 'consultant' | null>(null);
   const [bulkForm, setBulkForm] = useState<BulkEditForm>({
     company: '',
+    department: '',
     role: '',
+    permission: '',
     status: '',
     initialInterviewRemaining: '',
     continuousInterviewRemaining: '',
     initialLlmCallsPerInterview: '',
-    continuousLlmCallsPerInterview: '',
   });
 
   const [userQuery, setUserQuery] = useState('');
-  const [userStatusFilter, setUserStatusFilter] = useState('all');
   const [userSort, setUserSort] = useState<SortState>({ column: 'updatedAt', direction: 'desc' });
 
   const [consultantQuery, setConsultantQuery] = useState('');
-  const [consultantStatusFilter, setConsultantStatusFilter] = useState('all');
   const [consultantSort, setConsultantSort] = useState<SortState>({
     column: 'updatedAt',
     direction: 'desc',
   });
 
   const [newUserForm, setNewUserForm] = useState({
+    id: '',
     name: '',
     email: '',
     company: '',
+    department: '',
     role: '',
+    permission: '一般ユーザー',
     status: '面談準備中',
   });
 
   const [newConsultantForm, setNewConsultantForm] = useState({
+    id: '',
     name: '',
     email: '',
     company: '',
+    department: '',
     role: '',
+    permission: 'キャリアコンサルタント',
     status: 'アクティブ',
   });
 
   const [userCsvState, setUserCsvState] = useState<CsvState>({
     fileName: 'user_accounts.csv',
     preview: [
-      { id: 'USR-2024-030', name: '高橋 洋介', email: 'y.takahashi@example.com', role: 'Marketing' },
-      { id: 'USR-2024-031', name: '吉田 里奈', email: 'rina.yoshida@example.com', role: 'HR Manager' },
+      { id: 'USR-2024-030', name: '高橋 洋介', email: 'y.takahashi@example.com', company: 'Career Carte Inc.', department: 'Marketing', role: 'Marketing Manager', permission: '一般ユーザー' },
+      { id: 'USR-2024-031', name: '吉田 里奈', email: 'rina.yoshida@example.com', company: 'Career Carte Inc.', department: 'Human Resources', role: 'HR Manager', permission: '一般ユーザー' },
     ],
   });
   const [consultantCsvState, setConsultantCsvState] = useState<CsvState>({
     fileName: 'consultant_accounts.csv',
     preview: [
-      { id: 'CNS-405', name: '大谷 翼', email: 't.subasa@example.com', role: 'Senior Consultant' },
-      { id: 'CNS-406', name: '広瀬 翔', email: 'sho.hirose@example.com', role: 'Associate Consultant' },
+      { id: 'CNS-405', name: '大谷 翼', email: 't.subasa@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Senior Consultant', permission: 'キャリアコンサルタント' },
+      { id: 'CNS-406', name: '広瀬 翔', email: 'sho.hirose@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Associate Consultant', permission: 'キャリアコンサルタント' },
     ],
   });
   const [csvModalType, setCsvModalType] = useState<'user' | 'consultant'>('user');
@@ -382,20 +409,19 @@ function Admin() {
     const apiUsage = getCompanyApiUsageSummary(usageQuota);
     const isDemoUser = account.id === DEFAULT_DEMO_USER_ID;
     return {
+      id: account.id,
       name: account.name,
       email: account.email,
       company: account.company,
+      department: account.department,
       role: account.role,
+      permission: account.permission,
       status: account.status,
       initialInterviewRemaining: (isDemoUser ? apiUsage.totalLimit : account.initialInterviewRemaining).toString(),
       continuousInterviewRemaining: (isDemoUser ? apiUsage.used : account.continuousInterviewRemaining).toString(),
       initialLlmCallsPerInterview: (isDemoUser
         ? apiUsage.perMeetingTurnLimit
         : account.initialLlmCallsPerInterview
-      ).toString(),
-      continuousLlmCallsPerInterview: (isDemoUser
-        ? apiUsage.perMeetingTurnLimit
-        : account.continuousLlmCallsPerInterview
       ).toString(),
     };
   };
@@ -441,30 +467,25 @@ function Admin() {
     return userAccounts
       .filter((account) => {
         const keyword =
-          account.name + account.email + account.company + account.role + account.id;
+          account.id + account.name + account.email + account.company + account.department + account.role + account.permission;
         const matchesQuery = keyword.toLowerCase().includes(userQuery.toLowerCase());
-        const matchesStatus =
-          userStatusFilter === 'all' ? true : account.status === userStatusFilter;
-        return matchesQuery && matchesStatus;
+        return matchesQuery;
       })
       .sort(getComparator(userSort));
-  }, [userAccounts, userQuery, userStatusFilter, userSort]);
+  }, [userAccounts, userQuery, userSort]);
 
   const filteredConsultantAccounts = useMemo(() => {
     return consultantAccounts
       .filter((account) => {
         const keyword =
-          account.name + account.email + account.company + account.role + account.id;
+          account.id + account.name + account.email + account.company + account.department + account.role + account.permission;
         const matchesQuery = keyword.toLowerCase().includes(consultantQuery.toLowerCase());
-        const matchesStatus =
-          consultantStatusFilter === 'all' ? true : account.status === consultantStatusFilter;
-        return matchesQuery && matchesStatus;
+        return matchesQuery;
       })
       .sort(getComparator(consultantSort));
-  }, [consultantAccounts, consultantQuery, consultantStatusFilter, consultantSort]);
+  }, [consultantAccounts, consultantQuery, consultantSort]);
 
-  const userStatusOptions = ['面談準備中', '進行中', '完了'];
-  const consultantStatusOptions = ['アクティブ', '休止中'];
+  const permissionOptions = ['一般ユーザー', '企業管理者', 'キャリアコンサルタント', 'システム管理者'];
 
   const filteredUserIds = filteredUserAccounts.map((account) => account.id);
   const filteredConsultantIds = filteredConsultantAccounts.map((account) => account.id);
@@ -492,13 +513,15 @@ function Admin() {
 
     setUserAccounts((prev) => [
       {
-        id: `USR-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
+        id: newUserForm.id || `USR-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
           .toString()
           .padStart(3, '0')}`,
         name: newUserForm.name,
         email: newUserForm.email,
         company: newUserForm.company || 'Unassigned',
+        department: newUserForm.department || '未設定',
         role: newUserForm.role || 'Candidate',
+        permission: newUserForm.permission || '一般ユーザー',
         status: newUserForm.status,
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -511,7 +534,7 @@ function Admin() {
       ...prev,
     ]);
 
-    setNewUserForm({ name: '', email: '', company: '', role: '', status: '面談準備中' });
+    setNewUserForm({ id: '', name: '', email: '', company: '', department: '', role: '', permission: '一般ユーザー', status: '面談準備中' });
     toast({
       title: 'アカウントを追加しました',
       status: 'success',
@@ -538,13 +561,15 @@ function Admin() {
 
     setConsultantAccounts((prev) => [
       {
-        id: `CNS-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
+        id: newConsultantForm.id || `CNS-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
           .toString()
           .padStart(3, '0')}`,
         name: newConsultantForm.name,
         email: newConsultantForm.email,
         company: newConsultantForm.company || 'Career Carte Inc.',
+        department: newConsultantForm.department || 'Career Consulting',
         role: newConsultantForm.role || 'Consultant',
+        permission: newConsultantForm.permission || 'キャリアコンサルタント',
         status: newConsultantForm.status,
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -557,7 +582,7 @@ function Admin() {
       ...prev,
     ]);
 
-    setNewConsultantForm({ name: '', email: '', company: '', role: '', status: 'アクティブ' });
+    setNewConsultantForm({ id: '', name: '', email: '', company: '', department: '', role: '', permission: 'キャリアコンサルタント', status: 'アクティブ' });
     toast({
       title: 'コンサルタントアカウントを追加しました',
       status: 'success',
@@ -578,12 +603,12 @@ function Admin() {
     const nextPreview: CsvPreviewRecord[] =
       csvModalType === 'user'
         ? [
-            { id: 'USR-2024-041', name: '中村 愛', email: 'ai.nakamura@example.com', role: 'CS Lead' },
-            { id: 'USR-2024-042', name: '小林 真', email: 'makoto.kobayashi@example.com', role: 'Sales' },
+            { id: 'USR-2024-041', name: '中村 愛', email: 'ai.nakamura@example.com', company: 'Career Carte Inc.', department: 'Customer Success', role: 'CS Lead', permission: '一般ユーザー' },
+            { id: 'USR-2024-042', name: '小林 真', email: 'makoto.kobayashi@example.com', company: 'Career Carte Inc.', department: 'Sales', role: 'Sales', permission: '一般ユーザー' },
           ]
         : [
-            { id: 'CNS-407', name: '石井 拓', email: 'taku.ishii@example.com', role: 'Lead Consultant' },
-            { id: 'CNS-408', name: '森本 莉子', email: 'riko.morimoto@example.com', role: 'Consultant' },
+            { id: 'CNS-407', name: '石井 拓', email: 'taku.ishii@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Lead Consultant', permission: 'キャリアコンサルタント' },
+            { id: 'CNS-408', name: '森本 莉子', email: 'riko.morimoto@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Consultant', permission: 'キャリアコンサルタント' },
           ];
 
     if (csvModalType === 'user') {
@@ -657,12 +682,13 @@ function Admin() {
     setBulkTarget(target);
     setBulkForm({
       company: '',
+      department: '',
       role: '',
+      permission: '',
       status: '',
       initialInterviewRemaining: '',
       continuousInterviewRemaining: '',
       initialLlmCallsPerInterview: '',
-      continuousLlmCallsPerInterview: '',
     });
     bulkEditDisclosure.onOpen();
   };
@@ -674,17 +700,14 @@ function Admin() {
     const initialRemainingValue = Number(editForm.initialInterviewRemaining);
     const continuousRemainingValue = Number(editForm.continuousInterviewRemaining);
     const initialLlmValue = Number(editForm.initialLlmCallsPerInterview);
-    const continuousLlmValue = Number(editForm.continuousLlmCallsPerInterview);
 
     if (
       Number.isNaN(initialRemainingValue) ||
       Number.isNaN(continuousRemainingValue) ||
       Number.isNaN(initialLlmValue) ||
-      Number.isNaN(continuousLlmValue) ||
       initialRemainingValue < 0 ||
       continuousRemainingValue < 0 ||
-      initialLlmValue <= 0 ||
-      continuousLlmValue <= 0
+      initialLlmValue <= 0
     ) {
       toast({
         title: '入力値が正しくありません',
@@ -709,15 +732,18 @@ function Admin() {
         account.id === editingAccount.id
           ? {
               ...account,
+              id: editForm.id,
               name: editForm.name,
               email: editForm.email,
               company: editForm.company,
+              department: editForm.department,
               role: editForm.role,
+              permission: editForm.permission,
               status: editForm.status,
               initialInterviewRemaining: initialRemainingValue,
               continuousInterviewRemaining: continuousRemainingValue,
               initialLlmCallsPerInterview: initialLlmValue,
-              continuousLlmCallsPerInterview: continuousLlmValue,
+              continuousLlmCallsPerInterview: initialLlmValue,
               updatedAt: nextTimestamp,
             }
           : account,
@@ -755,16 +781,13 @@ function Admin() {
         : Number(bulkForm.continuousInterviewRemaining);
     const llmValue =
       bulkForm.initialLlmCallsPerInterview.trim() === '' ? null : Number(bulkForm.initialLlmCallsPerInterview);
-    const continuousLlmValue =
-      bulkForm.continuousLlmCallsPerInterview.trim() === '' ? null : Number(bulkForm.continuousLlmCallsPerInterview);
 
     if (
       (initialRemainingValue !== null &&
         (Number.isNaN(initialRemainingValue) || initialRemainingValue < 0)) ||
       (continuousRemainingValue !== null &&
         (Number.isNaN(continuousRemainingValue) || continuousRemainingValue < 0)) ||
-      (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0)) ||
-      (continuousLlmValue !== null && (Number.isNaN(continuousLlmValue) || continuousLlmValue <= 0))
+      (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0))
     ) {
       toast({
         title: '入力値が正しくありません',
@@ -790,13 +813,15 @@ function Admin() {
         return {
           ...account,
           company: bulkForm.company.trim() === '' ? account.company : bulkForm.company,
+          department: bulkForm.department.trim() === '' ? account.department : bulkForm.department,
           role: bulkForm.role.trim() === '' ? account.role : bulkForm.role,
+          permission: bulkForm.permission.trim() === '' ? account.permission : bulkForm.permission,
           status: bulkForm.status.trim() === '' ? account.status : bulkForm.status,
           initialInterviewRemaining: initialRemainingValue ?? account.initialInterviewRemaining,
           continuousInterviewRemaining:
             continuousRemainingValue ?? account.continuousInterviewRemaining,
           initialLlmCallsPerInterview: llmValue ?? account.initialLlmCallsPerInterview,
-          continuousLlmCallsPerInterview: continuousLlmValue ?? account.continuousLlmCallsPerInterview,
+          continuousLlmCallsPerInterview: llmValue ?? account.continuousLlmCallsPerInterview,
           updatedAt: nextTimestamp,
         };
       });
@@ -926,20 +951,10 @@ function Admin() {
                 <Text color="whiteAlpha.800">ユーザーアカウント専用の一覧。Excelライクな表で状態を確認できます。</Text>
                 <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                   <Input
-                    placeholder="ID / 氏名 / メール / 会社 で検索"
+                    placeholder="ID / 氏名 / メール / 会社名 / 部署 / 職種 / 権限 で検索"
                     value={userQuery}
                     onChange={(event) => setUserQuery(event.target.value)}
                   />
-                  <Select
-                    maxW={{ md: '240px' }}
-                    value={userStatusFilter}
-                    onChange={(event) => setUserStatusFilter(event.target.value)}
-                  >
-                    <option value="all">すべてのステータス</option>
-                    <option value="面談準備中">面談準備中</option>
-                    <option value="進行中">進行中</option>
-                    <option value="完了">完了</option>
-                  </Select>
                   <Button
                     width={{ md: '240px' }}
                     size="md"
@@ -994,39 +1009,19 @@ function Admin() {
                         <SortButton onSort={handleSort} label="氏名" target="user" column="name" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="会社" target="user" column="company" />
-                      </Th>
-                      <Th>メール</Th>
-                      <Th>
-                        <SortButton onSort={handleSort} label="ステータス" target="user" column="status" />
+                        <SortButton onSort={handleSort} label="メール" target="user" column="email" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="作成日時" target="user" column="createdAt" />
+                        <SortButton onSort={handleSort} label="会社名" target="user" column="company" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="更新日時" target="user" column="updatedAt" />
+                        <SortButton onSort={handleSort} label="部署" target="user" column="department" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="企業API使用状況" target="user" column="initialInterviewRemaining" />
+                        <SortButton onSort={handleSort} label="職種" target="user" column="role" />
                       </Th>
                       <Th>
-                        <SortButton
-                          onSort={handleSort}
-                          label="企業API残り"
-                          target="user"
-                          column="continuousInterviewRemaining"
-                        />
-                      </Th>
-                      <Th>
-                        <SortButton
-                          onSort={handleSort}
-                          label="最大ターン/面談"
-                          target="user"
-                          column="initialLlmCallsPerInterview"
-                        />
-                      </Th>
-                      <Th>
-                        <SortButton onSort={handleSort} label="操作ログ" target="user" column="logs" />
+                        <SortButton onSort={handleSort} label="権限" target="user" column="permission" />
                       </Th>
                       <Th>アクション</Th>
                     </Tr>
@@ -1034,7 +1029,6 @@ function Admin() {
                   <Tbody>
                     {filteredUserAccounts.map((rawAccount) => {
                       const account = getQuotaBackedAccount(rawAccount);
-                      const apiUsage = getCompanyApiUsageSummary(usageQuota);
                       return (
                       <Tr
                         key={account.id}
@@ -1057,40 +1051,13 @@ function Admin() {
                         </Td>
                         <Td fontWeight="medium">{account.id}</Td>
                         <Td>
-                          <Stack spacing={0}>
-                            <Text fontWeight="semibold">{account.name}</Text>
-                            <Text fontSize="xs" color="whiteAlpha.700">
-                              {account.role}
-                            </Text>
-                          </Stack>
+                          <Text fontWeight="semibold">{account.name}</Text>
                         </Td>
+                        <Td fontSize="sm">{account.email}</Td>
                         <Td>{account.company}</Td>
-                        <Td>
-                          <Text fontSize="sm" color="whiteAlpha.800">
-                            {account.email}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <Badge colorScheme={account.status === '完了' ? 'green' : 'purple'}>
-                            {account.status}
-                          </Badge>
-                        </Td>
-                        <Td fontSize="sm">{account.createdAt}</Td>
-                        <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">
-                          {account.id === DEFAULT_DEMO_USER_ID
-                            ? apiUsage.usageLabel
-                            : `${account.initialInterviewRemaining}回`}
-                        </Td>
-                        <Td fontSize="sm">
-                          {account.id === DEFAULT_DEMO_USER_ID
-                            ? `${apiUsage.remaining}回`
-                            : `${account.continuousInterviewRemaining}回`}
-                        </Td>
-                        <Td fontSize="sm">
-                          {account.initialLlmCallsPerInterview}ターン
-                        </Td>
-                        <Td fontSize="sm">{account.logs}件</Td>
+                        <Td>{account.department}</Td>
+                        <Td>{account.role}</Td>
+                        <Td><Badge colorScheme="blue">{account.permission}</Badge></Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
                             <Button
@@ -1145,6 +1112,15 @@ function Admin() {
                             <Heading size="sm" display="flex" alignItems="center" gap={2}>
                               <FiPlus /> 個別追加
                             </Heading>
+                            <FormControl>
+                              <FormLabel>ID</FormLabel>
+                              <Input
+                                value={newUserForm.id}
+                                onChange={(event) =>
+                                  setNewUserForm((prev) => ({ ...prev, id: event.target.value }))
+                                }
+                              />
+                            </FormControl>
                             <FormControl isRequired>
                               <FormLabel>氏名</FormLabel>
                               <Input
@@ -1174,7 +1150,16 @@ function Admin() {
                               />
                             </FormControl>
                             <FormControl>
-                              <FormLabel>職種 / ロール</FormLabel>
+                              <FormLabel>部署</FormLabel>
+                              <Input
+                                value={newUserForm.department}
+                                onChange={(event) =>
+                                  setNewUserForm((prev) => ({ ...prev, department: event.target.value }))
+                                }
+                              />
+                            </FormControl>
+                            <FormControl>
+                              <FormLabel>職種</FormLabel>
                               <Input
                                 value={newUserForm.role}
                                 onChange={(event) =>
@@ -1183,16 +1168,18 @@ function Admin() {
                               />
                             </FormControl>
                             <FormControl>
-                              <FormLabel>ステータス</FormLabel>
+                              <FormLabel>権限</FormLabel>
                               <Select
-                                value={newUserForm.status}
+                                value={newUserForm.permission}
                                 onChange={(event) =>
-                                  setNewUserForm((prev) => ({ ...prev, status: event.target.value }))
+                                  setNewUserForm((prev) => ({ ...prev, permission: event.target.value }))
                                 }
                               >
-                                <option value="面談準備中">面談準備中</option>
-                                <option value="進行中">進行中</option>
-                                <option value="完了">完了</option>
+                                {permissionOptions.map((permission) => (
+                                  <option key={permission} value={permission}>
+                                    {permission}
+                                  </option>
+                                ))}
                               </Select>
                             </FormControl>
                             <PrimaryButton type="submit" alignSelf="flex-start">
@@ -1208,7 +1195,7 @@ function Admin() {
                           </Heading>
                           <Text color="whiteAlpha.800">
                             CSVをアップロードして内容を確認後、一括登録を実行します。ヘッダーは
-                            <strong> ID, Name, Email, Role </strong>
+                            <strong> ID, Name, Email, Company, Department, JobTitle, Permission </strong>
                             の順で設定してください。
                           </Text>
                           <Button
@@ -1244,19 +1231,10 @@ function Admin() {
                 </Text>
                 <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                   <Input
-                    placeholder="ID / 氏名 / メール / 会社 で検索"
+                    placeholder="ID / 氏名 / メール / 会社名 / 部署 / 職種 / 権限 で検索"
                     value={consultantQuery}
                     onChange={(event) => setConsultantQuery(event.target.value)}
                   />
-                  <Select
-                    maxW={{ md: '240px' }}
-                    value={consultantStatusFilter}
-                    onChange={(event) => setConsultantStatusFilter(event.target.value)}
-                  >
-                    <option value="all">すべての状態</option>
-                    <option value="アクティブ">アクティブ</option>
-                    <option value="休止中">休止中</option>
-                  </Select>
                   <Button
                     width={{ md: '240px' }}
                     size="md"
@@ -1317,44 +1295,19 @@ function Admin() {
                         <SortButton onSort={handleSort} label="氏名" target="consultant" column="name" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="会社" target="consultant" column="company" />
-                      </Th>
-                      <Th>メール</Th>
-                      <Th>
-                        <SortButton onSort={handleSort} label="ステータス" target="consultant" column="status" />
+                        <SortButton onSort={handleSort} label="メール" target="consultant" column="email" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="作成日時" target="consultant" column="createdAt" />
+                        <SortButton onSort={handleSort} label="会社名" target="consultant" column="company" />
                       </Th>
                       <Th>
-                        <SortButton onSort={handleSort} label="更新日時" target="consultant" column="updatedAt" />
+                        <SortButton onSort={handleSort} label="部署" target="consultant" column="department" />
                       </Th>
                       <Th>
-                        <SortButton
-                          onSort={handleSort}
-                          label="API総枠メモ"
-                          target="consultant"
-                          column="initialInterviewRemaining"
-                        />
+                        <SortButton onSort={handleSort} label="職種" target="consultant" column="role" />
                       </Th>
                       <Th>
-                        <SortButton
-                          onSort={handleSort}
-                          label="API残枠メモ"
-                          target="consultant"
-                          column="continuousInterviewRemaining"
-                        />
-                      </Th>
-                      <Th>
-                        <SortButton
-                          onSort={handleSort}
-                          label="最大ターン/面談"
-                          target="consultant"
-                          column="initialLlmCallsPerInterview"
-                        />
-                      </Th>
-                      <Th>
-                        <SortButton onSort={handleSort} label="操作ログ" target="consultant" column="logs" />
+                        <SortButton onSort={handleSort} label="権限" target="consultant" column="permission" />
                       </Th>
                       <Th>アクション</Th>
                     </Tr>
@@ -1382,32 +1335,13 @@ function Admin() {
                         </Td>
                         <Td fontWeight="medium">{account.id}</Td>
                         <Td>
-                          <Stack spacing={0}>
-                            <Text fontWeight="semibold">{account.name}</Text>
-                            <Text fontSize="xs" color="whiteAlpha.700">
-                              {account.role}
-                            </Text>
-                          </Stack>
+                          <Text fontWeight="semibold">{account.name}</Text>
                         </Td>
+                        <Td fontSize="sm">{account.email}</Td>
                         <Td>{account.company}</Td>
-                        <Td>
-                          <Text fontSize="sm" color="whiteAlpha.800">
-                            {account.email}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <Badge colorScheme={account.status === '休止中' ? 'orange' : 'green'}>
-                            {account.status}
-                          </Badge>
-                        </Td>
-                        <Td fontSize="sm">{account.createdAt}</Td>
-                        <Td fontSize="sm">{account.updatedAt}</Td>
-                        <Td fontSize="sm">{account.initialInterviewRemaining}回</Td>
-                        <Td fontSize="sm">{account.continuousInterviewRemaining}回</Td>
-                        <Td fontSize="sm">
-                          {account.initialLlmCallsPerInterview}ターン
-                        </Td>
-                        <Td fontSize="sm">{account.logs}件</Td>
+                        <Td>{account.department}</Td>
+                        <Td>{account.role}</Td>
+                        <Td><Badge colorScheme="purple">{account.permission}</Badge></Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
                             <Button
@@ -1461,6 +1395,15 @@ function Admin() {
                             <Heading size="sm" display="flex" alignItems="center" gap={2}>
                               <FiPlus /> 個別追加
                             </Heading>
+                            <FormControl>
+                              <FormLabel>ID</FormLabel>
+                              <Input
+                                value={newConsultantForm.id}
+                                onChange={(event) =>
+                                  setNewConsultantForm((prev) => ({ ...prev, id: event.target.value }))
+                                }
+                              />
+                            </FormControl>
                             <FormControl isRequired>
                               <FormLabel>氏名</FormLabel>
                               <Input
@@ -1490,7 +1433,16 @@ function Admin() {
                               />
                             </FormControl>
                             <FormControl>
-                              <FormLabel>職種 / ロール</FormLabel>
+                              <FormLabel>部署</FormLabel>
+                              <Input
+                                value={newConsultantForm.department}
+                                onChange={(event) =>
+                                  setNewConsultantForm((prev) => ({ ...prev, department: event.target.value }))
+                                }
+                              />
+                            </FormControl>
+                            <FormControl>
+                              <FormLabel>職種</FormLabel>
                               <Input
                                 value={newConsultantForm.role}
                                 onChange={(event) =>
@@ -1499,15 +1451,18 @@ function Admin() {
                               />
                             </FormControl>
                             <FormControl>
-                              <FormLabel>ステータス</FormLabel>
+                              <FormLabel>権限</FormLabel>
                               <Select
-                                value={newConsultantForm.status}
+                                value={newConsultantForm.permission}
                                 onChange={(event) =>
-                                  setNewConsultantForm((prev) => ({ ...prev, status: event.target.value }))
+                                  setNewConsultantForm((prev) => ({ ...prev, permission: event.target.value }))
                                 }
                               >
-                                <option value="アクティブ">アクティブ</option>
-                                <option value="休止中">休止中</option>
+                                {permissionOptions.map((permission) => (
+                                  <option key={permission} value={permission}>
+                                    {permission}
+                                  </option>
+                                ))}
                               </Select>
                             </FormControl>
                             <PrimaryButton type="submit" alignSelf="flex-start">
@@ -1522,7 +1477,7 @@ function Admin() {
                             <FiUpload /> CSV一括追加
                           </Heading>
                           <Text color="whiteAlpha.800">
-                            CSVアップロードで複数のコンサルタントを同時に登録します。担当ロールやSlack通知設定もCSVに含められます。
+                            CSVアップロードで複数のコンサルタントを同時に登録します。会社名、部署、職種、権限もCSVに含められます。
                           </Text>
                           <Button
                             {...outlineLightButtonProps}
@@ -1642,7 +1597,10 @@ function Admin() {
                       <Th>ID</Th>
                       <Th>氏名</Th>
                       <Th>メール</Th>
-                      <Th>ロール</Th>
+                      <Th>会社名</Th>
+                      <Th>部署</Th>
+                      <Th>職種</Th>
+                      <Th>権限</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
@@ -1651,7 +1609,10 @@ function Admin() {
                         <Td>{record.id}</Td>
                         <Td>{record.name}</Td>
                         <Td>{record.email}</Td>
+                        <Td>{record.company}</Td>
+                        <Td>{record.department}</Td>
                         <Td>{record.role}</Td>
+                        <Td>{record.permission}</Td>
                       </Tr>
                     ))}
                   </Tbody>
@@ -1684,10 +1645,16 @@ function Admin() {
             <Stack spacing={4}>
               {editingAccount ? (
                 <>
-                  <Text fontSize="sm" color="gray.600">
-                    ID: {editingAccount.id}
-                  </Text>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <FormControl isRequired>
+                      <FormLabel>ID</FormLabel>
+                      <Input
+                        value={editForm.id}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, id: event.target.value }))
+                        }
+                      />
+                    </FormControl>
                     <FormControl isRequired>
                       <FormLabel>氏名</FormLabel>
                       <Input
@@ -1717,7 +1684,16 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl>
-                      <FormLabel>職種 / ロール</FormLabel>
+                      <FormLabel>部署</FormLabel>
+                      <Input
+                        value={editForm.department}
+                        onChange={(event) =>
+                          setEditForm((prev) => ({ ...prev, department: event.target.value }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>職種</FormLabel>
                       <Input
                         value={editForm.role}
                         onChange={(event) =>
@@ -1726,26 +1702,23 @@ function Admin() {
                       />
                     </FormControl>
                     <FormControl isRequired>
-                      <FormLabel>ステータス</FormLabel>
+                      <FormLabel>権限</FormLabel>
                       <Select
-                        value={editForm.status}
+                        value={editForm.permission}
                         onChange={(event) =>
-                          setEditForm((prev) => ({ ...prev, status: event.target.value }))
+                          setEditForm((prev) => ({ ...prev, permission: event.target.value }))
                         }
                       >
-                        {(editTarget === 'consultant'
-                          ? consultantStatusOptions
-                          : userStatusOptions
-                        ).map((status) => (
-                          <option key={status} value={status}>
-                            {status}
+                        {permissionOptions.map((permission) => (
+                          <option key={permission} value={permission}>
+                            {permission}
                           </option>
                         ))}
                       </Select>
                     </FormControl>
                   </SimpleGrid>
                   <Divider />
-                  <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <FormControl isRequired>
                       <FormLabel>企業API総回数</FormLabel>
                       <Input
@@ -1784,20 +1757,6 @@ function Admin() {
                           setEditForm((prev) => ({
                             ...prev,
                             initialLlmCallsPerInterview: event.target.value,
-                          }))
-                        }
-                      />
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>面談1回あたり最大ターン数（同値）</FormLabel>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={editForm.continuousLlmCallsPerInterview}
-                        onChange={(event) =>
-                          setEditForm((prev) => ({
-                            ...prev,
-                            continuousLlmCallsPerInterview: event.target.value,
                           }))
                         }
                       />
@@ -1849,7 +1808,17 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>職種 / ロール</FormLabel>
+                  <FormLabel>部署</FormLabel>
+                  <Input
+                    placeholder="変更しない"
+                    value={bulkForm.department}
+                    onChange={(event) =>
+                      setBulkForm((prev) => ({ ...prev, department: event.target.value }))
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>職種</FormLabel>
                   <Input
                     placeholder="変更しない"
                     value={bulkForm.role}
@@ -1859,27 +1828,24 @@ function Admin() {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>ステータス</FormLabel>
+                  <FormLabel>権限</FormLabel>
                   <Select
-                    value={bulkForm.status}
+                    value={bulkForm.permission}
                     onChange={(event) =>
-                      setBulkForm((prev) => ({ ...prev, status: event.target.value }))
+                      setBulkForm((prev) => ({ ...prev, permission: event.target.value }))
                     }
                   >
                     <option value="">変更しない</option>
-                    {(bulkTarget === 'consultant'
-                      ? consultantStatusOptions
-                      : userStatusOptions
-                    ).map((status) => (
-                      <option key={status} value={status}>
-                        {status}
+                    {permissionOptions.map((permission) => (
+                      <option key={permission} value={permission}>
+                        {permission}
                       </option>
                     ))}
                   </Select>
                 </FormControl>
               </SimpleGrid>
               <Divider />
-              <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                 <FormControl>
                   <FormLabel>企業API総回数</FormLabel>
                   <Input
@@ -1921,21 +1887,6 @@ function Admin() {
                       setBulkForm((prev) => ({
                         ...prev,
                         initialLlmCallsPerInterview: event.target.value,
-                      }))
-                    }
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>面談1回あたり最大ターン数（同値）</FormLabel>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="変更しない"
-                    value={bulkForm.continuousLlmCallsPerInterview}
-                    onChange={(event) =>
-                      setBulkForm((prev) => ({
-                        ...prev,
-                        continuousLlmCallsPerInterview: event.target.value,
                       }))
                     }
                   />

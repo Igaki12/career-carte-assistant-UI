@@ -111,10 +111,14 @@ const buildCsvRows = ({ karte, meta }: KarteExportPayload): CsvRow[] => {
   ];
 
   const demographicsRows: Array<[string, string | null]> = [
+    ['ID', karte.demographics.accountId],
     ['氏名', karte.demographics.name],
-    ['年齢', karte.demographics.age],
-    ['所属企業', karte.demographics.company],
+    ['メール', karte.demographics.email],
+    ['会社名', karte.demographics.company],
+    ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],
+    ['権限', karte.demographics.permission],
+    ['年齢', karte.demographics.age],
     ['勤務地(都道府県)', karte.demographics.workLocationPrefecture],
     ['転職歴(回数)', karte.demographics.jobChangeCount],
     ['勤続年数(年)', karte.demographics.yearsOfService],
@@ -386,10 +390,14 @@ const buildKartePdfPages = (payload: KarteBatchExportPayload) => {
 
   drawSectionTitle(pages, '基本情報');
   [
+    ['ID', formatPlainValue(karte.demographics.accountId)],
     ['氏名', formatPlainValue(karte.demographics.name)],
-    ['年齢', formatPlainValue(karte.demographics.age)],
-    ['所属企業', formatPlainValue(karte.demographics.company)],
+    ['メール', formatPlainValue(karte.demographics.email)],
+    ['会社名', formatPlainValue(karte.demographics.company)],
+    ['部署', formatPlainValue(karte.demographics.department)],
     ['職種', formatPlainValue(karte.demographics.jobTitle)],
+    ['権限', formatPlainValue(karte.demographics.permission)],
+    ['年齢', formatPlainValue(karte.demographics.age)],
     ['勤務地(都道府県)', formatPlainValue(karte.demographics.workLocationPrefecture)],
     ['転職歴(回数)', formatPlainValue(karte.demographics.jobChangeCount)],
     ['勤続年数(年)', formatPlainValue(karte.demographics.yearsOfService)],

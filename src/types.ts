@@ -30,10 +30,14 @@ export type ShirpDetailFieldUpdates = {
 export type ShirpDetailUpdates = Partial<Record<ShirpDetailCategoryKey, Record<string, ShirpDetailFieldUpdates>>>;
 
 export type DemographicData = {
+  accountId: string | null;
   name: string | null;
+  email: string | null;
   age: string | null;
   company: string | null;
+  department: string | null;
   jobTitle: string | null;
+  permission: string | null;
   workLocationPrefecture: string | null;
   jobChangeCount: string | null;
   yearsOfService: string | null;
@@ -123,6 +127,7 @@ export type CompanyEmployeeRecord = {
   company: string;
   department: string;
   jobTitle: string;
+  permission: string;
   status: string;
   latestKarte: KarteData | null;
   karteRecords: StoredKarteRecord[];

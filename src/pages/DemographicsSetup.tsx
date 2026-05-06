@@ -91,10 +91,14 @@ type FieldDefinition = {
 };
 
 const FIELD_LABELS: FieldDefinition[] = [
+  { key: 'accountId', label: 'ID', placeholder: 'USR-2024-021' },
   { key: 'name', label: '氏名', placeholder: '山田 花子' },
-  { key: 'age', label: '年齢', placeholder: '32', kind: 'number', min: 0, step: 1 },
-  { key: 'company', label: '所属企業', placeholder: 'Career Carte Inc.' },
+  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com' },
+  { key: 'company', label: '会社名', placeholder: 'Career Carte Inc.' },
+  { key: 'department', label: '部署', placeholder: 'Product Division' },
   { key: 'jobTitle', label: '職種', placeholder: 'Product Manager' },
+  { key: 'permission', label: '権限', kind: 'select', options: ['一般ユーザー', '企業管理者', 'キャリアコンサルタント'] },
+  { key: 'age', label: '年齢', placeholder: '32', kind: 'number', min: 0, step: 1 },
   { key: 'workLocationPrefecture', label: '勤務地(都道府県)', placeholder: '東京都' },
   { key: 'jobChangeCount', label: '転職歴(回数)', placeholder: '2', kind: 'number', min: 0, step: 1 },
   { key: 'yearsOfService', label: '勤続年数(年)', placeholder: '4', kind: 'number', min: 0, step: 1 },
