@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, RepeatIcon } from '@chakra-ui/icons';
 import {
   Badge,
   Box,
@@ -29,7 +29,9 @@ import {
   Text,
   Th,
   Thead,
+  Tooltip,
   Tr,
+  IconButton,
   useToast,
 } from '@chakra-ui/react';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
@@ -51,7 +53,7 @@ import {
   updateDemoUsageQuota,
   type DemoUsageQuota,
 } from '../lib/demoUsageQuota';
-import { downloadKartePdf, downloadKartePdfBatch, printKartePayloads, type KarteBatchExportPayload } from '../lib/karteExport';
+import { downloadKarteCsv, downloadKarteCsvBatch, printKartePayloads, type KarteBatchExportPayload } from '../lib/karteExport';
 import type { CompanyEmployeeRecord, DemoUserState } from '../types';
 
 type EmployeeSortColumn = 'id' | 'name' | 'email' | 'company' | 'department' | 'jobTitle' | 'status' | 'updatedAt';
@@ -281,15 +283,15 @@ function CompanyAdminHome() {
     return payloads;
   };
 
-  const handleEmployeePdf = async (employee: CompanyEmployeeRecord) => {
+  const handleEmployeeCsv = (employee: CompanyEmployeeRecord) => {
     const payload = buildExportPayload(employee);
     if (!payload) return;
     try {
-      await downloadKartePdf(payload);
-      toast({ title: 'PDFをダウンロードしました', status: 'success', duration: 2200, isClosable: true });
+      downloadKarteCsv(payload);
+      toast({ title: 'CSVをダウンロードしました', status: 'success', duration: 2200, isClosable: true });
     } catch (error) {
       toast({
-        title: 'PDF出力に失敗しました',
+        title: 'CSV出力に失敗しました',
         description: error instanceof Error ? error.message : undefined,
         status: 'error',
         duration: 3200,
@@ -314,18 +316,18 @@ function CompanyAdminHome() {
     }
   };
 
-  const handleBatchPdf = async () => {
+  const handleBatchCsv = () => {
     const payloads = getSelectedPayloads(selectedEmployees);
     if (payloads.length === 0) {
       toast({ title: '出力できるカルテがありません', status: 'warning', duration: 2400, isClosable: true });
       return;
     }
     try {
-      await downloadKartePdfBatch(payloads);
-      toast({ title: '一括PDFをダウンロードしました', status: 'success', duration: 2200, isClosable: true });
+      downloadKarteCsvBatch(payloads);
+      toast({ title: '一括CSVをダウンロードしました', status: 'success', duration: 2200, isClosable: true });
     } catch (error) {
       toast({
-        title: '一括PDF出力に失敗しました',
+        title: '一括CSV出力に失敗しました',
         description: error instanceof Error ? error.message : undefined,
         status: 'error',
         duration: 3200,
@@ -418,9 +420,17 @@ function CompanyAdminHome() {
                   <Badge colorScheme="purple">一般ユーザーと同一ログイン入口想定</Badge>
                 </Flex>
               </Stack>
-              <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/company-admin')}>
-                企業管理トップを再表示
-              </Button>
+              <Tooltip label="更新" placement="left">
+                <IconButton
+                  aria-label="企業管理トップを再表示"
+                  icon={<RepeatIcon boxSize={5} />}
+                  variant="outline"
+                  color="white"
+                  borderColor="whiteAlpha.500"
+                  _hover={{ bg: 'whiteAlpha.160' }}
+                  onClick={() => navigate('/company-admin')}
+                />
+              </Tooltip>
             </Flex>
           </Box>
 
@@ -464,18 +474,6 @@ function CompanyAdminHome() {
           </SimpleGrid>
 
           <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
-            <Stack spacing={4}>
-              <Heading size="md">企業別オプション</Heading>
-              <Checkbox isChecked={flags.stressAnalysisEnabled} onChange={(event) => handleStressToggle(event.target.checked)}>
-                面談前コンディションチェックと緊張度スコア表示を有効にする
-              </Checkbox>
-              <Text fontSize="sm" color="whiteAlpha.700">
-                個人別の顔分析結果は企業管理者画面には表示せず、測定件数などの集計のみ扱います。
-              </Text>
-            </Stack>
-          </Box>
-
-          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <form onSubmit={handleQuotaSubmit}>
               <Stack spacing={4}>
                 <Heading size="md">企業API使用枠・会話ターン制限</Heading>
@@ -508,6 +506,18 @@ function CompanyAdminHome() {
           </Box>
 
           <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
+            <Stack spacing={4}>
+              <Heading size="md">企業別オプション</Heading>
+              <Checkbox isChecked={flags.stressAnalysisEnabled} onChange={(event) => handleStressToggle(event.target.checked)}>
+                面談前コンディションチェックと緊張度スコア表示を有効にする
+              </Checkbox>
+              <Text fontSize="sm" color="whiteAlpha.700">
+                個人別の顔分析結果は企業管理者画面には表示せず、測定件数などの集計のみ扱います。
+              </Text>
+            </Stack>
+          </Box>
+
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <Stack spacing={5}>
               <Flex justify="space-between" align={{ base: 'stretch', lg: 'center' }} gap={4} direction={{ base: 'column', lg: 'row' }}>
                 <Stack spacing={1}>
@@ -520,8 +530,8 @@ function CompanyAdminHome() {
                   <Button size="sm" variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleSelectAll}>
                     {allFilteredSelected ? '表示中の選択解除' : '表示中を一括選択'}
                   </Button>
-                  <PrimaryButton size="sm" onClick={handleBatchPdf} isDisabled={selectedEmployeeIds.length === 0}>
-                    選択カルテPDF
+                  <PrimaryButton size="sm" onClick={handleBatchCsv} isDisabled={selectedEmployeeIds.length === 0}>
+                    選択カルテCSV
                   </PrimaryButton>
                   <Button size="sm" variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleBatchPrint} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテ印刷
@@ -605,10 +615,10 @@ function CompanyAdminHome() {
                                 {...tableActionButtonProps}
                                 borderColor={hasKarte ? 'pink.400' : 'whiteAlpha.300'}
                                 _hover={hasKarte ? { bg: 'pink.500', color: 'white', borderColor: 'pink.300' } : tableActionButtonProps._hover}
-                                onClick={() => handleEmployeePdf(employee)}
+                                onClick={() => handleEmployeeCsv(employee)}
                                 isDisabled={!hasKarte}
                               >
-                                PDF
+                                CSV
                               </Button>
                             </Stack>
                           </Td>
@@ -687,8 +697,8 @@ function CompanyAdminHome() {
             >
               印刷
             </Button>
-            <PrimaryButton onClick={() => viewingEmployee && handleEmployeePdf(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
-              PDFとして保存
+            <PrimaryButton onClick={() => viewingEmployee && handleEmployeeCsv(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
+              CSVとして保存
             </PrimaryButton>
             <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={() => setViewingEmployee(null)}>
               閉じる

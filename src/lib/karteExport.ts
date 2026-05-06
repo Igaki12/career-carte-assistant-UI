@@ -199,6 +199,25 @@ export const downloadKarteCsv = (payload: KarteExportPayload) => {
   downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), buildFileName('csv'));
 };
 
+export const downloadKarteCsvBatch = (payloads: KarteBatchExportPayload[]) => {
+  if (payloads.length === 0) return;
+  const header = 'employeeId,employeeName,section,item,value';
+  const body = payloads
+    .flatMap((payload) =>
+      buildCsvRows(payload).map((row) => [
+        payload.employeeId ?? '',
+        payload.employeeName ?? '',
+        row.section,
+        row.item,
+        row.value,
+      ]),
+    )
+    .map((row) => row.map(escapeCsvValue).join(','))
+    .join('\r\n');
+  const csv = `\uFEFF${header}\r\n${body}`;
+  downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), buildFileName('csv', 'career-karte-batch'));
+};
+
 const createCanvasPage = (): CanvasPage => {
   const canvas = document.createElement('canvas');
   canvas.width = PAGE_WIDTH;
