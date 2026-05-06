@@ -651,6 +651,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const audioSourceUrlRef = useRef<string | null>(null);
   const audioResumePositionRef = useRef<number>(0);
   const shouldResumeAudioRef = useRef(false);
+  const pendingAudioPlaybackStartRef = useRef<(() => void) | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const audioAnalyserRef = useRef<AnalyserNode | null>(null);
@@ -899,6 +900,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     activeAudioRef.current = null;
     audioResumePositionRef.current = 0;
     shouldResumeAudioRef.current = false;
+    pendingAudioPlaybackStartRef.current = null;
     setIsSpeaking(false);
   }, [stopAudioAnalysis]);
 
@@ -1034,6 +1036,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       if (playPromise) {
         playPromise
           .then(() => {
+            pendingAudioPlaybackStartRef.current?.();
+            pendingAudioPlaybackStartRef.current = null;
             setIsSpeaking(true);
             void startAudioAnalysis(audio);
           })
@@ -1043,6 +1047,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             }
           });
       } else {
+        pendingAudioPlaybackStartRef.current?.();
+        pendingAudioPlaybackStartRef.current = null;
         setIsSpeaking(true);
         void startAudioAnalysis(audio);
       }
@@ -1125,7 +1131,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }, [openAiApiKey, toast]);
 
   const playAudioBlob = useCallback(
-    async (blob: Blob, playbackRate: number) => {
+    async (blob: Blob, playbackRate: number, onPlaybackStart?: () => void) => {
       const url = URL.createObjectURL(blob);
       disposeActiveAudio();
       const audio = new Audio(url);
@@ -1148,14 +1154,18 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
       if (isKarteModalOpen) {
         shouldResumeAudioRef.current = true;
+        pendingAudioPlaybackStartRef.current = onPlaybackStart ?? null;
         return;
       }
 
       try {
         await audio.play();
+        pendingAudioPlaybackStartRef.current = null;
+        onPlaybackStart?.();
         setIsSpeaking(true);
         await startAudioAnalysis(audio);
       } catch (playError) {
+        pendingAudioPlaybackStartRef.current = null;
         if (activeAudioRef.current === audio) {
           disposeActiveAudio();
         } else {
@@ -1168,7 +1178,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   );
 
   const playWithOpenAiTts = useCallback(
-    async (text: string) => {
+    async (text: string, onPlaybackStart?: () => void) => {
       if (!openAiApiKey || !text) {
         throw new Error('OpenAI APIキーが設定されていません。');
       }
@@ -1191,13 +1201,13 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       }
 
       const blob = await response.blob();
-      await playAudioBlob(blob, 1.2);
+      await playAudioBlob(blob, 1.2, onPlaybackStart);
     },
     [openAiApiKey, playAudioBlob],
   );
 
   const playWithGeminiTts = useCallback(
-    async (text: string) => {
+    async (text: string, onPlaybackStart?: () => void) => {
       if (!geminiApiKey || !text) {
         throw new Error('Gemini APIキーが設定されていません。');
       }
@@ -1247,28 +1257,29 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
       const pcmBytes = decodeBase64ToUint8Array(inlineAudio);
       const wavBlob = buildWavBlobFromMonoPcm16(pcmBytes);
-      await playAudioBlob(wavBlob, 1.0);
+      await playAudioBlob(wavBlob, 1.0, onPlaybackStart);
     },
     [geminiApiKey, playAudioBlob, selectedModelId],
   );
 
   const playTextToSpeech = useCallback(
-    async (text: string) => {
-      if (!openAiApiKey || !text) return;
+    async (text: string, onPlaybackStart?: () => void) => {
+      if (!openAiApiKey || !text) return false;
 
       try {
         if (geminiApiKey) {
           try {
-            await playWithGeminiTts(text);
-            return;
+            await playWithGeminiTts(text, onPlaybackStart);
+            return true;
           } catch (geminiError) {
             console.error(geminiError);
-            await playWithOpenAiTts(text);
-            return;
+            await playWithOpenAiTts(text, onPlaybackStart);
+            return true;
           }
         }
 
-        await playWithOpenAiTts(text);
+        await playWithOpenAiTts(text, onPlaybackStart);
+        return true;
       } catch (error) {
         console.error(error);
         toast({
@@ -1277,6 +1288,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           status: 'error',
           duration: 4000,
         });
+        return false;
       }
     },
     [geminiApiKey, openAiApiKey, playWithGeminiTts, playWithOpenAiTts, toast],
@@ -1337,18 +1349,26 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           role: 'assistant',
           content: parsed.reply,
         };
-        setMessages((prev) => {
-          const updated = [...prev, assistantMessage];
-          messagesRef.current = updated;
-          return updated;
-        });
+        let hasDisplayedAssistantMessage = false;
+        const displayAssistantMessage = () => {
+          if (hasDisplayedAssistantMessage) return;
+          hasDisplayedAssistantMessage = true;
+          setMessages((prev) => {
+            const updated = [...prev, assistantMessage];
+            messagesRef.current = updated;
+            return updated;
+          });
+        };
 
         if (finalize && parsed.feedback) {
           setFeedbackText(parsed.feedback);
         }
 
         setProcessingText('音声生成中...');
-        await playTextToSpeech(parsed.reply);
+        const didStartSpeech = await playTextToSpeech(parsed.reply, displayAssistantMessage);
+        if (!didStartSpeech) {
+          displayAssistantMessage();
+        }
       } catch (error) {
         console.error(error);
         toast({
