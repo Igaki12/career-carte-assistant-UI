@@ -72,52 +72,6 @@ type Props = {
   continuousMode?: ContinuousMode;
 };
 
-const UserGuideBubble = ({
-  children,
-  minW,
-  align = 'center',
-}: {
-  children: string;
-  minW?: string;
-  align?: 'left' | 'center' | 'right';
-}) => (
-  <Box
-    position="absolute"
-    bottom="calc(100% + 12px)"
-    left={align === 'right' ? 'auto' : align === 'left' ? 0 : '50%'}
-    right={align === 'right' ? 0 : 'auto'}
-    transform={align === 'center' ? 'translateX(-50%)' : 'none'}
-    bg="gray.900"
-    color="white"
-    px={3}
-    py={2}
-    borderRadius="md"
-    fontSize="xs"
-    fontWeight="bold"
-    lineHeight="1.5"
-    textAlign="center"
-    whiteSpace="normal"
-    minW={minW ?? '160px'}
-    maxW="220px"
-    boxShadow="0 14px 30px rgba(15, 23, 42, 0.24)"
-    zIndex={5}
-    pointerEvents="none"
-    _after={{
-      content: '""',
-      position: 'absolute',
-      top: '100%',
-      left: align === 'right' ? 'auto' : align === 'left' ? '26px' : '50%',
-      right: align === 'right' ? '26px' : 'auto',
-      transform: align === 'center' ? 'translateX(-50%)' : 'none',
-      borderWidth: '7px 7px 0 7px',
-      borderStyle: 'solid',
-      borderColor: 'gray.900 transparent transparent transparent',
-    }}
-  >
-    {children}
-  </Box>
-);
-
 const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
 const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
 const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
@@ -1745,7 +1699,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       : 'OpenAI Key: 設定済 / Gemini Key: 未設定'
     : 'OpenAI Key: 未設定';
   const apiStatusColor = openAiApiKey ? 'green' : 'gray';
-  const showInputGuide = !conversationStarted && messages.length <= 1;
 
   useEffect(() => {
     if (hasPassedStartGate) {
@@ -1930,46 +1883,32 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                 <Stack spacing={3}>
                   {isTurnTakingMode ? (
                     <Flex gap={3} align="center" justify="center">
-                      <Box position="relative" flexShrink={0}>
-                        {showInputGuide && (
-                          <UserGuideBubble align="left">
-                            このボタンで音声入力スタート
-                          </UserGuideBubble>
-                        )}
-                        <IconButton
-                          aria-label="音声入力"
-                          icon={<FaMicrophone />}
-                          colorScheme={isRecording ? 'red' : 'blue'}
-                          isDisabled={isBusy || !hasConversationQuota}
-                          onClick={toggleRecording}
-                          isRound
-                          minW="56px"
-                          h="56px"
-                        />
-                      </Box>
+                      <IconButton
+                        aria-label="音声入力"
+                        icon={<FaMicrophone />}
+                        colorScheme={isRecording ? 'red' : 'blue'}
+                        isDisabled={isBusy || !hasConversationQuota}
+                        onClick={toggleRecording}
+                        isRound
+                        minW="56px"
+                        h="56px"
+                      />
                       <Text fontSize="sm" color="gray.600">
                         マイクで話すと自動で送信されます（残り{remainingMessages}回）
                       </Text>
                     </Flex>
                   ) : (
                     <Flex gap={3} align="center">
-                      <Box position="relative" flexShrink={0}>
-                        {showInputGuide && (
-                          <UserGuideBubble align="left">
-                            このボタンで音声入力スタート
-                          </UserGuideBubble>
-                        )}
-                        <IconButton
-                          aria-label="音声入力"
-                          icon={<FaMicrophone />}
-                          colorScheme={isRecording ? 'red' : 'blue'}
-                          isDisabled={isBusy || !hasConversationQuota}
-                          onClick={toggleRecording}
-                          isRound
-                          minW="56px"
-                          h="56px"
-                        />
-                      </Box>
+                      <IconButton
+                        aria-label="音声入力"
+                        icon={<FaMicrophone />}
+                        colorScheme={isRecording ? 'red' : 'blue'}
+                        isDisabled={isBusy || !hasConversationQuota}
+                        onClick={toggleRecording}
+                        isRound
+                        minW="56px"
+                        h="56px"
+                      />
                       <Box position="relative" flex="1">
                         <Textarea
                           ref={textareaRef}
@@ -2006,23 +1945,16 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                           borderRadius="lg"
                         />
                       </Box>
-                      <Box position="relative" flexShrink={0}>
-                        {showInputGuide && (
-                          <UserGuideBubble minW="210px" align="right">
-                            Shift + Enterキーでも送信できます
-                          </UserGuideBubble>
-                        )}
-                        <IconButton
-                          aria-label="送信"
-                          icon={<FaPaperPlane />}
-                          colorScheme="blue"
-                          onClick={() => handleUserMessage(textValue)}
-                          isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
-                          borderRadius="full"
-                          minW="56px"
-                          h="56px"
-                        />
-                      </Box>
+                      <IconButton
+                        aria-label="送信"
+                        icon={<FaPaperPlane />}
+                        colorScheme="blue"
+                        onClick={() => handleUserMessage(textValue)}
+                        isDisabled={!textValue.trim() || isBusy || !hasConversationQuota}
+                        borderRadius="full"
+                        minW="56px"
+                        h="56px"
+                      />
                     </Flex>
                   )}
                   <Stack spacing={2}>
