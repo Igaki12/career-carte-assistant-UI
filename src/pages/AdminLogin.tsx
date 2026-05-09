@@ -210,6 +210,9 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
               <PrimaryButton type="submit" size="lg">
                 管理者画面へログイン
               </PrimaryButton>
+              <Text fontSize="xs" color="whiteAlpha.700">
+                デモ版のパスワード再設定・一時パスワード発行は画面確認用で、ログイン時の照合には反映されません。本番実装ではサーバー側認証へ接続します。
+              </Text>
               <Divider borderColor="whiteAlpha.300" />
               <Link
                 as={RouterLink}

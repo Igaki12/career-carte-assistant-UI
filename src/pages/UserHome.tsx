@@ -50,6 +50,7 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
+import { buildDemoPasswordIssuedAt, validateDemoPassword } from '../lib/demoPassword';
 import {
   getCompanyApiUsageSummary,
   getDemoUsageQuota,
@@ -197,6 +198,18 @@ type PendingStart = {
   meetingType: MeetingType;
   continuousMode: ContinuousMode | null;
 };
+
+type PasswordResetForm = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
+const createEmptyPasswordResetForm = (): PasswordResetForm => ({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+});
 
 const SURVEY_QUESTIONS: SurveyQuestion[] = [
   { id: 'q6_59', index: 1, label: '自分のこれからのキャリアにとって環境変化に能動的に対応している', type: 'likert', options: LIKERT_OPTIONS },
@@ -373,6 +386,8 @@ function UserHome() {
   const defaultSurveyAnswers = useMemo(() => createDefaultSurveyAnswers(), []);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
   const [lastSurveyAnswers, setLastSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
+  const [passwordResetForm, setPasswordResetForm] = useState<PasswordResetForm>(() => createEmptyPasswordResetForm());
+  const [passwordUpdatedAt, setPasswordUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
 
@@ -570,11 +585,45 @@ function UserHome() {
     setSurveyAnswers(lastSurveyAnswers);
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!passwordResetForm.currentPassword.trim()) {
+      toast({
+        title: '現在のパスワードを入力してください',
+        description: 'デモ版では実際の照合は行わず、本人確認の入力欄として扱います。',
+        status: 'warning',
+        duration: 2800,
+        isClosable: true,
+      });
+      return;
+    }
+    const validation = validateDemoPassword(passwordResetForm.newPassword);
+    if (!validation.isValid) {
+      toast({
+        title: '新しいパスワードを確認してください',
+        description: validation.message ?? undefined,
+        status: 'warning',
+        duration: 2800,
+        isClosable: true,
+      });
+      return;
+    }
+    if (passwordResetForm.newPassword !== passwordResetForm.confirmPassword) {
+      toast({
+        title: '確認用パスワードが一致しません',
+        status: 'warning',
+        duration: 2600,
+        isClosable: true,
+      });
+      return;
+    }
+    const updatedAt = buildDemoPasswordIssuedAt();
+    setPasswordUpdatedAt(updatedAt);
+    setPasswordResetForm(createEmptyPasswordResetForm());
     toast({
-      title: 'パスワードリセット手続き',
-      description: '登録メールアドレス宛に案内を送信しました（ダミー）。',
-      status: 'info',
+      title: 'デモ上のパスワードを更新しました',
+      description: 'ログイン画面は引き続き任意のパスワードで通過できます。',
+      status: 'success',
       duration: 3000,
       isClosable: true,
     });
@@ -982,6 +1031,10 @@ function UserHome() {
                               <Text fontSize="sm" color={mutedTextColor}>権限</Text>
                               <Text fontWeight="semibold">{profile.permission}</Text>
                             </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>パスワード更新</Text>
+                              <Text fontWeight="semibold">{passwordUpdatedAt ?? '未更新（デモ）'}</Text>
+                            </Stack>
                           </SimpleGrid>
                         </TabPanel>
                         <TabPanel px={0} pt={3}>
@@ -1331,26 +1384,95 @@ function UserHome() {
         </ModalContent>
       </Modal>
 
-      <Modal isOpen={resetModalDisclosure.isOpen} onClose={resetModalDisclosure.onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>パスワードの再設定</ModalHeader>
-          <ModalCloseButton />
+      <Modal
+        isOpen={resetModalDisclosure.isOpen}
+        onClose={() => {
+          setPasswordResetForm(createEmptyPasswordResetForm());
+          resetModalDisclosure.onClose();
+        }}
+        size="lg"
+      >
+        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalContent
+          as="form"
+          onSubmit={handleResetPassword}
+          bg="rgba(15, 23, 42, 0.98)"
+          color="white"
+          borderRadius="0"
+          borderWidth="1px"
+          borderColor="rgba(255, 255, 255, 0.18)"
+          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          overflow="hidden"
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '5px',
+            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(241, 245, 249, 0.92), transparent)',
+          }}
+        >
+          <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
+          <ModalCloseButton color="whiteAlpha.900" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
           <ModalBody>
             <Stack spacing={3}>
-              <Text fontSize="sm" color="gray.600">登録メールアドレスに再設定用リンクを送信します。</Text>
+              <Text fontSize="sm" color="whiteAlpha.760">
+                現在のパスワードを確認用に入力し、新しいパスワードをアプリ内で再設定します。GitHub Pagesデモ版ではログイン時のパスワード照合には反映されません。
+              </Text>
               <FormControl>
-                <FormLabel>メールアドレス</FormLabel>
-                <Input value={profile.email} isReadOnly />
+                <FormLabel>現在のパスワード</FormLabel>
+                <Input
+                  type="password"
+                  value={passwordResetForm.currentPassword}
+                  onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                  bg="rgba(15, 23, 42, 0.74)"
+                  color="white"
+                  borderColor="rgba(255, 255, 255, 0.22)"
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>新しいパスワード</FormLabel>
+                <Input
+                  type="password"
+                  value={passwordResetForm.newPassword}
+                  onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+                  placeholder="8文字以上、英字と数字を含める"
+                  bg="rgba(15, 23, 42, 0.74)"
+                  color="white"
+                  borderColor="rgba(255, 255, 255, 0.22)"
+                  _placeholder={{ color: 'whiteAlpha.500' }}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>新しいパスワード確認</FormLabel>
+                <Input
+                  type="password"
+                  value={passwordResetForm.confirmPassword}
+                  onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+                  bg="rgba(15, 23, 42, 0.74)"
+                  color="white"
+                  borderColor="rgba(255, 255, 255, 0.22)"
+                />
               </FormControl>
             </Stack>
           </ModalBody>
-          <ModalFooter>
-            <Button onClick={resetModalDisclosure.onClose} variant="outline">
+          <ModalFooter gap={3}>
+            <Button
+              onClick={() => {
+                setPasswordResetForm(createEmptyPasswordResetForm());
+                resetModalDisclosure.onClose();
+              }}
+              variant="outline"
+              color="whiteAlpha.900"
+              borderColor="whiteAlpha.500"
+              _hover={{ bg: 'whiteAlpha.160', color: 'white' }}
+            >
               キャンセル
             </Button>
-            <PrimaryButton onClick={handleResetPassword}>
-              送信する
+            <PrimaryButton type="submit">
+              再設定する
             </PrimaryButton>
           </ModalFooter>
         </ModalContent>

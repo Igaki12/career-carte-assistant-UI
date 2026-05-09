@@ -47,6 +47,11 @@ import {
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
 import {
+  buildPasswordNotification,
+  copyTextToClipboard,
+  type DemoPasswordNotification,
+} from '../lib/demoPassword';
+import {
   getCompanyApiUsageSummary,
   getDemoUsageQuota,
   subscribeDemoUsageQuota,
@@ -185,6 +190,7 @@ function CompanyAdminHome() {
   const [sort, setSort] = useState<EmployeeSortState>({ column: 'updatedAt', direction: 'desc' });
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
   const [viewingEmployee, setViewingEmployee] = useState<CompanyEmployeeRecord | null>(null);
+  const [passwordNotifications, setPasswordNotifications] = useState<DemoPasswordNotification[]>([]);
 
   const tenantId = resolveTenantId(userState);
   const tenant = userState.tenants.find((entry) => entry.id === tenantId) ?? userState.tenants[0];
@@ -356,6 +362,44 @@ function CompanyAdminHome() {
     }
   };
 
+  const handleEmployeePasswordReset = (employee: CompanyEmployeeRecord) => {
+    const notification = buildPasswordNotification({
+      accountId: employee.id,
+      accountName: employee.name,
+      email: employee.email || '未設定',
+      roleLabel: employee.permission || '一般ユーザー',
+    });
+    setPasswordNotifications((prev) => [notification, ...prev]);
+    toast({
+      title: '一時パスワードを発行しました',
+      description: '通知文一覧からコピーし、既存の業務メーラーで通知してください。',
+      status: 'info',
+      duration: 2600,
+      isClosable: true,
+    });
+  };
+
+  const handleCopyPasswordNotification = async (notification: DemoPasswordNotification) => {
+    try {
+      await copyTextToClipboard(`${notification.subject}\n\n${notification.body}`);
+      toast({
+        title: '通知文をコピーしました',
+        description: '既存の業務メーラーに貼り付けて通知してください。',
+        status: 'success',
+        duration: 2400,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'コピーに失敗しました',
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleStressToggle = (isChecked: boolean) => {
     persistState(updateTenantFeatureFlags(userState, tenantId, { stressAnalysisEnabled: isChecked }));
     toast({
@@ -473,6 +517,60 @@ function CompanyAdminHome() {
               </Text>
             </Box>
           </SimpleGrid>
+
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
+            <Stack spacing={4}>
+              <Flex justify="space-between" gap={3} align={{ base: 'stretch', md: 'center' }} direction={{ base: 'column', md: 'row' }}>
+                <Stack spacing={1}>
+                  <Heading size="md">パスワード通知文一覧</Heading>
+                  <Text color="whiteAlpha.800" fontSize="sm">
+                    自社従業員向けに発行した一時パスワードの通知文です。コピーして既存の業務メーラーで通知してください。
+                  </Text>
+                </Stack>
+                <Badge alignSelf={{ base: 'flex-start', md: 'center' }} colorScheme={passwordNotifications.length > 0 ? 'blue' : 'gray'}>
+                  {passwordNotifications.length}件
+                </Badge>
+              </Flex>
+              {passwordNotifications.length === 0 ? (
+                <Text color="whiteAlpha.700" fontSize="sm">
+                  まだ通知文はありません。従業員一覧の再発行から作成できます。
+                </Text>
+              ) : (
+                <Box borderWidth="1px" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
+                  <Table size="sm">
+                    <Thead bg="whiteAlpha.160">
+                      <Tr>
+                        <Th>発行日時</Th>
+                        <Th>ID</Th>
+                        <Th>氏名</Th>
+                        <Th>メール</Th>
+                        <Th>権限</Th>
+                        <Th>一時パスワード</Th>
+                        <Th>通知文</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {passwordNotifications.map((notification) => (
+                        <Tr key={notification.id}>
+                          <Td>{notification.issuedAt}</Td>
+                          <Td fontWeight="semibold">{notification.accountId}</Td>
+                          <Td>{notification.accountName}</Td>
+                          <Td>{notification.email}</Td>
+                          <Td>{notification.roleLabel}</Td>
+                          <Td fontFamily="mono">{notification.temporaryPassword}</Td>
+                          <Td>
+                            <Button size="xs" {...tableActionButtonProps} onClick={() => handleCopyPasswordNotification(notification)}>
+                              通知文をコピー
+                            </Button>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </Box>
+              )}
+            </Stack>
+          </Box>
 
           <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
             <form onSubmit={handleQuotaSubmit}>
@@ -612,6 +710,9 @@ function CompanyAdminHome() {
                               </Button>
                               <Button size="xs" {...tableActionButtonProps} onClick={() => handleEmployeePrint(employee)} isDisabled={!hasKarte}>
                                 印刷
+                              </Button>
+                              <Button size="xs" {...tableActionButtonProps} onClick={() => handleEmployeePasswordReset(employee)}>
+                                再発行
                               </Button>
                               <Button
                                 size="xs"

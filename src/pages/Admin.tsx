@@ -43,6 +43,11 @@ import {
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
 import {
+  buildPasswordNotification,
+  copyTextToClipboard,
+  type DemoPasswordNotification,
+} from '../lib/demoPassword';
+import {
   getCompanyApiUsageSummary,
   getDemoUsageQuota,
   subscribeDemoUsageQuota,
@@ -380,6 +385,7 @@ function Admin() {
   const [activeSection, setActiveSection] = useState<'user' | 'consultant' | 'tenant'>('user');
   const [demoState, setDemoState] = useState<DemoUserState>(() => loadDemoUserState());
   const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
+  const [passwordNotifications, setPasswordNotifications] = useState<DemoPasswordNotification[]>([]);
 
   useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
 
@@ -424,6 +430,41 @@ function Admin() {
         : account.initialLlmCallsPerInterview
       ).toString(),
     };
+  };
+
+  const createPasswordNotification = (account: AccountRecord) =>
+    buildPasswordNotification({
+      accountId: account.id,
+      accountName: account.name,
+      email: account.email,
+      roleLabel: account.permission,
+    });
+
+  const appendPasswordNotifications = (accounts: AccountRecord[]) => {
+    if (accounts.length === 0) return;
+    const nextNotifications = accounts.map(createPasswordNotification);
+    setPasswordNotifications((prev) => [...nextNotifications, ...prev]);
+  };
+
+  const handleCopyPasswordNotification = async (notification: DemoPasswordNotification) => {
+    try {
+      await copyTextToClipboard(`${notification.subject}\n\n${notification.body}`);
+      toast({
+        title: '通知文をコピーしました',
+        description: '既存の業務メーラーに貼り付けて通知してください。',
+        status: 'success',
+        duration: 2400,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'コピーに失敗しました',
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleSort = (target: 'user' | 'consultant', column: keyof AccountRecord) => {
@@ -511,32 +552,33 @@ function Admin() {
     const now = new Date();
     const timestamp = buildTimestamp();
 
-    setUserAccounts((prev) => [
-      {
-        id: newUserForm.id || `USR-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
+    const nextAccount: AccountRecord = {
+      id: newUserForm.id || `USR-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
           .toString()
           .padStart(3, '0')}`,
-        name: newUserForm.name,
-        email: newUserForm.email,
-        company: newUserForm.company || 'Unassigned',
-        department: newUserForm.department || '未設定',
-        role: newUserForm.role || 'Candidate',
-        permission: newUserForm.permission || '一般ユーザー',
-        status: newUserForm.status,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        logs: 0,
-        initialInterviewRemaining: 10,
-        continuousInterviewRemaining: 10,
-        initialLlmCallsPerInterview: 10,
-        continuousLlmCallsPerInterview: 7,
-      },
-      ...prev,
-    ]);
+      name: newUserForm.name,
+      email: newUserForm.email,
+      company: newUserForm.company || 'Unassigned',
+      department: newUserForm.department || '未設定',
+      role: newUserForm.role || 'Candidate',
+      permission: newUserForm.permission || '一般ユーザー',
+      status: newUserForm.status,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      logs: 0,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 10,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
+    };
+
+    setUserAccounts((prev) => [nextAccount, ...prev]);
+    appendPasswordNotifications([nextAccount]);
 
     setNewUserForm({ id: '', name: '', email: '', company: '', department: '', role: '', permission: '一般ユーザー', status: '面談準備中' });
     toast({
       title: 'アカウントを追加しました',
+      description: '一時パスワード通知文を一覧に作成しました。',
       status: 'success',
       duration: 2400,
       isClosable: true,
@@ -559,32 +601,33 @@ function Admin() {
     const now = new Date();
     const timestamp = buildTimestamp();
 
-    setConsultantAccounts((prev) => [
-      {
-        id: newConsultantForm.id || `CNS-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
+    const nextAccount: AccountRecord = {
+      id: newConsultantForm.id || `CNS-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
           .toString()
           .padStart(3, '0')}`,
-        name: newConsultantForm.name,
-        email: newConsultantForm.email,
-        company: newConsultantForm.company || 'Career Carte Inc.',
-        department: newConsultantForm.department || 'Career Consulting',
-        role: newConsultantForm.role || 'Consultant',
-        permission: newConsultantForm.permission || 'キャリアコンサルタント',
-        status: newConsultantForm.status,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        logs: 0,
-        initialInterviewRemaining: 10,
-        continuousInterviewRemaining: 10,
-        initialLlmCallsPerInterview: 10,
-        continuousLlmCallsPerInterview: 7,
-      },
-      ...prev,
-    ]);
+      name: newConsultantForm.name,
+      email: newConsultantForm.email,
+      company: newConsultantForm.company || 'Career Carte Inc.',
+      department: newConsultantForm.department || 'Career Consulting',
+      role: newConsultantForm.role || 'Consultant',
+      permission: newConsultantForm.permission || 'キャリアコンサルタント',
+      status: newConsultantForm.status,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      logs: 0,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 10,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
+    };
+
+    setConsultantAccounts((prev) => [nextAccount, ...prev]);
+    appendPasswordNotifications([nextAccount]);
 
     setNewConsultantForm({ id: '', name: '', email: '', company: '', department: '', role: '', permission: 'キャリアコンサルタント', status: 'アクティブ' });
     toast({
       title: 'コンサルタントアカウントを追加しました',
+      description: '一時パスワード通知文を一覧に作成しました。',
       status: 'success',
       duration: 2400,
       isClosable: true,
@@ -620,12 +663,37 @@ function Admin() {
 
   const handleCsvConfirm = () => {
     const targetLabel = csvModalType === 'user' ? 'ユーザー' : 'コンサルタント';
-    const recordCount =
-      csvModalType === 'user' ? userCsvState.preview.length : consultantCsvState.preview.length;
+    const timestamp = buildTimestamp();
+    const previewRecords = csvModalType === 'user' ? userCsvState.preview : consultantCsvState.preview;
+    const nextAccounts: AccountRecord[] = previewRecords.map((record) => ({
+      id: record.id,
+      name: record.name,
+      email: record.email,
+      company: record.company,
+      department: record.department,
+      role: record.role,
+      permission: record.permission,
+      status: csvModalType === 'user' ? '面談準備中' : 'アクティブ',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      logs: 0,
+      initialInterviewRemaining: 10,
+      continuousInterviewRemaining: 10,
+      initialLlmCallsPerInterview: 10,
+      continuousLlmCallsPerInterview: 7,
+    }));
+
+    if (csvModalType === 'user') {
+      setUserAccounts((prev) => [...nextAccounts, ...prev]);
+    } else {
+      setConsultantAccounts((prev) => [...nextAccounts, ...prev]);
+    }
+    appendPasswordNotifications(nextAccounts);
+
     toast({
       title: `${targetLabel}CSVアップロード`,
-      description: `${recordCount}件のレコードを登録します（ダミー）。`,
-      status: 'info',
+      description: `${nextAccounts.length}件を登録し、一時パスワード通知文を一覧に作成しました。`,
+      status: 'success',
       duration: 2800,
       isClosable: true,
     });
@@ -861,9 +929,10 @@ function Admin() {
   };
 
   const handlePasswordReset = (account: AccountRecord) => {
+    appendPasswordNotifications([account]);
     toast({
-      title: 'パスワード再発行を送信しました',
-      description: `${account.email} に案内を送付（ダミー）。`,
+      title: '一時パスワードを発行しました',
+      description: '通知文一覧からコピーし、既存の業務メーラーで通知してください。',
       status: 'info',
       duration: 2600,
       isClosable: true,
@@ -938,6 +1007,60 @@ function Admin() {
                 企業別オプション管理
               </Button>
             </Flex>
+          </Box>
+
+          <Box {...linePanelProps} p={{ base: 6, lg: 8 }}>
+            <Stack spacing={4}>
+              <Flex justify="space-between" gap={3} align={{ base: 'stretch', md: 'center' }} direction={{ base: 'column', md: 'row' }}>
+                <Stack spacing={1}>
+                  <Heading size="md">パスワード通知文一覧</Heading>
+                  <Text color="whiteAlpha.800" fontSize="sm">
+                    アプリ内で発行した一時パスワードの通知文です。コピーして既存の業務メーラーで通知してください。
+                  </Text>
+                </Stack>
+                <Badge alignSelf={{ base: 'flex-start', md: 'center' }} colorScheme={passwordNotifications.length > 0 ? 'blue' : 'gray'}>
+                  {passwordNotifications.length}件
+                </Badge>
+              </Flex>
+              {passwordNotifications.length === 0 ? (
+                <Text color="whiteAlpha.700" fontSize="sm">
+                  まだ通知文はありません。アカウント追加、CSV一括追加、または一覧の再発行から作成できます。
+                </Text>
+              ) : (
+                <Box borderWidth="1px" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
+                  <Table size="sm">
+                    <Thead bg="whiteAlpha.160">
+                      <Tr>
+                        <Th>発行日時</Th>
+                        <Th>ID</Th>
+                        <Th>氏名</Th>
+                        <Th>メール</Th>
+                        <Th>権限</Th>
+                        <Th>一時パスワード</Th>
+                        <Th>通知文</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {passwordNotifications.map((notification) => (
+                        <Tr key={notification.id}>
+                          <Td>{notification.issuedAt}</Td>
+                          <Td fontWeight="semibold">{notification.accountId}</Td>
+                          <Td>{notification.accountName}</Td>
+                          <Td>{notification.email}</Td>
+                          <Td>{notification.roleLabel}</Td>
+                          <Td fontFamily="mono">{notification.temporaryPassword}</Td>
+                          <Td>
+                            <Button size="xs" {...tableActionButtonProps} onClick={() => handleCopyPasswordNotification(notification)}>
+                              通知文をコピー
+                            </Button>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </Box>
+              )}
+            </Stack>
           </Box>
 
           <Box

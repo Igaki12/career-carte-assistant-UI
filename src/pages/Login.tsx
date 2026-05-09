@@ -236,7 +236,7 @@ function Login({ session, onLogin }: LoginProps) {
                 </PrimaryButton>
                 <Divider borderColor="whiteAlpha.300" />
                 <Text fontSize="xs" color="whiteAlpha.700">
-                  本番実装ではサーバー側認証、権限、テナント紐付け、パスワード再発行を接続します。
+                  デモ版のパスワード再設定は画面確認用で、ログイン時の照合には反映されません。本番実装ではサーバー側認証、権限、テナント紐付け、アプリ内パスワード再設定を接続します。
                 </Text>
               </Stack>
             </form>
