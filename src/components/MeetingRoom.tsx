@@ -272,13 +272,14 @@ const formatDraftTimestamp = () =>
 
 const buildDemographicPromptContext = (karte: KarteData) => {
   const demographicPairs = [
-    ['ID', karte.demographics.accountId],
-    ['氏名', karte.demographics.name],
-    ['メール', karte.demographics.email],
+    // 面談内容の推論に直接使いにくい識別・連絡・権限情報は、AI応答プロンプトには含めない。
+    // ['ID', karte.demographics.accountId],
+    // ['氏名', karte.demographics.name],
+    // ['メール', karte.demographics.email],
     ['会社名', karte.demographics.company],
     ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],
-    ['権限', karte.demographics.permission],
+    // ['権限', karte.demographics.permission],
     ['年齢', karte.demographics.age],
     ['勤務地', karte.demographics.workLocationPrefecture],
     ['転職歴', karte.demographics.jobChangeCount],
