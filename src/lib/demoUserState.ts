@@ -641,6 +641,7 @@ const normalizeDraftSession = (meetingType: MeetingType, draft: DraftSession | n
     meetingType,
     continuousMode: draft.continuousMode ?? null,
     initialPromptVariant: meetingType === 'initial' ? normalizeInitialPromptVariant(draft.initialPromptVariant) : null,
+    hasFinalizedInitial: meetingType === 'initial' ? draft.hasFinalizedInitial === true : false,
     karte: applyDemographicsToKarte(draft.karte, draft.karte?.demographics),
     updatedAt: draft.updatedAt ?? '',
   };

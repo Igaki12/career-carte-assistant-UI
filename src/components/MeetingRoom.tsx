@@ -75,6 +75,8 @@ type Props = {
   continuousMode?: ContinuousMode;
 };
 
+type LlmProcessMode = 'normal' | 'initialFinalize' | 'continuousFinalize';
+
 const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
 const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
 const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
@@ -86,6 +88,7 @@ const GEMINI_VOICE_BY_MODEL: Record<StageModelId, string> = {
   youngCounsil: 'Zephyr',
 };
 const MEETING_RESPONSE_SCHEMA_NAME = 'meeting_room_response';
+const MEETING_INITIAL_FINALIZE_RESPONSE_SCHEMA_NAME = 'meeting_room_initial_finalize_response';
 const MEETING_FINALIZE_RESPONSE_SCHEMA_NAME = 'meeting_room_finalize_response';
 const SHIRP_SCHEMA_PROPERTIES = {
   S: { type: ['string', 'null'] },
@@ -190,12 +193,12 @@ const buildCurrentInitialPromptInstructions = ({
 2. reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
 3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
 4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
-5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まり、P(計画)を生成した時だけ true にしてください。それまでは false にしてください。
-6. 必須詳細項目がすべて埋まった場合は、P(計画)のトップレベル要約と詳細計画を生成し、面談のまとめを返してください。
-7. カルテは50%以上完成していれば保存可能です。6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
+5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まった時だけ true にしてください。それまでは false にしてください。
+6. 必須詳細項目がすべて埋まった場合は、P(計画)や保存案内を作らず、「必要項目が揃いました。カルテと今後のプランを整理します。」という趣旨の短い返答にしてください。
+7. P(計画)のトップレベル要約、詳細計画、最終的な提出案内は、この後に実行される最終分析プロンプトが担当します。
 8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
 9. 三段目項目は会話から自然に読み取れるものだけ埋め、判断できないものは null のままにしてください。S〜Pに当てはまらない内容は#に記録してください。
-10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
+10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。is_complete が true の完了時だけは質問で終えないでください。
 11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
 12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
 13. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
@@ -408,6 +411,35 @@ ${AI_RESPONSE_GUIDELINES}
 7. 既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
 `.trim();
 
+const buildInitialFinalizePrompt = (karte: KarteData) => `
+あなたは初回面談の会話内容を分析し、SHIRPカルテのP(計画)を作成して面談を締めます。
+
+# SHIRPガイド
+${SHIRP_GUIDE}
+
+${buildDemographicPromptContext(karte)}
+
+# 現在のカルテ(SHIRP)
+${JSON.stringify(karte.shirp, null, 2)}
+
+# 現在のカルテ(SHIRP詳細)
+${JSON.stringify(karte.shirpDetails, null, 2)}
+
+${AI_RESPONSE_GUIDELINES}
+
+# 指示
+1. 会話履歴と現在のカルテを分析し、SHIRPのトップレベル要約と二段目要約・三段目項目を必要に応じて補強してください。
+2. S/H/I/Rの必須詳細17項目は、既存の二段目summaryを尊重し、不足や矛盾が明確な場合だけ補正してください。
+3. P(計画)のトップレベル要約と詳細計画を生成してください。探索行動、学習行動、実行行動、実行管理を、会話内容から無理なく導ける範囲で具体化してください。
+4. reply は追加質問をせず、面談終了を促す短い案内にしてください。
+5. reply には「本日はありがとうございました。カルテ確認 → カルテ保存ボタンを押してカルテを提出してください。内容はあとでユーザーページから編集することができます」という趣旨を自然な日本語で必ず含めてください。
+6. is_complete は true にしてください。
+7. response_format の JSON Schema に厳密に従って出力してください。
+8. reply にはユーザーに見せる自然な返答だけを書いてください。
+9. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+10. デモグラフィックは整合性確認のために使い、断定や過剰な言及は避けてください。
+`.trim();
+
 const buildContinuousFinalizePrompt = (karte: KarteData) => `
 あなたは自由対話の内容を整理し、SHIRPカルテを更新して簡単なフィードバックを提示します。
 
@@ -436,44 +468,54 @@ ${AI_RESPONSE_GUIDELINES}
 9. 既知のプロフィール情報と矛盾しない前提で整理し、不足分は会話履歴ベースで補ってください。
 `.trim();
 
-const createMeetingResponseSchema = (finalize: boolean) => ({
-  name: finalize ? MEETING_FINALIZE_RESPONSE_SCHEMA_NAME : MEETING_RESPONSE_SCHEMA_NAME,
-  strict: true,
-  schema: {
-    type: 'object',
-    additionalProperties: false,
-    properties: {
-      reply: {
-        type: 'string',
+const getMeetingResponseSchemaName = (mode: LlmProcessMode) => {
+  if (mode === 'continuousFinalize') return MEETING_FINALIZE_RESPONSE_SCHEMA_NAME;
+  if (mode === 'initialFinalize') return MEETING_INITIAL_FINALIZE_RESPONSE_SCHEMA_NAME;
+  return MEETING_RESPONSE_SCHEMA_NAME;
+};
+
+const createMeetingResponseSchema = (mode: LlmProcessMode) => {
+  const requiresFeedback = mode === 'continuousFinalize';
+
+  return {
+    name: getMeetingResponseSchemaName(mode),
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        reply: {
+          type: 'string',
+        },
+        updated_shirp: {
+          type: 'object',
+          additionalProperties: false,
+          properties: SHIRP_SCHEMA_PROPERTIES,
+          required: SHIRP_KEYS,
+        },
+        updated_shirp_details: {
+          type: 'object',
+          additionalProperties: false,
+          properties: SHIRP_DETAIL_SCHEMA_PROPERTIES,
+          required: [...SHIRP_DETAIL_CATEGORY_KEYS],
+        },
+        is_complete: {
+          type: 'boolean',
+        },
+        ...(requiresFeedback
+          ? {
+              feedback: {
+                type: 'string',
+              },
+            }
+          : {}),
       },
-      updated_shirp: {
-        type: 'object',
-        additionalProperties: false,
-        properties: SHIRP_SCHEMA_PROPERTIES,
-        required: SHIRP_KEYS,
-      },
-      updated_shirp_details: {
-        type: 'object',
-        additionalProperties: false,
-        properties: SHIRP_DETAIL_SCHEMA_PROPERTIES,
-        required: [...SHIRP_DETAIL_CATEGORY_KEYS],
-      },
-      is_complete: {
-        type: 'boolean',
-      },
-      ...(finalize
-        ? {
-            feedback: {
-              type: 'string',
-            },
-          }
-        : {}),
+      required: requiresFeedback
+        ? ['reply', 'updated_shirp', 'updated_shirp_details', 'feedback', 'is_complete']
+        : ['reply', 'updated_shirp', 'updated_shirp_details', 'is_complete'],
     },
-    required: finalize
-      ? ['reply', 'updated_shirp', 'updated_shirp_details', 'feedback', 'is_complete']
-      : ['reply', 'updated_shirp', 'updated_shirp_details', 'is_complete'],
-  },
-});
+  };
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -481,7 +523,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const hasSuspiciousReplyContent = (reply: string) =>
   INTERNAL_REPLY_PATTERNS.some((pattern) => pattern.test(reply));
 
-const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResponse => {
+const parseStructuredLlmResponse = (content: string, mode: LlmProcessMode): LlmResponse => {
   let parsed: unknown;
 
   try {
@@ -494,7 +536,8 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
     throw new Error('AI応答の形式が不正です。');
   }
 
-  const allowedTopLevelKeys = finalize
+  const requiresFeedback = mode === 'continuousFinalize';
+  const allowedTopLevelKeys = requiresFeedback
     ? new Set(['reply', 'updated_shirp', 'updated_shirp_details', 'feedback', 'is_complete'])
     : new Set(['reply', 'updated_shirp', 'updated_shirp_details', 'is_complete']);
 
@@ -590,7 +633,7 @@ const parseStructuredLlmResponse = (content: string, finalize: boolean): LlmResp
     validatedDetailUpdates[category] = nextCategoryUpdates as ShirpDetailUpdates[typeof category];
   });
 
-  if (finalize) {
+  if (requiresFeedback) {
     const feedback = parsed.feedback;
     if (typeof feedback !== 'string' || !feedback.trim()) {
       throw new Error('AI応答のfeedbackが不正です。');
@@ -726,6 +769,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
   const [hasPassedStartGate, setHasPassedStartGate] = useState(() => getMeetingQuotaSummary(getDemoUsageQuota(), meetingType).canStartMeeting);
   const [initialPromptVariant, setInitialPromptVariant] = useState<InitialPromptVariant>('current');
+  const [hasFinalizedInitial, setHasFinalizedInitial] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
   const [speechMotion, setSpeechMotion] = useState<SpeechMotionFrame>(createSilentSpeechMotion);
 
@@ -740,6 +784,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const audioResumePositionRef = useRef<number>(0);
   const shouldResumeAudioRef = useRef(false);
   const pendingAudioPlaybackStartRef = useRef<(() => void) | null>(null);
+  const isInitialFinalizeRunningRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const audioAnalyserRef = useRef<AnalyserNode | null>(null);
@@ -754,20 +799,22 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const draftAction = searchParams.get('draft');
   const meetingQuota = getMeetingQuotaSummary(usageQuota, meetingType);
   const maxApiCalls = meetingQuota.llmCallsPerInterview;
-  const conversationQuotaLimit = maxApiCalls;
+  const reservedFinalizeCalls = isInitialMeeting ? 1 : 0;
+  const conversationQuotaLimit = Math.max(maxApiCalls - reservedFinalizeCalls, 0);
   const hasCompanyApiQuota = meetingQuota.remaining > 0;
-  const hasConversationQuota = hasCompanyApiQuota && apiUsageCount < conversationQuotaLimit;
+  const hasConversationQuota =
+    hasCompanyApiQuota && conversationQuotaLimit > 0 && apiUsageCount < conversationQuotaLimit && !hasFinalizedInitial;
   const hasApiBudget = apiUsageCount < maxApiCalls;
   const hasUsedApi = hasSessionStarted || apiUsageCount > 0;
   const remainingMessages = Math.max(conversationQuotaLimit - apiUsageCount, 0);
   const isBusy = Boolean(processingText);
   const stressAnalysisEnabled = isStressAnalysisEnabled(userState);
   const textareaPlaceholder = useMemo(() => {
-    if (apiUsageCount === 0) {
-      return 'テキスト入力はこちら...';
-    }
     if (remainingMessages === 0) {
       return 'これ以上のテキストは送信することができません';
+    }
+    if (apiUsageCount === 0) {
+      return 'テキスト入力はこちら...';
     }
     return `あと${remainingMessages}回メッセージを送信できます`;
   }, [apiUsageCount, remainingMessages]);
@@ -1071,6 +1118,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setInitialPromptVariant(
         meetingType === 'initial' ? normalizeInitialPromptVariant(currentDraft.initialPromptVariant) : 'current',
       );
+      setHasFinalizedInitial(meetingType === 'initial' ? currentDraft.hasFinalizedInitial === true : false);
       setFeedbackText(currentDraft.feedbackText);
     } else {
       if (draftAction === 'fresh' && currentDraft) {
@@ -1089,6 +1137,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setApiUsageCount(0);
       setSessionStarted(false);
       setInitialPromptVariant('current');
+      setHasFinalizedInitial(false);
       setFeedbackText('');
     }
 
@@ -1175,6 +1224,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               feedbackText,
               conversationStarted,
               hasSessionStarted,
+              hasFinalizedInitial: isInitialMeeting ? hasFinalizedInitial : false,
               updatedAt: formatDraftTimestamp(),
             }
           : null,
@@ -1188,6 +1238,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     conversationStarted,
     feedbackText,
     hasInitializedState,
+    hasFinalizedInitial,
     hasSessionStarted,
     isInitialMeeting,
     initialPromptVariant,
@@ -1390,20 +1441,24 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   );
 
   const runLLMProcess = useCallback(
-    async (history: ConversationMessage[], finalize = false) => {
-      if (!ensureApiKey()) return;
+    async (history: ConversationMessage[], mode: LlmProcessMode = 'normal') => {
+      if (!ensureApiKey()) return false;
       const nextStep = isInitialMeeting ? getNextInitialDetailStep(karte.shirpDetails) : null;
-      const systemPrompt = isInitialMeeting
-        ? buildInitialPrompt(karte, nextStep, initialPromptVariant)
-        : finalize
-          ? buildContinuousFinalizePrompt(karte)
-          : buildContinuousPrompt(karte);
+      const isFinalizeMode = mode !== 'normal';
+      const systemPrompt =
+        mode === 'initialFinalize'
+          ? buildInitialFinalizePrompt(karte)
+          : mode === 'continuousFinalize'
+            ? buildContinuousFinalizePrompt(karte)
+            : isInitialMeeting
+              ? buildInitialPrompt(karte, nextStep, initialPromptVariant)
+              : buildContinuousPrompt(karte);
       if (!consumeCompanyApiUsage(1)) {
         notifyApiLimit('企業のAPI残枠がないため、AIを呼び出せません。');
-        return;
+        return false;
       }
 
-      setProcessingText(finalize ? 'カルテとフィードバックを整理しています...' : 'AI思考中...');
+      setProcessingText(isFinalizeMode ? 'カルテとプランを整理しています...' : 'AI思考中...');
       setApiUsageCount((prev) => Math.min(prev + 1, maxApiCalls));
 
       try {
@@ -1418,7 +1473,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             messages: [{ role: 'system', content: systemPrompt }, ...history],
             response_format: {
               type: 'json_schema',
-              json_schema: createMeetingResponseSchema(finalize),
+              json_schema: createMeetingResponseSchema(mode),
             },
           }),
         });
@@ -1436,7 +1491,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         const content = data.choices?.[0]?.message?.content as string | undefined;
         if (!content) throw new Error('AI応答の形式が不正です。');
 
-        const parsed = parseStructuredLlmResponse(content, finalize);
+        const parsed = parseStructuredLlmResponse(content, mode);
 
         setKarte((prev) => updateShirpDetails(updateShirp(prev, parsed.updated_shirp), parsed.updated_shirp_details));
 
@@ -1455,7 +1510,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           });
         };
 
-        if (finalize && parsed.feedback) {
+        if (mode === 'continuousFinalize' && parsed.feedback) {
           setFeedbackText(parsed.feedback);
         }
 
@@ -1464,6 +1519,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         if (!didStartSpeech) {
           displayAssistantMessage();
         }
+        return true;
       } catch (error) {
         console.error(error);
         toast({
@@ -1472,12 +1528,47 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           status: 'error',
           duration: 5000,
         });
+        return false;
       } finally {
         setProcessingText('');
       }
     },
     [ensureApiKey, initialPromptVariant, isInitialMeeting, karte, maxApiCalls, notifyApiLimit, openAiApiKey, playTextToSpeech, toast],
   );
+
+  useEffect(() => {
+    if (!hasInitializedState || !isInitialMeeting || hasFinalizedInitial || initialProgress < 100) return;
+    if (isBusy) return;
+    if (isInitialFinalizeRunningRef.current) return;
+    if (!hasApiBudget) {
+      notifyApiLimit('API制限に達したため、カルテとプランの最終整理を生成できません。');
+      return;
+    }
+    if (!openAiApiKey) {
+      setApiModalOpen(true);
+      return;
+    }
+
+    isInitialFinalizeRunningRef.current = true;
+    void (async () => {
+      const success = await runLLMProcess(messagesRef.current, 'initialFinalize');
+      if (success) {
+        setHasFinalizedInitial(true);
+        setKarteModalOpen(true);
+      }
+      isInitialFinalizeRunningRef.current = false;
+    })();
+  }, [
+    hasApiBudget,
+    hasFinalizedInitial,
+    hasInitializedState,
+    initialProgress,
+    isBusy,
+    isInitialMeeting,
+    notifyApiLimit,
+    openAiApiKey,
+    runLLMProcess,
+  ]);
 
   const handleUserMessage = useCallback(
     async (content: string) => {
@@ -1486,6 +1577,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         notifyApiLimit(
           meetingQuota.remaining <= 0
             ? '企業のAPI残枠がないため、これ以上メッセージを送信できません。'
+            : conversationQuotaLimit <= 0
+              ? '初回面談の最終整理用API回数を確保できないため、メッセージを送信できません。'
             : `${isInitialMeeting ? '初回面談' : '継続面談'}は1セッション${conversationQuotaLimit}ターンまで送信できます。`,
         );
         return;
@@ -1689,6 +1782,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             feedbackText,
             conversationStarted,
             hasSessionStarted,
+            hasFinalizedInitial: isInitialMeeting ? hasFinalizedInitial : false,
             updatedAt: formatDraftTimestamp(),
           },
         },
@@ -1712,6 +1806,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       continuousMode,
       disposeActiveAudio,
       feedbackText,
+      hasFinalizedInitial,
       hasSessionStarted,
       initialPromptVariant,
       isInitialMeeting,
@@ -1731,7 +1826,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     }
     if (!ensureApiKey()) return;
     const finalInputHistory = isTurnTakingMode ? getTurnTakingConversationHistory() : messagesRef.current;
-    await runLLMProcess(finalInputHistory, true);
+    await runLLMProcess(finalInputHistory, 'continuousFinalize');
     setKarteModalOpen(true);
   }, [ensureApiKey, getTurnTakingConversationHistory, hasApiBudget, isInitialMeeting, isTurnTakingMode, notifyApiLimit, runLLMProcess]);
 

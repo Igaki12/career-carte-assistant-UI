@@ -155,6 +155,7 @@ export type DraftSession = {
   feedbackText: string;
   conversationStarted: boolean;
   hasSessionStarted: boolean;
+  hasFinalizedInitial?: boolean;
   updatedAt: string;
 };
 
