@@ -154,6 +154,28 @@ const formatKarteValue = (value: string | null | undefined) => formatPlainValue(
 const formatSurveyValue = (value: number | null | undefined) => (typeof value === 'number' ? `${value}` : '未回答');
 const formatConditionValue = (value: string | number | null | undefined) => formatPlainValue(value, '未測定');
 
+const padDatePart = (value: string | number) => String(value).padStart(2, '0');
+
+const formatPdfDateTime = (value: string | null | undefined, fallback = '未保存') => {
+  const raw = formatPlainValue(value, fallback);
+  if (raw === fallback) return raw;
+
+  const dateTimeMatch = raw.match(
+    /(\d{4})[/-](\d{1,2})[/-](\d{1,2})(?:[T\s]+(\d{1,2})(?::?(\d{2}))?)?/,
+  );
+  if (dateTimeMatch) {
+    const [, year, month, day, hour = '0', minute = '0'] = dateTimeMatch;
+    return `${year}/${padDatePart(month)}/${padDatePart(day)} ${padDatePart(hour)}:${padDatePart(minute)}`;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  return [
+    `${parsed.getFullYear()}/${padDatePart(parsed.getMonth() + 1)}/${padDatePart(parsed.getDate())}`,
+    `${padDatePart(parsed.getHours())}:${padDatePart(parsed.getMinutes())}`,
+  ].join(' ');
+};
+
 const hasSurveyResponses = (karte: KarteData) =>
   SURVEY_FACTOR_KEYS.some((key) => typeof karte.survey.factors[key] === 'number' && (karte.survey.factors[key] ?? 0) > 0);
 
@@ -402,7 +424,7 @@ const drawFirstPageHeader = (page: CanvasPage, payload: KarteBatchExportPayload)
   setFont(context, 400, 24, FONT_SERIF);
   context.fillStyle = PDF_THEME.text;
   context.fillText(formatMeetingType(payload.meta.meetingType), metaX, 128);
-  context.fillText(formatPlainValue(payload.meta.createdAt, '未保存'), metaX + 150, 128);
+  context.fillText(formatPdfDateTime(payload.meta.createdAt, '未保存'), metaX + 150, 128);
 
   drawLine(context, PAGE_MARGIN_X, 214, PAGE_WIDTH - PAGE_MARGIN_X, PDF_THEME.rule, 2);
   page.cursorY = 250;
@@ -440,7 +462,7 @@ const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) 
   const { context } = page;
   const { demographics } = payload.karte;
   const y = page.cursorY;
-  const height = 470;
+  const height = 600;
   context.fillStyle = PDF_THEME.panel;
   context.fillRect(PAGE_MARGIN_X, y, CONTENT_WIDTH, height);
   context.fillStyle = '#263856';
@@ -483,23 +505,40 @@ const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) 
     ['末子の年齢(歳)', formatPlainValue(demographics.youngestChildAge, '-')],
   ];
 
-  const drawProfileColumn = (rows: Array<[string, string]>, x: number, startY: number, columnWidth: number, rowGap = 58) => {
-    rows.forEach(([label, value], index) => {
-      const rowY = startY + index * rowGap;
-      setFont(context, 600, 17, FONT_SANS);
-      context.fillStyle = PDF_THEME.muted;
-      context.fillText(label, x, rowY);
-      setFont(context, 400, 22, FONT_SERIF);
-      context.fillStyle = PDF_THEME.text;
-      const valueLines = wrapText(context, value, columnWidth);
-      context.fillText(valueLines[0] ?? '-', x, rowY + 28);
-      drawLine(context, x, rowY + 58, x + columnWidth, PDF_THEME.rule, 1, true);
-    });
+  const drawProfileGrid = (
+    rows: Array<[string, string]>,
+    x: number,
+    startY: number,
+    columnWidth: number,
+    columnGap: number,
+    columns = 2,
+  ) => {
+    let rowY = startY;
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex += columns) {
+      const rowCells = rows.slice(rowIndex, rowIndex + columns);
+      setFont(context, 400, 20, FONT_SERIF);
+      const wrappedValues = rowCells.map(([, value]) => wrapText(context, value, columnWidth));
+      const rowHeight = Math.max(76, Math.max(...wrappedValues.map((lines) => lines.length)) * 27 + 50);
+
+      rowCells.forEach(([label], columnIndex) => {
+        const cellX = x + columnIndex * (columnWidth + columnGap);
+        setFont(context, 600, 17, FONT_SANS);
+        context.fillStyle = PDF_THEME.muted;
+        context.fillText(label, cellX, rowY);
+        setFont(context, 400, 20, FONT_SERIF);
+        context.fillStyle = PDF_THEME.text;
+        (wrappedValues[columnIndex] ?? ['-']).forEach((line, lineIndex) => {
+          context.fillText(line, cellX, rowY + 28 + lineIndex * 27);
+        });
+        drawLine(context, cellX, rowY + rowHeight - 8, cellX + columnWidth, PDF_THEME.rule, 1, true);
+      });
+
+      rowY += rowHeight + 8;
+    }
   };
 
-  drawProfileColumn(leftRows, leftX, y + 198, 240);
-  drawProfileColumn(rightRows.slice(0, 4), rightX, y + 166, 210, 70);
-  drawProfileColumn(rightRows.slice(4), rightX + 250, y + 166, 210, 70);
+  drawProfileGrid(leftRows, leftX, y + 198, 220, 42);
+  drawProfileGrid(rightRows, rightX, y + 166, 210, 40);
 
   page.cursorY = y + height + 34;
 };
@@ -525,6 +564,22 @@ const drawChapterTitle = (page: CanvasPage, chapter: string, title: string, subt
 const drawMutedRule = (context: CanvasRenderingContext2D, x: number, y: number, width: number, color: string) => {
   drawLine(context, x, y, x + width, PDF_THEME.rule, 2);
   drawLine(context, x, y, x + 50, color, 4);
+};
+
+const SUMMARY_BODY_FONT_SIZE = 20;
+const SUMMARY_BODY_LINE_HEIGHT = 28;
+const SUMMARY_BODY_TOP_OFFSET = 238;
+const SUMMARY_CARD_BOTTOM_PADDING = 36;
+
+const measureSummaryCardHeight = (
+  context: CanvasRenderingContext2D,
+  value: string,
+  width: number,
+  minHeight: number,
+) => {
+  setFont(context, 400, SUMMARY_BODY_FONT_SIZE, FONT_SANS);
+  const lineCount = Math.max(1, wrapText(context, value, width - 72).length);
+  return Math.max(minHeight, SUMMARY_BODY_TOP_OFFSET + lineCount * SUMMARY_BODY_LINE_HEIGHT + SUMMARY_CARD_BOTTOM_PADDING);
 };
 
 const drawSummaryCard = (
@@ -562,11 +617,11 @@ const drawSummaryCard = (
   context.fillText(meta.description, x + 36, y + 156);
   drawMutedRule(context, x + 36, y + 202, width - 72, meta.color);
 
-  setFont(context, 600, 24, FONT_SANS);
+  setFont(context, 400, SUMMARY_BODY_FONT_SIZE, FONT_SANS);
   context.fillStyle = PDF_THEME.text;
-  const lines = wrapText(context, value, width - 72).slice(0, Math.max(1, Math.floor((height - 244) / 34)));
+  const lines = wrapText(context, value, width - 72);
   lines.forEach((line, index) => {
-    context.fillText(line, x + 36, y + 238 + index * 34);
+    context.fillText(line, x + 36, y + SUMMARY_BODY_TOP_OFFSET + index * SUMMARY_BODY_LINE_HEIGHT);
   });
 };
 
@@ -576,15 +631,38 @@ const drawSummaryPage = (pages: CanvasPage[], karte: KarteData) => {
 
   const gap = 24;
   const cardWidth = Math.floor((CONTENT_WIDTH - gap) / 2);
-  const cardHeight = 300;
   const left = PAGE_MARGIN_X;
   const right = PAGE_MARGIN_X + cardWidth + gap;
   const top = page.cursorY + 8;
-  drawSummaryCard(page, 'S', left, top, cardWidth, cardHeight, formatKarteValue(karte.shirp.S));
-  drawSummaryCard(page, 'H', right, top, cardWidth, cardHeight, formatKarteValue(karte.shirp.H));
-  drawSummaryCard(page, 'I', left, top + cardHeight + gap, cardWidth, cardHeight, formatKarteValue(karte.shirp.I));
-  drawSummaryCard(page, 'R', right, top + cardHeight + gap, cardWidth, cardHeight, formatKarteValue(karte.shirp.R));
-  drawSummaryCard(page, 'P', left, top + (cardHeight + gap) * 2, CONTENT_WIDTH, 240, formatKarteValue(karte.shirp.P));
+  const summaryValues = {
+    S: formatKarteValue(karte.shirp.S),
+    H: formatKarteValue(karte.shirp.H),
+    I: formatKarteValue(karte.shirp.I),
+    R: formatKarteValue(karte.shirp.R),
+    P: formatKarteValue(karte.shirp.P),
+  } satisfies Record<ShirpDetailCategoryKey, string>;
+  const firstRowHeight = Math.max(
+    measureSummaryCardHeight(page.context, summaryValues.S, cardWidth, 340),
+    measureSummaryCardHeight(page.context, summaryValues.H, cardWidth, 340),
+  );
+  const secondRowHeight = Math.max(
+    measureSummaryCardHeight(page.context, summaryValues.I, cardWidth, 340),
+    measureSummaryCardHeight(page.context, summaryValues.R, cardWidth, 340),
+  );
+  drawSummaryCard(page, 'S', left, top, cardWidth, firstRowHeight, summaryValues.S);
+  drawSummaryCard(page, 'H', right, top, cardWidth, firstRowHeight, summaryValues.H);
+  drawSummaryCard(page, 'I', left, top + firstRowHeight + gap, cardWidth, secondRowHeight, summaryValues.I);
+  drawSummaryCard(page, 'R', right, top + firstRowHeight + gap, cardWidth, secondRowHeight, summaryValues.R);
+
+  const pHeight = measureSummaryCardHeight(page.context, summaryValues.P, CONTENT_WIDTH, 300);
+  let pPage = page;
+  let pTop = top + firstRowHeight + gap + secondRowHeight + gap;
+  if (pTop + pHeight > PAGE_HEIGHT - PAGE_BOTTOM) {
+    pPage = addPage(pages);
+    drawChapterTitle(pPage, '01', 'SHIRP サマリー', '計画の要約');
+    pTop = pPage.cursorY + 8;
+  }
+  drawSummaryCard(pPage, 'P', left, pTop, CONTENT_WIDTH, pHeight, summaryValues.P);
 };
 
 const drawCategoryBand = (pages: CanvasPage[], category: ShirpDetailCategoryKey) => {
@@ -598,13 +676,17 @@ const drawCategoryBand = (pages: CanvasPage[], category: ShirpDetailCategoryKey)
   context.lineWidth = 2;
   context.strokeRect(PAGE_MARGIN_X, y, CONTENT_WIDTH, 150);
 
+  const letterBoxX = PAGE_MARGIN_X + 28;
+  const letterBoxY = y + 32;
+  const letterBoxWidth = 50;
+  const letterBoxHeight = 84;
   context.strokeStyle = 'rgba(255,255,255,0.5)';
   context.lineWidth = 2;
-  context.strokeRect(PAGE_MARGIN_X + 28, y + 32, 50, 84);
+  context.strokeRect(letterBoxX, letterBoxY, letterBoxWidth, letterBoxHeight);
 
   setFont(context, 700, 44, FONT_SERIF);
   context.fillStyle = '#ffffff';
-  context.fillText(meta.letter, PAGE_MARGIN_X + 46, y + 52);
+  context.fillText(meta.letter, letterBoxX + (letterBoxWidth - context.measureText(meta.letter).width) / 2 - 2, y + 52);
 
   setFont(context, 700, 34, FONT_SERIF);
   context.fillText(meta.title, PAGE_MARGIN_X + 110, y + 36);
