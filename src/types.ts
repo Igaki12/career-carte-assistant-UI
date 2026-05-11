@@ -9,6 +9,15 @@ export type MeetingType = 'initial' | 'continuous';
 
 export type ContinuousMode = 'normal' | 'turn';
 
+export type InitialPromptVariant = 'current' | 'front_light' | 'late_focus' | 'coverage_first';
+
+export const INITIAL_PROMPT_VARIANTS: readonly InitialPromptVariant[] = Object.freeze([
+  'current',
+  'front_light',
+  'late_focus',
+  'coverage_first',
+]);
+
 export type ShirpKey = 'S' | 'H' | 'I' | 'R' | 'P' | '#';
 
 export type ShirpData = Record<ShirpKey, string | null>;
@@ -115,6 +124,7 @@ export type StoredKarteRecord = {
   data: KarteData;
   meetingType: MeetingType;
   continuousMode: ContinuousMode | null;
+  initialPromptVariant?: InitialPromptVariant | null;
   feedback: string | null;
   conversationLog: ConversationMessage[];
 };
@@ -138,6 +148,7 @@ export type CompanyEmployeeRecord = {
 export type DraftSession = {
   meetingType: MeetingType;
   continuousMode: ContinuousMode | null;
+  initialPromptVariant?: InitialPromptVariant | null;
   messages: ConversationMessage[];
   karte: KarteData;
   apiUsageCount: number;

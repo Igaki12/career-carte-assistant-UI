@@ -15,6 +15,8 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Radio,
+  RadioGroup,
   Stack,
   Text,
   Textarea,
@@ -52,11 +54,12 @@ import {
   SHIRP_DETAIL_PROMPT_HINTS,
   SHIRP_LABELS,
 } from '../lib/shirp';
-import { SHIRP_KEYS } from '../types';
+import { INITIAL_PROMPT_VARIANTS, SHIRP_KEYS } from '../types';
 import type {
   ContinuousMode,
   ConversationMessage,
   DemoUserState,
+  InitialPromptVariant,
   KarteData,
   LlmResponse,
   MeetingType,
@@ -166,6 +169,98 @@ const AI_RESPONSE_GUIDELINES = `
   3) 会社批判への誘導をしない
 `;
 
+type InitialPromptInstructionContext = {
+  currentStepLabel: string;
+  followingStepLabel: string;
+};
+
+type InitialPromptVariantOption = {
+  value: InitialPromptVariant;
+  label: string;
+  description: string;
+  buildInstructions: (context: InitialPromptInstructionContext) => string;
+};
+
+const buildCurrentInitialPromptInstructions = ({
+  currentStepLabel,
+  followingStepLabel,
+}: InitialPromptInstructionContext) => `
+# 指示
+1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で二段目要約と分かる範囲の三段目項目を更新してください。
+2. reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
+3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
+4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
+5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まり、P(計画)を生成した時だけ true にしてください。それまでは false にしてください。
+6. 必須詳細項目がすべて埋まった場合は、P(計画)のトップレベル要約と詳細計画を生成し、面談のまとめを返してください。
+7. カルテは50%以上完成していれば保存可能です。6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
+8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
+9. 三段目項目は会話から自然に読み取れるものだけ埋め、判断できないものは null のままにしてください。S〜Pに当てはまらない内容は#に記録してください。
+10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
+11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
+12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
+13. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
+14. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
+`.trim();
+
+const buildFrontLightInitialPromptInstructions = (context: InitialPromptInstructionContext) => `
+${buildCurrentInitialPromptInstructions(context)}
+15. 前半(S/H)では、トップレベル要約は短く保ち、二段目summaryに必要十分な要約を置いてください。三段目項目は明確に言及された内容だけ更新してください。
+16. 後半(I/R)でも前半と同じ粒度を維持し、現在フォーカスしている項目の二段目summaryは毎ターン必ず更新候補として返してください。
+17. 前半で細部を詰めすぎず、後半の課題・資源の抽出に同じ注意量を残す前提で質問してください。
+18. すでに十分な前半情報がある場合は追加で掘りすぎず、自然に次の項目へ進めてください。
+`.trim();
+
+const buildLateFocusInitialPromptInstructions = (context: InitialPromptInstructionContext) => `
+${buildCurrentInitialPromptInstructions(context)}
+15. 面談後半でも集中度を落とさず、現在フォーカスしている項目の二段目summaryを空欄にしないことを優先してください。
+16. ユーザー発話から自然に読み取れる三段目項目が1つ以上ある場合は、必ず少なくとも1つ更新候補に含めてください。
+17. 現在項目の根拠が曖昧な場合は、次項目へ進まず同じ項目を1問だけ深掘りしてください。
+18. 前半のテンポは現行と同じに保ちつつ、I/Rでは課題・資源の具体性が落ちないようにしてください。
+`.trim();
+
+const buildCoverageFirstInitialPromptInstructions = (context: InitialPromptInstructionContext) => `
+${buildCurrentInitialPromptInstructions(context)}
+15. カルテ充足を優先し、現在フォーカスしている項目の二段目summaryと最低限の根拠が取れるまでは次項目へ進まないでください。
+16. 「十分に埋まった」と判断する条件は、現在項目についてユーザーの状況・希望・課題・資源のいずれかが具体的に要約できることです。
+17. 情報が広すぎる場合は、次項目へ進む前に1つだけ確認質問を挟んで、summaryに残せる粒度まで具体化してください。
+18. reply は2文以内を維持し、質問は1つだけにしてください。会話ターン数が増えても、空欄を減らすことを優先してください。
+`.trim();
+
+const INITIAL_PROMPT_VARIANT_OPTIONS: readonly InitialPromptVariantOption[] = Object.freeze([
+  {
+    value: 'current',
+    label: '現行',
+    description: '現在の初回面談プロンプトをそのまま使う比較用ベースラインです。',
+    buildInstructions: buildCurrentInitialPromptInstructions,
+  },
+  {
+    value: 'front_light',
+    label: '前半軽量',
+    description: 'S/Hを詰めすぎず、I/Rまで同じ粒度で記録しやすくします。',
+    buildInstructions: buildFrontLightInitialPromptInstructions,
+  },
+  {
+    value: 'late_focus',
+    label: '後半集中',
+    description: '後半でもsummaryと三段目候補を落とさないようにします。',
+    buildInstructions: buildLateFocusInitialPromptInstructions,
+  },
+  {
+    value: 'coverage_first',
+    label: '充足優先',
+    description: '空欄を減らすため、現在項目をやや丁寧に埋めてから進みます。',
+    buildInstructions: buildCoverageFirstInitialPromptInstructions,
+  },
+]);
+
+const getInitialPromptVariantOption = (variant: InitialPromptVariant) =>
+  INITIAL_PROMPT_VARIANT_OPTIONS.find((option) => option.value === variant) ?? INITIAL_PROMPT_VARIANT_OPTIONS[0];
+
+const normalizeInitialPromptVariant = (value: unknown): InitialPromptVariant =>
+  typeof value === 'string' && INITIAL_PROMPT_VARIANTS.includes(value as InitialPromptVariant)
+    ? (value as InitialPromptVariant)
+    : 'current';
+
 const formatDraftTimestamp = () =>
   new Date().toLocaleString('ja-JP', {
     year: 'numeric',
@@ -246,7 +341,7 @@ const createSilentSpeechMotion = (): SpeechMotionFrame => ({
   updatedAt: 0,
 });
 
-const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null) => {
+const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null, variant: InitialPromptVariant) => {
   const currentCategory = nextStep?.category ?? 'S';
   const currentField = nextStep?.field;
   const followingStep = getFollowingInitialDetailStep(nextStep);
@@ -258,6 +353,7 @@ const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null
     : '全体要約と計画生成';
   const followingStepLabel =
     followingStep ? getInitialDetailStepLabel(followingStep.category, followingStep.field) : 'P. 計画生成と全体整理';
+  const variantOption = getInitialPromptVariantOption(variant);
   return `
 あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で詳細項目を1つずつ埋めます。
 
@@ -281,21 +377,7 @@ ${JSON.stringify(karte.shirpDetails, null, 2)}
 
 ${AI_RESPONSE_GUIDELINES}
 
-# 指示
-1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で二段目要約と分かる範囲の三段目項目を更新してください。
-2. 以前のテンポの良い面談のように、reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
-3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
-4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
-5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まり、P(計画)を生成した時だけ true にしてください。それまでは false にしてください。
-6. 必須詳細項目がすべて埋まった場合は、P(計画)のトップレベル要約と詳細計画を生成し、面談のまとめを返してください。
-7. カルテは50%以上完成していれば保存可能です。6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
-8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
-9. 三段目項目は会話から自然に読み取れるものだけ埋め、判断できないものは null のままにしてください。S〜Pに当てはまらない内容は#に記録してください。
-10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
-11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
-12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
-13. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
-14. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
+${variantOption.buildInstructions({ currentStepLabel, followingStepLabel })}
 `.trim();
 };
 
@@ -642,6 +724,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
   const [hasPassedStartGate, setHasPassedStartGate] = useState(() => getMeetingQuotaSummary(getDemoUsageQuota(), meetingType).canStartMeeting);
+  const [initialPromptVariant, setInitialPromptVariant] = useState<InitialPromptVariant>('current');
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
   const [speechMotion, setSpeechMotion] = useState<SpeechMotionFrame>(createSilentSpeechMotion);
 
@@ -700,6 +783,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   );
   const initialProgressCountLabel = `${initialProgressCount} / ${INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length} 項目完了`;
   const canSubmitKarte = !isInitialMeeting || initialProgress >= 50;
+  const selectedInitialPromptVariantOption = getInitialPromptVariantOption(initialPromptVariant);
 
   const saveUserState = useCallback((nextState: DemoUserState) => {
     setUserState(nextState);
@@ -983,6 +1067,9 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setApiUsageCount(0);
       setConversationStarted(currentDraft.conversationStarted);
       setSessionStarted(currentDraft.hasSessionStarted);
+      setInitialPromptVariant(
+        meetingType === 'initial' ? normalizeInitialPromptVariant(currentDraft.initialPromptVariant) : 'current',
+      );
       setFeedbackText(currentDraft.feedbackText);
     } else {
       if (draftAction === 'fresh' && currentDraft) {
@@ -1000,6 +1087,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setConversationStarted(false);
       setApiUsageCount(0);
       setSessionStarted(false);
+      setInitialPromptVariant('current');
       setFeedbackText('');
     }
 
@@ -1079,6 +1167,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           ? {
               meetingType,
               continuousMode: isInitialMeeting ? null : continuousMode,
+              initialPromptVariant: isInitialMeeting ? initialPromptVariant : null,
               messages,
               karte,
               apiUsageCount,
@@ -1100,6 +1189,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     hasInitializedState,
     hasSessionStarted,
     isInitialMeeting,
+    initialPromptVariant,
     karte,
     meetingType,
     messages,
@@ -1303,7 +1393,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       if (!ensureApiKey()) return;
       const nextStep = isInitialMeeting ? getNextInitialDetailStep(karte.shirpDetails) : null;
       const systemPrompt = isInitialMeeting
-        ? buildInitialPrompt(karte, nextStep)
+        ? buildInitialPrompt(karte, nextStep, initialPromptVariant)
         : finalize
           ? buildContinuousFinalizePrompt(karte)
           : buildContinuousPrompt(karte);
@@ -1385,7 +1475,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [ensureApiKey, isInitialMeeting, karte, maxApiCalls, notifyApiLimit, openAiApiKey, playTextToSpeech, toast],
+    [ensureApiKey, initialPromptVariant, isInitialMeeting, karte, maxApiCalls, notifyApiLimit, openAiApiKey, playTextToSpeech, toast],
   );
 
   const handleUserMessage = useCallback(
@@ -1591,6 +1681,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           [meetingType]: {
             meetingType,
             continuousMode: isInitialMeeting ? null : continuousMode,
+            initialPromptVariant: isInitialMeeting ? initialPromptVariant : null,
             messages: messagesRef.current,
             karte,
             apiUsageCount,
@@ -1616,11 +1707,12 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     },
     [
       apiUsageCount,
-      continuousMode,
       conversationStarted,
+      continuousMode,
       disposeActiveAudio,
       feedbackText,
       hasSessionStarted,
+      initialPromptVariant,
       isInitialMeeting,
       karte,
       meetingType,
@@ -1669,6 +1761,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       data: nextKarte,
       meetingType,
       continuousMode: isInitialMeeting ? null : continuousMode,
+      initialPromptVariant: isInitialMeeting ? initialPromptVariant : null,
       feedback: feedbackText || null,
       conversationLog: messagesRef.current,
     };
@@ -1691,7 +1784,20 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       duration: 2500,
     });
     navigate('/user');
-  }, [canSubmitKarte, continuousMode, disposeActiveAudio, feedbackText, initialProgress, isInitialMeeting, karte, meetingType, navigate, saveUserState, toast]);
+  }, [
+    canSubmitKarte,
+    continuousMode,
+    disposeActiveAudio,
+    feedbackText,
+    initialProgress,
+    initialPromptVariant,
+    isInitialMeeting,
+    karte,
+    meetingType,
+    navigate,
+    saveUserState,
+    toast,
+  ]);
 
   const apiStatusLabel = openAiApiKey
     ? geminiApiKey
@@ -1793,6 +1899,9 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                       {continuousMode === 'turn' ? 'ターンテイキングモード (Realtime API・未実装)' : '通常モード'}
                     </Badge>
                   )}
+                  {isInitialMeeting && hasUsedApi && (
+                    <Badge colorScheme="purple">プロンプト: {selectedInitialPromptVariantOption.label}</Badge>
+                  )}
                   <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)}>
                     API設定
                   </Button>
@@ -1805,6 +1914,41 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Box>
                 )}
               </Flex>
+              {isInitialMeeting && !hasUsedApi && (
+                <Box w="full" mt={5}>
+                  <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>
+                    初回面談プロンプト
+                  </Text>
+                  <RadioGroup
+                    value={initialPromptVariant}
+                    onChange={(value) => setInitialPromptVariant(normalizeInitialPromptVariant(value))}
+                  >
+                    <Stack spacing={2}>
+                      {INITIAL_PROMPT_VARIANT_OPTIONS.map((option) => (
+                        <Box
+                          key={option.value}
+                          cursor="pointer"
+                          borderWidth="1px"
+                          borderColor={initialPromptVariant === option.value ? 'purple.300' : 'gray.200'}
+                          bg={initialPromptVariant === option.value ? 'purple.50' : 'white'}
+                          px={3}
+                          py={2}
+                          onClick={() => setInitialPromptVariant(option.value)}
+                        >
+                          <Radio value={option.value} colorScheme="purple">
+                            <Text as="span" fontSize="sm" fontWeight="bold">
+                              {option.label}
+                            </Text>
+                          </Radio>
+                          <Text fontSize="xs" color="gray.600" mt={1} pl={6}>
+                            {option.description}
+                          </Text>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </RadioGroup>
+                </Box>
+              )}
               <Button mt={6} colorScheme="blue" size="md" w="full" onClick={() => setSessionStarted(true)} isDisabled={hasUsedApi}>
                 {isInitialMeeting ? '初回面談を開始する' : '継続面談を開始する'}
               </Button>

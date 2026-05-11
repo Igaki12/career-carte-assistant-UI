@@ -5,12 +5,14 @@ import type {
   DemoUserState,
   DemographicData,
   DraftSession,
+  InitialPromptVariant,
   KarteData,
   MeetingType,
   SurveyResult,
   Tenant,
   TenantFeatureFlags,
 } from '../types';
+import { INITIAL_PROMPT_VARIANTS } from '../types';
 import { cloneShirpDetails, createEmptyShirpDetails, SHIRP_DETAIL_CATEGORY_KEYS, SHIRP_DETAIL_FIELDS, SHIRP_DETAIL_ITEM_LABELS } from './shirp';
 
 export const LOCAL_STORAGE_DEMO_USER_KEY = 'cca-demo-user-state';
@@ -30,6 +32,11 @@ const createEmptyShirp = (): KarteData['shirp'] => ({
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const normalizeInitialPromptVariant = (value: unknown): InitialPromptVariant =>
+  typeof value === 'string' && INITIAL_PROMPT_VARIANTS.includes(value as (typeof INITIAL_PROMPT_VARIANTS)[number])
+    ? (value as InitialPromptVariant)
+    : 'current';
 
 const mergeText = (base: string | null | undefined, addition: string) => {
   const next = addition.trim();
@@ -633,6 +640,7 @@ const normalizeDraftSession = (meetingType: MeetingType, draft: DraftSession | n
     ...draft,
     meetingType,
     continuousMode: draft.continuousMode ?? null,
+    initialPromptVariant: meetingType === 'initial' ? normalizeInitialPromptVariant(draft.initialPromptVariant) : null,
     karte: applyDemographicsToKarte(draft.karte, draft.karte?.demographics),
     updatedAt: draft.updatedAt ?? '',
   };
