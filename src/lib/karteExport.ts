@@ -7,7 +7,7 @@ import {
   SHIRP_LABELS,
 } from './shirp';
 import { SHIRP_KEYS } from '../types';
-import type { KarteData, MeetingType, SurveyFactorKey } from '../types';
+import type { KarteData, MeetingType, ShirpDetailCategoryKey, SurveyFactorKey } from '../types';
 
 const SURVEY_LABELS: Record<SurveyFactorKey, string> = {
   growth_orientation: '成長志向',
@@ -27,10 +27,64 @@ const SURVEY_FACTOR_KEYS: SurveyFactorKey[] = [
 
 const PAGE_WIDTH = 1240;
 const PAGE_HEIGHT = 1754;
-const PAGE_MARGIN = 84;
-const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN * 2;
-const PAGE_FOOTER_SPACE = 60;
-const FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, "Yu Gothic", sans-serif';
+const PAGE_MARGIN_X = 86;
+const PAGE_TOP = 84;
+const PAGE_BOTTOM = 150;
+const CONTENT_WIDTH = PAGE_WIDTH - PAGE_MARGIN_X * 2;
+const FONT_SERIF = '"Times New Roman", "Yu Mincho", "Hiragino Mincho ProN", serif';
+const FONT_SANS = '"Hiragino Sans", "Yu Gothic", "Helvetica Neue", Arial, sans-serif';
+
+const PDF_THEME = {
+  paper: '#fbfaf7',
+  panel: '#f4efe6',
+  text: '#182031',
+  muted: '#8d96a6',
+  rule: '#ded8ca',
+  ruleStrong: '#1b2536',
+  copper: '#944d3f',
+  dash: '#d7d0c2',
+};
+
+const CATEGORY_META: Record<
+  ShirpDetailCategoryKey,
+  { letter: ShirpDetailCategoryKey; title: string; english: string; description: string; color: string }
+> = {
+  S: {
+    letter: 'S',
+    title: '現状',
+    english: 'Satisfaction',
+    description: '現在の状態をめぐる満足/不満足の構造',
+    color: '#3f6684',
+  },
+  H: {
+    letter: 'H',
+    title: '希望',
+    english: 'Hope',
+    description: '本人が望むキャリアと働き方の方向性',
+    color: '#82743e',
+  },
+  I: {
+    letter: 'I',
+    title: '課題',
+    english: 'Issue',
+    description: '希望実現にあたって直面している障壁',
+    color: '#944d3f',
+  },
+  R: {
+    letter: 'R',
+    title: '資源',
+    english: 'Resource',
+    description: '活用しうる能力・対人・心理・環境のリソース',
+    color: '#386f60',
+  },
+  P: {
+    letter: 'P',
+    title: '計画',
+    english: 'Plan',
+    description: '現状から希望へ向かう探索・学習・実行の道筋',
+    color: '#613b72',
+  },
+};
 
 type ExportMeta = {
   meetingType: MeetingType | null;
@@ -231,15 +285,15 @@ const createCanvasPage = (): CanvasPage => {
     throw new Error('PDF出力用のキャンバスを初期化できませんでした。');
   }
 
-  context.fillStyle = '#ffffff';
+  context.fillStyle = PDF_THEME.paper;
   context.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-  context.fillStyle = '#0f172a';
+  context.fillStyle = PDF_THEME.text;
   context.textBaseline = 'top';
 
   return {
     canvas,
     context,
-    cursorY: PAGE_MARGIN,
+    cursorY: PAGE_TOP,
   };
 };
 
@@ -274,172 +328,477 @@ const wrapText = (context: CanvasRenderingContext2D, text: string, maxWidth: num
 
 const ensureSpace = (pages: CanvasPage[], requiredHeight: number) => {
   let page = pages[pages.length - 1];
-  if (page.cursorY + requiredHeight > PAGE_HEIGHT - PAGE_MARGIN - PAGE_FOOTER_SPACE) {
+  if (page.cursorY + requiredHeight > PAGE_HEIGHT - PAGE_BOTTOM) {
     page = createCanvasPage();
     pages.push(page);
   }
   return page;
 };
 
-const setFont = (context: CanvasRenderingContext2D, weight: 400 | 600 | 700, size: number) => {
-  context.font = `${weight} ${size}px ${FONT_FAMILY}`;
+const setFont = (
+  context: CanvasRenderingContext2D,
+  weight: 400 | 500 | 600 | 700,
+  size: number,
+  family = FONT_SANS,
+  style: 'normal' | 'italic' = 'normal',
+) => {
+  context.font = `${style} ${weight} ${size}px ${family}`;
 };
 
-const drawTitleBlock = (pages: CanvasPage[], payload: KarteBatchExportPayload) => {
-  const page = pages[pages.length - 1];
+const drawLine = (
+  context: CanvasRenderingContext2D,
+  x1: number,
+  y: number,
+  x2: number,
+  color = PDF_THEME.rule,
+  width = 2,
+  dashed = false,
+) => {
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = width;
+  if (dashed) context.setLineDash([3, 5]);
+  context.beginPath();
+  context.moveTo(x1, y);
+  context.lineTo(x2, y);
+  context.stroke();
+  context.restore();
+};
+
+const drawFooter = (page: CanvasPage, pageIndex: number, totalPages: number) => {
   const { context } = page;
+  setFont(context, 400, 20, FONT_SERIF, 'italic');
+  context.fillStyle = PDF_THEME.muted;
+  const text = `Career Karte - page ${pageIndex + 1} / ${totalPages}`;
+  context.fillText(text, PAGE_WIDTH - PAGE_MARGIN_X - context.measureText(text).width, PAGE_HEIGHT - 62);
+};
 
-  setFont(context, 700, 36);
-  context.fillStyle = '#0f172a';
-  context.fillText('キャリアカルテ', PAGE_MARGIN, page.cursorY);
-  page.cursorY += 56;
+const addPage = (pages: CanvasPage[]) => {
+  const page = createCanvasPage();
+  pages.push(page);
+  return page;
+};
 
-  const metaRows = [
-    ...(payload.employeeName ? [`対象者: ${payload.employeeName}${payload.employeeId ? ` (${payload.employeeId})` : ''}`] : []),
-    `面談種別: ${formatMeetingType(payload.meta.meetingType)}`,
-    `作成日: ${formatPlainValue(payload.meta.createdAt, '未保存')}`,
-    `最終更新日: ${formatPlainValue(payload.meta.updatedAt, '未保存')}`,
+const drawFirstPageHeader = (page: CanvasPage, payload: KarteBatchExportPayload) => {
+  const { context } = page;
+  drawLine(context, PAGE_MARGIN_X, 62, PAGE_WIDTH - PAGE_MARGIN_X, '#263856', 5);
+
+  setFont(context, 400, 44, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText('HRdock', PAGE_MARGIN_X, 76);
+
+  setFont(context, 400, 16, FONT_SERIF);
+  context.fillStyle = PDF_THEME.muted;
+  context.letterSpacing = '12px';
+  context.fillText('CAREER KARTE', PAGE_MARGIN_X, 150);
+  context.letterSpacing = '0px';
+
+  const metaX = PAGE_WIDTH - PAGE_MARGIN_X - 300;
+  setFont(context, 600, 18, FONT_SANS);
+  context.fillStyle = PDF_THEME.muted;
+  context.fillText('面 談 種 別', metaX, 90);
+  context.fillText('作 成 日', metaX + 230, 90);
+
+  setFont(context, 400, 24, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText(formatMeetingType(payload.meta.meetingType), metaX, 128);
+  context.fillText(formatPlainValue(payload.meta.createdAt, '未保存'), metaX + 150, 128);
+
+  drawLine(context, PAGE_MARGIN_X, 214, PAGE_WIDTH - PAGE_MARGIN_X, PDF_THEME.rule, 2);
+  page.cursorY = 250;
+};
+
+const drawDocumentIntro = (page: CanvasPage) => {
+  const { context } = page;
+  setFont(context, 400, 18, FONT_SERIF, 'italic');
+  context.fillStyle = PDF_THEME.copper;
+  context.fillText('Career Dialogue Report - SHIRP Framework', PAGE_MARGIN_X, page.cursorY);
+  page.cursorY += 58;
+
+  setFont(context, 700, 42, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText('キャリアカルテ', PAGE_MARGIN_X, page.cursorY);
+  page.cursorY += 66;
+
+  setFont(context, 600, 21, FONT_SANS);
+  context.fillStyle = '#566174';
+  const lines = wrapText(
+    context,
+    '本ドキュメントは、SHIRPフレームワーク（現状／希望／課題／資源／計画）に基づき、対話で得られた情報を構造化したキャリア面談の記録である。',
+    CONTENT_WIDTH,
+  );
+  lines.forEach((line) => {
+    context.fillText(line, PAGE_MARGIN_X, page.cursorY);
+    page.cursorY += 34;
+  });
+  page.cursorY += 34;
+  drawLine(context, PAGE_MARGIN_X, page.cursorY, PAGE_WIDTH - PAGE_MARGIN_X, PDF_THEME.rule, 2);
+  page.cursorY += 38;
+};
+
+const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) => {
+  const { context } = page;
+  const { demographics } = payload.karte;
+  const y = page.cursorY;
+  const height = 470;
+  context.fillStyle = PDF_THEME.panel;
+  context.fillRect(PAGE_MARGIN_X, y, CONTENT_WIDTH, height);
+  context.fillStyle = '#263856';
+  context.fillRect(PAGE_MARGIN_X, y, 5, height);
+  drawLine(context, PAGE_MARGIN_X, y, PAGE_WIDTH - PAGE_MARGIN_X, PDF_THEME.rule, 2);
+  drawLine(context, PAGE_MARGIN_X, y + height, PAGE_WIDTH - PAGE_MARGIN_X, PDF_THEME.rule, 2);
+
+  const leftX = PAGE_MARGIN_X + 58;
+  const rightX = PAGE_MARGIN_X + Math.round(CONTENT_WIDTH * 0.56);
+  setFont(context, 400, 15, FONT_SERIF);
+  context.fillStyle = PDF_THEME.muted;
+  context.letterSpacing = '8px';
+  context.fillText('PROFILE', leftX, y + 56);
+  context.letterSpacing = '0px';
+
+  setFont(context, 700, 34, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText(formatPlainValue(payload.employeeName ?? demographics.name), leftX, y + 108);
+
+  drawLine(context, rightX, y + 72, PAGE_WIDTH - PAGE_MARGIN_X - 40, PDF_THEME.rule, 2);
+  setFont(context, 400, 19, FONT_SERIF);
+  context.fillStyle = PDF_THEME.muted;
+  context.fillText('基 本 情 報', rightX, y + 104);
+
+  const leftRows: Array<[string, string]> = [
+    ['氏名', formatPlainValue(demographics.name)],
+    ['会社名', formatPlainValue(demographics.company)],
+    ['部署', formatPlainValue(demographics.department)],
+    ['職種', formatPlainValue(demographics.jobTitle)],
+    ['権限', formatPlainValue(demographics.permission)],
+  ];
+  const rightRows: Array<[string, string]> = [
+    ['年齢', formatPlainValue(demographics.age)],
+    ['性別', formatPlainValue(demographics.gender)],
+    ['勤続年数(年)', formatPlainValue(demographics.yearsOfService)],
+    ['転職歴(回数)', formatPlainValue(demographics.jobChangeCount)],
+    ['勤務地(都道府県)', formatPlainValue(demographics.workLocationPrefecture)],
+    ['現在の婚姻関係', formatPlainValue(demographics.maritalStatus)],
+    ['子供の有無(人)', formatPlainValue(demographics.childrenCount, '-')],
+    ['末子の年齢(歳)', formatPlainValue(demographics.youngestChildAge, '-')],
   ];
 
-  setFont(context, 400, 22);
-  context.fillStyle = '#334155';
-  metaRows.forEach((row) => {
-    context.fillText(row, PAGE_MARGIN, page.cursorY);
-    page.cursorY += 32;
-  });
-  page.cursorY += 16;
+  const drawProfileColumn = (rows: Array<[string, string]>, x: number, startY: number, columnWidth: number, rowGap = 58) => {
+    rows.forEach(([label, value], index) => {
+      const rowY = startY + index * rowGap;
+      setFont(context, 600, 17, FONT_SANS);
+      context.fillStyle = PDF_THEME.muted;
+      context.fillText(label, x, rowY);
+      setFont(context, 400, 22, FONT_SERIF);
+      context.fillStyle = PDF_THEME.text;
+      const valueLines = wrapText(context, value, columnWidth);
+      context.fillText(valueLines[0] ?? '-', x, rowY + 28);
+      drawLine(context, x, rowY + 58, x + columnWidth, PDF_THEME.rule, 1, true);
+    });
+  };
+
+  drawProfileColumn(leftRows, leftX, y + 198, 240);
+  drawProfileColumn(rightRows.slice(0, 4), rightX, y + 166, 210, 70);
+  drawProfileColumn(rightRows.slice(4), rightX + 250, y + 166, 210, 70);
+
+  page.cursorY = y + height + 34;
 };
 
-const drawSectionTitle = (pages: CanvasPage[], title: string) => {
-  const page = ensureSpace(pages, 54);
+const drawChapterTitle = (page: CanvasPage, chapter: string, title: string, subtitle: string) => {
   const { context } = page;
+  setFont(context, 700, 36, FONT_SERIF, 'italic');
+  context.fillStyle = PDF_THEME.copper;
+  context.fillText(chapter, PAGE_MARGIN_X, page.cursorY);
 
-  setFont(context, 700, 26);
-  context.fillStyle = '#0f172a';
-  context.fillText(title, PAGE_MARGIN, page.cursorY);
-  page.cursorY += 38;
-  context.strokeStyle = '#cbd5e1';
-  context.lineWidth = 1;
-  context.beginPath();
-  context.moveTo(PAGE_MARGIN, page.cursorY);
-  context.lineTo(PAGE_WIDTH - PAGE_MARGIN, page.cursorY);
-  context.stroke();
-  page.cursorY += 18;
+  setFont(context, 700, 42, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText(title, PAGE_MARGIN_X + 76, page.cursorY - 4);
+
+  setFont(context, 600, 24, FONT_SANS);
+  context.fillStyle = '#566174';
+  context.fillText(subtitle, PAGE_MARGIN_X + 76, page.cursorY + 76);
+
+  drawLine(context, PAGE_MARGIN_X, page.cursorY + 130, PAGE_WIDTH - PAGE_MARGIN_X, PDF_THEME.ruleStrong, 4);
+  page.cursorY += 172;
 };
 
-const drawField = (pages: CanvasPage[], label: string, value: string) => {
-  let page = ensureSpace(pages, 84);
+const drawMutedRule = (context: CanvasRenderingContext2D, x: number, y: number, width: number, color: string) => {
+  drawLine(context, x, y, x + width, PDF_THEME.rule, 2);
+  drawLine(context, x, y, x + 50, color, 4);
+};
+
+const drawSummaryCard = (
+  page: CanvasPage,
+  category: ShirpDetailCategoryKey,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  value: string,
+) => {
+  const { context } = page;
+  const meta = CATEGORY_META[category];
+  context.fillStyle = PDF_THEME.paper;
+  context.fillRect(x, y, width, height);
+  context.strokeStyle = PDF_THEME.rule;
+  context.lineWidth = 2;
+  context.strokeRect(x, y, width, height);
+  context.fillStyle = meta.color;
+  context.fillRect(x, y, 7, height);
+
+  setFont(context, 700, 56, FONT_SERIF);
+  context.fillStyle = meta.color;
+  context.fillText(meta.letter, x + 50, y + 54);
+
+  setFont(context, 700, 32, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText(meta.title, x + 132, y + 56);
+  setFont(context, 400, 22, FONT_SERIF, 'italic');
+  context.fillStyle = PDF_THEME.muted;
+  context.fillText(meta.english, x + 132, y + 96);
+
+  setFont(context, 600, 20, FONT_SANS);
+  context.fillStyle = PDF_THEME.muted;
+  context.fillText(meta.description, x + 36, y + 156);
+  drawMutedRule(context, x + 36, y + 202, width - 72, meta.color);
+
+  setFont(context, 600, 24, FONT_SANS);
+  context.fillStyle = PDF_THEME.text;
+  const lines = wrapText(context, value, width - 72).slice(0, Math.max(1, Math.floor((height - 244) / 34)));
+  lines.forEach((line, index) => {
+    context.fillText(line, x + 36, y + 238 + index * 34);
+  });
+};
+
+const drawSummaryPage = (pages: CanvasPage[], karte: KarteData) => {
+  const page = addPage(pages);
+  drawChapterTitle(page, '01', 'SHIRP サマリー', '対話全体から抽出された5つの観点ごとの要約');
+
+  const gap = 24;
+  const cardWidth = Math.floor((CONTENT_WIDTH - gap) / 2);
+  const cardHeight = 300;
+  const left = PAGE_MARGIN_X;
+  const right = PAGE_MARGIN_X + cardWidth + gap;
+  const top = page.cursorY + 8;
+  drawSummaryCard(page, 'S', left, top, cardWidth, cardHeight, formatKarteValue(karte.shirp.S));
+  drawSummaryCard(page, 'H', right, top, cardWidth, cardHeight, formatKarteValue(karte.shirp.H));
+  drawSummaryCard(page, 'I', left, top + cardHeight + gap, cardWidth, cardHeight, formatKarteValue(karte.shirp.I));
+  drawSummaryCard(page, 'R', right, top + cardHeight + gap, cardWidth, cardHeight, formatKarteValue(karte.shirp.R));
+  drawSummaryCard(page, 'P', left, top + (cardHeight + gap) * 2, CONTENT_WIDTH, 240, formatKarteValue(karte.shirp.P));
+};
+
+const drawCategoryBand = (pages: CanvasPage[], category: ShirpDetailCategoryKey) => {
+  const page = ensureSpace(pages, 170);
+  const meta = CATEGORY_META[category];
+  const { context } = page;
+  const y = page.cursorY;
+  context.fillStyle = meta.color;
+  context.fillRect(PAGE_MARGIN_X, y, CONTENT_WIDTH, 150);
+  context.strokeStyle = meta.color;
+  context.lineWidth = 2;
+  context.strokeRect(PAGE_MARGIN_X, y, CONTENT_WIDTH, 150);
+
+  context.strokeStyle = 'rgba(255,255,255,0.5)';
+  context.lineWidth = 2;
+  context.strokeRect(PAGE_MARGIN_X + 28, y + 32, 50, 84);
+
+  setFont(context, 700, 44, FONT_SERIF);
+  context.fillStyle = '#ffffff';
+  context.fillText(meta.letter, PAGE_MARGIN_X + 46, y + 52);
+
+  setFont(context, 700, 34, FONT_SERIF);
+  context.fillText(meta.title, PAGE_MARGIN_X + 110, y + 36);
+  setFont(context, 400, 24, FONT_SERIF, 'italic');
+  context.fillText(`/ ${meta.english}`, PAGE_MARGIN_X + 196, y + 42);
+  setFont(context, 400, 22, FONT_SANS);
+  context.fillStyle = 'rgba(255,255,255,0.7)';
+  context.fillText(meta.description, PAGE_MARGIN_X + 110, y + 88);
+  page.cursorY += 190;
+};
+
+const drawDetailField = (
+  pages: CanvasPage[],
+  category: ShirpDetailCategoryKey,
+  index: number,
+  title: string,
+  summary: string,
+  items: Array<[string, string]>,
+) => {
+  const meta = CATEGORY_META[category];
+  let page = ensureSpace(pages, 160);
   let { context } = page;
 
-  setFont(context, 700, 20);
-  const labelLines = wrapText(context, label, CONTENT_WIDTH);
-  setFont(context, 400, 20);
-  const valueLines = wrapText(context, value, CONTENT_WIDTH - 20);
-  const blockHeight = labelLines.length * 28 + valueLines.length * 28 + 18;
-  page = ensureSpace(pages, blockHeight);
-  context = page.context;
+  setFont(context, 700, 22, FONT_SERIF, 'italic');
+  context.fillStyle = meta.color;
+  context.fillText(String(index).padStart(2, '0'), PAGE_MARGIN_X + 30, page.cursorY + 10);
+  setFont(context, 700, 30, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText(title, PAGE_MARGIN_X + 74, page.cursorY);
+  drawMutedRule(context, PAGE_MARGIN_X + 74, page.cursorY + 56, CONTENT_WIDTH - 104, meta.color);
+  page.cursorY += 88;
 
-  setFont(context, 700, 20);
-  context.fillStyle = '#475569';
-  labelLines.forEach((line) => {
-    context.fillText(line, PAGE_MARGIN, page.cursorY);
-    page.cursorY += 28;
+  setFont(context, 700, 25, FONT_SANS);
+  context.fillStyle = PDF_THEME.text;
+  wrapText(context, summary, CONTENT_WIDTH - 74).forEach((line) => {
+    page = ensureSpace(pages, 36);
+    setFont(page.context, 700, 25, FONT_SANS);
+    page.context.fillStyle = PDF_THEME.text;
+    page.context.fillText(line, PAGE_MARGIN_X + 74, page.cursorY);
+    page.cursorY += 36;
+  });
+  page.cursorY += 22;
+
+  items.forEach(([label, value]) => {
+    setFont(page.context, 400, 22, FONT_SANS);
+    const valueLines = wrapText(page.context, value, CONTENT_WIDTH - 330);
+    const rowHeight = Math.max(54, valueLines.length * 32 + 18);
+    page = ensureSpace(pages, rowHeight + 8);
+    context = page.context;
+    setFont(context, 400, 22, FONT_SANS);
+    context.fillStyle = meta.color;
+    context.fillText('-', PAGE_MARGIN_X + 74, page.cursorY + 4);
+    context.fillStyle = '#566174';
+    context.fillText(label, PAGE_MARGIN_X + 98, page.cursorY);
+    context.fillStyle = PDF_THEME.text;
+    valueLines.forEach((line, lineIndex) => {
+      context.fillText(line, PAGE_MARGIN_X + 330, page.cursorY + lineIndex * 32);
+    });
+    drawLine(context, PAGE_MARGIN_X + 74, page.cursorY + rowHeight - 8, PAGE_WIDTH - PAGE_MARGIN_X - 30, PDF_THEME.dash, 1, true);
+    page.cursorY += rowHeight;
   });
 
-  setFont(context, 400, 20);
-  context.fillStyle = '#0f172a';
-  valueLines.forEach((line) => {
-    context.fillText(line, PAGE_MARGIN + 20, page.cursorY);
-    page.cursorY += 28;
-  });
-
-  page.cursorY += 18;
+  page.cursorY += 36;
 };
 
-const drawSurveySection = (pages: CanvasPage[], karte: KarteData) => {
-  drawSectionTitle(pages, 'アンケート');
+const drawDetailPages = (pages: CanvasPage[], karte: KarteData) => {
+  const firstPage = addPage(pages);
+  drawChapterTitle(firstPage, '02', 'SHIRP 詳細', 'SHIRPの各観点について、中カテゴリ／小項目単位で記載');
+
+  SHIRP_DETAIL_CATEGORY_KEYS.forEach((category) => {
+    drawCategoryBand(pages, category);
+    getShirpDetailFieldEntries(category).forEach(([field, definition], index) => {
+      const detailValue = karte.shirpDetails[category]?.[field];
+      const items = getShirpDetailItemEntries(category, field).map(([itemKey, itemLabel]) => [
+        itemLabel,
+        formatPlainValue(detailValue?.items?.[itemKey], '-'),
+      ] as [string, string]);
+      drawDetailField(pages, category, index + 1, definition.label, formatKarteValue(detailValue?.summary), items);
+    });
+  });
+};
+
+const drawSupplementSectionTitle = (pages: CanvasPage[], title: string, accent = PDF_THEME.ruleStrong) => {
+  const page = ensureSpace(pages, 120);
+  const { context } = page;
+  setFont(context, 700, 30, FONT_SERIF);
+  context.fillStyle = PDF_THEME.text;
+  context.fillText(title, PAGE_MARGIN_X + 74, page.cursorY);
+  drawMutedRule(context, PAGE_MARGIN_X + 74, page.cursorY + 58, CONTENT_WIDTH - 104, accent);
+  page.cursorY += 92;
+};
+
+const drawParagraphBlock = (pages: CanvasPage[], text: string, accent = PDF_THEME.ruleStrong) => {
+  let page = ensureSpace(pages, 90);
+  const lines = wrapText(page.context, text, CONTENT_WIDTH - 148);
+  lines.forEach((line) => {
+    page = ensureSpace(pages, 36);
+    setFont(page.context, 600, 24, FONT_SANS);
+    page.context.fillStyle = PDF_THEME.text;
+    page.context.fillText(line, PAGE_MARGIN_X + 74, page.cursorY);
+    page.cursorY += 36;
+  });
+  drawLine(page.context, PAGE_MARGIN_X + 74, page.cursorY + 16, PAGE_WIDTH - PAGE_MARGIN_X - 30, accent, 1);
+  page.cursorY += 46;
+};
+
+const drawSimpleRows = (pages: CanvasPage[], rows: Array<[string, string]>, accent = PDF_THEME.ruleStrong) => {
+  rows.forEach(([label, value]) => {
+    let page = ensureSpace(pages, 60);
+    setFont(page.context, 400, 22, FONT_SANS);
+    const valueLines = wrapText(page.context, value, CONTENT_WIDTH - 330);
+    const rowHeight = Math.max(56, valueLines.length * 32 + 18);
+    page = ensureSpace(pages, rowHeight + 6);
+    const { context } = page;
+    setFont(context, 400, 22, FONT_SANS);
+    context.fillStyle = accent;
+    context.fillText('-', PAGE_MARGIN_X + 74, page.cursorY + 4);
+    context.fillStyle = '#566174';
+    context.fillText(label, PAGE_MARGIN_X + 98, page.cursorY);
+    context.fillStyle = PDF_THEME.text;
+    valueLines.forEach((line, index) => {
+      context.fillText(line, PAGE_MARGIN_X + 330, page.cursorY + index * 32);
+    });
+    drawLine(context, PAGE_MARGIN_X + 74, page.cursorY + rowHeight - 8, PAGE_WIDTH - PAGE_MARGIN_X - 30, PDF_THEME.dash, 1, true);
+    page.cursorY += rowHeight;
+  });
+  pages[pages.length - 1].cursorY += 24;
+};
+
+const drawSurveySupplement = (pages: CanvasPage[], karte: KarteData) => {
+  drawSupplementSectionTitle(pages, 'アンケート', '#566174');
 
   if (!hasSurveyResponses(karte)) {
-    drawField(pages, 'アンケート結果', '未回答');
+    drawSimpleRows(pages, [['アンケート結果', '未回答']], '#566174');
     return;
   }
 
   const chartSize = 340;
-  const page = ensureSpace(pages, chartSize + 40);
+  const page = ensureSpace(pages, chartSize + 58);
   const model = createSurveyRadarModel(
     SURVEY_FACTOR_KEYS.map((key) => SURVEY_LABELS[key]),
     SURVEY_FACTOR_KEYS.map((key) => karte.survey.factors[key] ?? 0),
     100,
     chartSize,
   );
-  const chartX = PAGE_MARGIN + Math.round((CONTENT_WIDTH - model.canvasSize) / 2);
+  const chartX = PAGE_MARGIN_X + Math.round((CONTENT_WIDTH - model.canvasSize) / 2);
   drawSurveyRadarOnCanvas(page.context, model, chartX, page.cursorY);
-  page.cursorY += model.canvasSize + 24;
+  page.cursorY += model.canvasSize + 32;
 
-  drawField(pages, '最終更新', formatPlainValue(karte.survey.lastUpdated, '未回答'));
-  SURVEY_FACTOR_KEYS.forEach((key) => {
-    drawField(pages, SURVEY_LABELS[key], `${formatSurveyValue(karte.survey.factors[key])}点 / 100点`);
-  });
+  drawSimpleRows(
+    pages,
+    [
+      ['最終更新', formatPlainValue(karte.survey.lastUpdated, '未回答')],
+      ...SURVEY_FACTOR_KEYS.map((key) => [SURVEY_LABELS[key], `${formatSurveyValue(karte.survey.factors[key])}点 / 100点`] as [string, string]),
+    ],
+    '#566174',
+  );
 };
 
 const buildKartePdfPages = (payload: KarteBatchExportPayload) => {
   const pages = [createCanvasPage()];
   const { karte, meta } = payload;
 
-  drawTitleBlock(pages, payload);
+  drawFirstPageHeader(pages[0], payload);
+  drawDocumentIntro(pages[0]);
+  drawProfileSection(pages[0], payload);
 
-  drawSectionTitle(pages, '基本情報');
-  [
-    ['ID', formatPlainValue(karte.demographics.accountId)],
-    ['氏名', formatPlainValue(karte.demographics.name)],
-    ['メール', formatPlainValue(karte.demographics.email)],
-    ['会社名', formatPlainValue(karte.demographics.company)],
-    ['部署', formatPlainValue(karte.demographics.department)],
-    ['職種', formatPlainValue(karte.demographics.jobTitle)],
-    ['権限', formatPlainValue(karte.demographics.permission)],
-    ['年齢', formatPlainValue(karte.demographics.age)],
-    ['勤務地(都道府県)', formatPlainValue(karte.demographics.workLocationPrefecture)],
-    ['転職歴(回数)', formatPlainValue(karte.demographics.jobChangeCount)],
-    ['勤続年数(年)', formatPlainValue(karte.demographics.yearsOfService)],
-    ['性別', formatPlainValue(karte.demographics.gender)],
-    ['現在の婚姻関係', formatPlainValue(karte.demographics.maritalStatus)],
-    ['子供の有無(人)', formatPlainValue(karte.demographics.childrenCount)],
-    ['末子の年齢(歳)', formatPlainValue(karte.demographics.youngestChildAge)],
-  ].forEach(([label, value]) => drawField(pages, label, value));
+  drawSummaryPage(pages, karte);
+  drawDetailPages(pages, karte);
 
-  drawSectionTitle(pages, '電子カルテ要約');
-  SHIRP_KEYS.forEach((key) => {
-    drawField(pages, SHIRP_LABELS[key], formatKarteValue(karte.shirp[key]));
-  });
+  const supplementPage = addPage(pages);
+  drawChapterTitle(supplementPage, '03', '補足情報', 'その他、フィードバック、アンケート、面談前コンディション');
+  drawSupplementSectionTitle(pages, 'その他', '#566174');
+  drawParagraphBlock(pages, formatKarteValue(karte.shirp['#']), '#566174');
 
-  drawSectionTitle(pages, '電子カルテ詳細');
-  SHIRP_DETAIL_CATEGORY_KEYS.forEach((category) => {
-    getShirpDetailFieldEntries(category).forEach(([field, definition]) => {
-      const detailValue = karte.shirpDetails[category]?.[field];
-      drawField(pages, `${SHIRP_LABELS[category]} / ${definition.label}`, formatKarteValue(detailValue?.summary));
-      getShirpDetailItemEntries(category, field).forEach(([itemKey, itemLabel]) => {
-        drawField(
-          pages,
-          `${SHIRP_LABELS[category]} / ${definition.label} / ${itemLabel}`,
-          formatPlainValue(detailValue?.items?.[itemKey], '未記載'),
-        );
-      });
-    });
-  });
+  drawSupplementSectionTitle(pages, '面談フィードバック', '#566174');
+  drawParagraphBlock(pages, formatPlainValue(meta.feedback, 'なし'), '#566174');
 
-  drawSectionTitle(pages, '面談フィードバック');
-  drawField(pages, 'フィードバック', formatPlainValue(meta.feedback, 'なし'));
+  drawSurveySupplement(pages, karte);
 
-  drawSurveySection(pages, karte);
-
-  drawSectionTitle(pages, '面談前コンディション');
-  drawField(
+  drawSupplementSectionTitle(pages, '面談前コンディション', PDF_THEME.copper);
+  drawSimpleRows(
     pages,
-    '緊張度スコア',
-    karte.conditionSummary ? `${karte.conditionSummary.score} / 100` : '未測定',
+    [
+      ['緊張度スコア', karte.conditionSummary ? `${karte.conditionSummary.score} / 100` : '未測定'],
+      ['レベル', formatConditionValue(karte.conditionSummary?.level)],
+      ['測定日時', formatConditionValue(karte.conditionSummary?.measuredAt)],
+      ['注意', '表情から面談前後の緊張傾向を参考値として表示するもので、医療・心理診断ではありません。'],
+    ],
+    PDF_THEME.copper,
   );
-  drawField(pages, 'レベル', formatConditionValue(karte.conditionSummary?.level));
-  drawField(pages, '測定日時', formatConditionValue(karte.conditionSummary?.measuredAt));
+
+  const totalPages = pages.length;
+  pages.forEach((page, index) => drawFooter(page, index, totalPages));
 
   return pages;
 };
