@@ -15,11 +15,11 @@ const DETAIL_DEFINITION_BASE = {
   S: {
     externalConditions: {
       label: '外的条件',
-      promptHint: '現状の収入、労働時間、勤務形態、作業環境、雇用の安定性への満足',
+      promptHint: '現状の勤務形態、労働時間、収入、作業環境、雇用の安定性への満足',
       items: {
-        income: '収入',
-        workingHours: '労働時間',
         workStyle: '勤務形態',
+        workingHours: '労働時間',
+        income: '収入',
         workEnvironment: '作業環境',
         employmentStability: '雇用の安定性',
       },

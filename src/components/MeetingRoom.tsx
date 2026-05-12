@@ -159,7 +159,7 @@ type InitialDetailStep = (typeof INITIAL_REQUIRED_SHIRP_DETAIL_STEPS)[number];
 
 const greetingForMeeting = (meetingType: MeetingType) =>
   meetingType === 'initial'
-    ? 'こんにちは。キャリアメンターです。まずは現状の働く条件から伺います。今の収入や労働時間、勤務形態、作業環境などについて、どのように感じていますか。なお、この対話は事前準備であり、実際の面談が本番です。'
+    ? 'こんにちは。キャリアメンターです。まずは現状の働く条件から伺います。今の勤務形態や労働時間、収入、作業環境などについて、どのように感じていますか。なお、この対話は事前準備であり、実際の面談が本番です。'
     : 'こんにちは。キャリアメンターです。今日は自由にお話しください。必要に応じて、前回のカルテ内容を更新していきます。なお、この対話は事前準備であり、実際の面談が本番です。';
 
 const AI_RESPONSE_GUIDELINES = `
