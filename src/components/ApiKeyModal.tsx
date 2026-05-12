@@ -105,7 +105,7 @@ const ApiKeyModal = ({ isOpen, openAiApiKey = '', geminiApiKey = '', onSave }: A
               </Text>
               <Input
                 type="password"
-                placeholder="AIza********************************"
+                placeholder="A********************************"
                 value={geminiValue}
                 onChange={(e) => {
                   setGeminiValue(e.target.value);
