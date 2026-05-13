@@ -13,7 +13,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import { useMemo, useState } from 'react';
+import { type ClipboardEvent, type KeyboardEvent, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PrimaryButton from '../components/PrimaryButton';
 import {
@@ -110,7 +110,7 @@ type FieldDefinition = {
   key: keyof DemographicData;
   label: string;
   placeholder?: string;
-  kind?: 'text' | 'number' | 'select';
+  kind?: 'text' | 'number' | 'select' | 'date';
   min?: number;
   step?: number;
   options?: string[];
@@ -131,18 +131,68 @@ const JOB_TITLE_OPTIONS = [
   'その他',
 ];
 
+const PREFECTURE_OPTIONS = [
+  '北海道',
+  '青森県',
+  '岩手県',
+  '宮城県',
+  '秋田県',
+  '山形県',
+  '福島県',
+  '茨城県',
+  '栃木県',
+  '群馬県',
+  '埼玉県',
+  '千葉県',
+  '東京都',
+  '神奈川県',
+  '新潟県',
+  '富山県',
+  '石川県',
+  '福井県',
+  '山梨県',
+  '長野県',
+  '岐阜県',
+  '静岡県',
+  '愛知県',
+  '三重県',
+  '滋賀県',
+  '京都府',
+  '大阪府',
+  '兵庫県',
+  '奈良県',
+  '和歌山県',
+  '鳥取県',
+  '島根県',
+  '岡山県',
+  '広島県',
+  '山口県',
+  '徳島県',
+  '香川県',
+  '愛媛県',
+  '高知県',
+  '福岡県',
+  '佐賀県',
+  '長崎県',
+  '熊本県',
+  '大分県',
+  '宮崎県',
+  '鹿児島県',
+  '沖縄県',
+];
+
 const FIELD_LABELS: FieldDefinition[] = [
   { key: 'accountId', label: 'ID', placeholder: 'USR-2024-021', isReadOnly: true },
+  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com', isReadOnly: true },
   { key: 'lastName', label: '姓', placeholder: '山田', isReadOnly: true },
   { key: 'firstName', label: '名', placeholder: '花子', isReadOnly: true },
   { key: 'lastNameKana', label: 'フリガナ（姓）', placeholder: 'ヤマダ', isReadOnly: true },
   { key: 'firstNameKana', label: 'フリガナ（名）', placeholder: 'ハナコ', isReadOnly: true },
-  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com', isReadOnly: true },
   { key: 'company', label: '会社名', placeholder: 'Career Carte Inc.', isReadOnly: true },
   { key: 'department', label: '部署', placeholder: 'Product Division' },
   { key: 'jobTitle', label: '職種', kind: 'select', options: JOB_TITLE_OPTIONS },
-  { key: 'birthDate', label: '生年月日', placeholder: '19800501' },
-  { key: 'workLocationPrefecture', label: '勤務地(都道府県)', placeholder: '東京都' },
+  { key: 'birthDate', label: '生年月日', placeholder: '1980-05-01', kind: 'date' },
+  { key: 'workLocationPrefecture', label: '勤務地(都道府県)', kind: 'select', options: PREFECTURE_OPTIONS },
   { key: 'jobChangeCount', label: '転職歴(回数)', placeholder: '2', kind: 'number', min: 0, step: 1 },
   { key: 'yearsOfService', label: '勤続年数(年)', placeholder: '4', kind: 'number', min: 0, step: 1 },
   { key: 'gender', label: '性別', kind: 'select', options: ['男', '女', 'その他'] },
@@ -165,11 +215,35 @@ const normalizeNumberInput = (value: string) => {
   return sanitized ? sanitized : null;
 };
 
+const normalizeDateInput = (value: string | null | undefined) => {
+  if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (/^\d{8}$/.test(value)) return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+  return null;
+};
+
+const getDateInputValue = (value: string | null | undefined) => normalizeDateInput(value) ?? '';
+
+const ALLOWED_NUMERIC_CONTROL_KEYS = new Set([
+  'Backspace',
+  'Delete',
+  'Tab',
+  'Enter',
+  'Escape',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+]);
+
 const normalizeFormValues = (values: DemographicData): DemographicData => {
   const normalized = { ...values };
   NUMBER_FIELD_KEYS.forEach((key) => {
     normalized[key] = normalizeNumberInput(normalized[key] ?? '');
   });
+  normalized.birthDate = normalizeDateInput(normalized.birthDate);
   normalized.name = joinName(normalized.lastName, normalized.firstName);
   normalized.nameKana = joinNameKana(normalized.lastNameKana, normalized.firstNameKana);
 
@@ -195,6 +269,22 @@ function DemographicsSetup() {
   const returnTo = useMemo(() => searchParams.get('returnTo') || '/user', [searchParams]);
   const childrenCountValue = formValues.childrenCount ?? '';
   const isYoungestChildAgeDisabled = !childrenCountValue || childrenCountValue === '0' || childrenCountValue === '回答しない';
+
+  const handleNumberKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.metaKey || event.ctrlKey || ALLOWED_NUMERIC_CONTROL_KEYS.has(event.key)) return;
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  };
+
+  const handleNumberPaste = (event: ClipboardEvent<HTMLInputElement>, key: keyof DemographicData) => {
+    const digits = event.clipboardData.getData('text').replace(/[^\d]/g, '');
+    event.preventDefault();
+    setFormValues((prev) => ({
+      ...prev,
+      [key]: digits || null,
+    }));
+  };
 
   const handleSave = () => {
     const currentState = loadDemoUserState();
@@ -357,20 +447,25 @@ function DemographicsSetup() {
                         <Input
                           {...formFieldSurfaceProps}
                           {...(field.isReadOnly ? readOnlyFieldSurfaceProps : {})}
-                          type={field.kind === 'number' ? 'number' : 'text'}
+                          type={field.kind === 'date' ? 'date' : 'text'}
                           inputMode={field.kind === 'number' ? 'numeric' : undefined}
-                          min={field.kind === 'number' ? field.min : undefined}
-                          step={field.kind === 'number' ? field.step : undefined}
-                          value={formValues[field.key] ?? ''}
+                          pattern={field.kind === 'number' ? '[0-9]*' : undefined}
+                          min={field.kind === 'date' ? '1900-01-01' : undefined}
+                          max={field.kind === 'date' ? new Date().toISOString().slice(0, 10) : undefined}
+                          value={field.kind === 'date' ? getDateInputValue(formValues[field.key]) : formValues[field.key] ?? ''}
                           placeholder={formatPlaceholder(field.placeholder)}
                           isReadOnly={field.isReadOnly}
                           isDisabled={field.key === 'youngestChildAge' && isYoungestChildAgeDisabled}
+                          onKeyDown={field.kind === 'number' ? handleNumberKeyDown : undefined}
+                          onPaste={field.kind === 'number' ? (event) => handleNumberPaste(event, field.key) : undefined}
                           onChange={(event) =>
                             setFormValues((prev) => ({
                               ...prev,
                               [field.key]:
                                 field.kind === 'number'
                                   ? normalizeNumberInput(event.target.value)
+                                  : field.kind === 'date'
+                                    ? event.target.value || null
                                   : event.target.value || null,
                             }))
                           }
