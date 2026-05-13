@@ -85,7 +85,7 @@ export const createDemoAuthSession = ({ accountId, role = 'user', tenantId, reme
 
 export const getDefaultRouteForRole = (role: DemoAuthRole) => {
   if (role === 'admin') return '/admin';
-  if (role === 'company-admin') return '/company-admin';
+  if (role === 'company-admin') return '/user';
   if (role === 'consultant') return '/consultant';
   return '/user';
 };

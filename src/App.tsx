@@ -68,7 +68,7 @@ function App() {
         <Route
           path="/user"
           element={
-            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin']} onLogout={handleLogout}>
               <UserHome />
             </ProtectedRoute>
           }
@@ -76,7 +76,7 @@ function App() {
         <Route
           path="/user/condition-check"
           element={
-            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin']} onLogout={handleLogout}>
               <ConditionCheck />
             </ProtectedRoute>
           }
@@ -84,7 +84,7 @@ function App() {
         <Route
           path="/user/demographics"
           element={
-            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin']} onLogout={handleLogout}>
               <DemographicsSetup />
             </ProtectedRoute>
           }
@@ -116,7 +116,7 @@ function App() {
         <Route
           path="/app/initial"
           element={
-            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin']} onLogout={handleLogout}>
               <InitialMeetingRoom />
             </ProtectedRoute>
           }
@@ -124,7 +124,7 @@ function App() {
         <Route
           path="/app/continuous"
           element={
-            <ProtectedRoute session={session} allowedRoles={['user']} onLogout={handleLogout}>
+            <ProtectedRoute session={session} allowedRoles={['user', 'company-admin']} onLogout={handleLogout}>
               <ContinuousMeetingRoom />
             </ProtectedRoute>
           }

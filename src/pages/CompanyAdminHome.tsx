@@ -1,4 +1,4 @@
-import { ChevronDownIcon, RepeatIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon } from '@chakra-ui/icons';
 import {
   Badge,
   Box,
@@ -29,9 +29,7 @@ import {
   Text,
   Th,
   Thead,
-  Tooltip,
   Tr,
-  IconButton,
   useToast,
 } from '@chakra-ui/react';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
@@ -466,21 +464,19 @@ function CompanyAdminHome() {
                   <Badge colorScheme="purple">一般ユーザーと同一ログイン入口想定</Badge>
                 </Flex>
               </Stack>
-              <Tooltip label="更新" placement="left">
-                <IconButton
-                  aria-label="企業管理トップを再表示"
-                  icon={<RepeatIcon boxSize={5} />}
-                  variant="outline"
-                  color="white"
-                  borderColor="whiteAlpha.500"
-                  _hover={{ bg: 'whiteAlpha.160' }}
-                  onClick={() => navigate('/company-admin')}
-                />
-              </Tooltip>
+              <Button
+                variant="outline"
+                color="white"
+                borderColor="whiteAlpha.500"
+                _hover={{ bg: 'whiteAlpha.160' }}
+                onClick={() => navigate('/user')}
+              >
+                マイページへ戻る
+              </Button>
             </Flex>
           </Box>
 
-          <SimpleGrid columns={{ base: 1, md: 4 }} spacing={5}>
+          <SimpleGrid columns={{ base: 2, md: 2 }} spacing={5}>
             <Box {...translucentPanelProps} p={5}>
               <Stat>
                 <StatLabel color="whiteAlpha.700">社員アカウント</StatLabel>

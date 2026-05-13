@@ -48,7 +48,12 @@ const getNavigationItems = (role: DemoAuthRole): NavigationItem[] => {
     return [{ label: '管理コンソール', to: '/admin', pathname: '/admin', icon: <FiShield /> }];
   }
   if (role === 'company-admin') {
-    return [{ label: '企業管理者ホーム', to: '/company-admin', pathname: '/company-admin', icon: <FiBriefcase /> }];
+    return [
+      { label: 'マイページ', to: '/user', pathname: '/user', icon: <FiUser /> },
+      { label: 'プロフィール設定', to: '/user/demographics?returnTo=%2Fuser', pathname: '/user/demographics', icon: <FiEdit3 /> },
+      { label: '初回面談', to: '/app/initial', pathname: '/app/initial', icon: <FiPlayCircle /> },
+      { label: '企業管理者画面', to: '/company-admin', pathname: '/company-admin', icon: <FiBriefcase /> },
+    ];
   }
   if (role === 'consultant') {
     return [{ label: 'コンサルタント画面', to: '/consultant', pathname: '/consultant', icon: <FiUsers /> }];

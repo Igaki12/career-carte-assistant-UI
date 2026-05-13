@@ -88,11 +88,13 @@ function Login({ session, onLogin }: LoginProps) {
         ...currentState,
         tenantId: matchedAccount.tenantId ?? currentState.tenantId,
         demographics:
-          matchedAccount.role === 'user'
+          matchedAccount.role === 'user' || matchedAccount.role === 'company-admin'
             ? createDemographicsFromDemoAccount(matchedAccount)
             : currentState.demographics,
         demographicsSavedAt:
-          matchedAccount.role === 'user' ? new Date().toISOString() : currentState.demographicsSavedAt,
+          matchedAccount.role === 'user' || matchedAccount.role === 'company-admin'
+            ? new Date().toISOString()
+            : currentState.demographicsSavedAt,
       });
     }
     saveDemoAuthSession(nextSession);
@@ -130,9 +132,6 @@ function Login({ session, onLogin }: LoginProps) {
               >
                 Career Karte Assistant
               </Heading>
-              <Text mt={4} color="gray.200" fontSize="lg">
-                一般ユーザー・企業管理者・キャリアコンサルタント共通のログイン入口です。
-              </Text>
             </Box>
           </Stack>
 

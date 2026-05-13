@@ -33,7 +33,7 @@ import {
 import { keyframes } from '@emotion/react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { FiActivity, FiBookOpen, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiActivity, FiBookOpen, FiBriefcase, FiClipboard, FiPlayCircle, FiRefreshCw } from 'react-icons/fi';
 import { Navigate, useNavigate } from 'react-router-dom';
 import KartePanel from '../components/KartePanel';
 import PrimaryButton from '../components/PrimaryButton';
@@ -51,6 +51,7 @@ import {
   saveDemoUserState,
 } from '../lib/demoUserState';
 import { buildDemoPasswordIssuedAt, validateDemoPassword } from '../lib/demoPassword';
+import { loadDemoAuthSession } from '../lib/demoAuth';
 import {
   getCompanyApiUsageSummary,
   getDemoUsageQuota,
@@ -394,6 +395,8 @@ function UserHome() {
   const [lastSurveyAnswers, setLastSurveyAnswers] = useState<Record<string, string>>(() => defaultSurveyAnswers);
   const [passwordResetForm, setPasswordResetForm] = useState<PasswordResetForm>(() => createEmptyPasswordResetForm());
   const [passwordUpdatedAt, setPasswordUpdatedAt] = useState<string | null>(null);
+  const session = useMemo(() => loadDemoAuthSession(), []);
+  const isCompanyAdmin = session?.role === 'company-admin';
 
   useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
 
@@ -989,6 +992,22 @@ function UserHome() {
                 </Text>
               </Stack>
             </Box>
+
+            {isCompanyAdmin && (
+              <Box {...decoratedPanelProps}>
+                <Stack spacing={3}>
+                  <Heading size="md" display="flex" alignItems="center" gap={2}>
+                    <FiBriefcase /> 企業管理者画面
+                  </Heading>
+                  <Text color={mutedTextColor}>
+                    自社従業員のカルテ一覧、検索、出力状況を確認できます。
+                  </Text>
+                  <PrimaryButton size="md" onClick={() => navigate('/company-admin')}>
+                    企業管理者画面へ移動
+                  </PrimaryButton>
+                </Stack>
+              </Box>
+            )}
 
             <Box {...decoratedPanelProps}>
               <Stack spacing={3}>
