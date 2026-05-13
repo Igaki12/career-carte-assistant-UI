@@ -840,14 +840,14 @@ function UserHome() {
             <Box {...decoratedPanelProps}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiPlayCircle /> キャリアカルテの作成
+                  <FiPlayCircle /> 面談
                 </Heading>
                 <Text color={mutedTextColor}>
                   面談を実施し、キャリアカルテを作成しましょう。※途中での中断も可能です
                 </Text>
                 <Stack spacing={3}>
                   <PrimaryButton size="lg" onClick={handleStartInitial}>
-                    初回面談
+                    キャリアカルテの作成
                   </PrimaryButton>
                   <Button
                     variant="outline"

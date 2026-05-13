@@ -12,11 +12,11 @@
 - Hosting (Future): VPS (Ubuntu 26.04 LTS) + Node.js (Express) + Apache2 (Reverse Proxy) + DB (PostgreSQL) + BrowserRouter
 
 ### 2.2 役割別ページ構成とルーティング
-- Login (`/login`): 一般ユーザー・企業管理者・キャリアコンサルタント共通のダミーログイン画面。任意のID/パスワードで認証を通し、ロール選択により `/user`、`/company-admin`、`/consultant` へ遷移する。利用条件モーダル、利用条件同意チェック、常にログインした状態にしておくチェックを持つ。
+- Login (`/login`): 一般ユーザー・企業管理者・キャリアコンサルタント共通のダミーログイン画面。入力されたアカウントIDまたはメールアドレスを `demo-accounts.json` と完全一致照合し、該当アカウントのロールで認証する。通常ログイン画面ではロール選択、利用条件モーダル、利用条件同意チェック、システム管理者リンク、デモ説明文は表示しない。企業管理者も一般ユーザーと同じ入口を使い、ログイン後は `/user` に遷移する。常にログインした状態にしておくチェックを持つ。
 - AdminLogin (`/admin/login`): システム管理者専用の別ログイン画面。通常ログイン画面とは入口を分け、画面上で「管理者ログイン」であることを明示する。任意の管理者ID/パスワードで認証を通し、`/admin` へ遷移する。
-- Root (`/`): 独立したホーム画面は持たず、ログイン状態に応じてロール別の既定ページへ即時リダイレクトする。未ログイン時は `/login`、一般ユーザーは `/user`、企業管理者は `/company-admin`、キャリアコンサルタントは `/consultant`、システム管理者は `/admin` へ遷移する。旧 `Home.tsx` は廃止済みで、プロフィール設定・初回面談・継続面談の導線は `UserHome` に集約する。
-- DemographicsSetup (`/user/demographics`): プロフィール初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。デモ検証用に「デモ用にスキップして進む」を持つ。
-- UserHome (`/user`): 一般ユーザー用。初期版では初回面談、カルテ閲覧・出力、プロフィール編集を主要導線とする。継続面談、ユーザーアンケート、面談前コンディションチェックは準備中として disabled 表示にし、開始できない状態にする。ステータスは summary 表示を基本とし、詳細 badge の羅列は表示しない。カルテ出力は最新の保存済みカルテ1件を対象に、ブラウザ経由で CSV / PDF を直接ダウンロードできるようにする。一般ユーザー画面では面談利用回数、残り回数、AI利用可能回数を表示せず、利用状況は管理者・企業管理者画面で確認する。
+- Root (`/`): 独立したホーム画面は持たず、ログイン状態に応じてロール別の既定ページへ即時リダイレクトする。未ログイン時は `/login`、一般ユーザーと企業管理者は `/user`、キャリアコンサルタントは `/consultant`、システム管理者は `/admin` へ遷移する。旧 `Home.tsx` は廃止済みで、プロフィール設定・初回面談・継続面談の導線は `UserHome` に集約する。
+- DemographicsSetup (`/user/demographics`): プロフィール初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。`ID`, `姓`, `名`, `フリガナ（姓）`, `フリガナ（名）`, `メール`, `会社名` は表示するが編集不可にし、白背景ではなく固定項目と分かる暗色の読取専用スタイルで表示する。入力欄の placeholder は例示として `例: ...` を付ける。デモ検証用に「デモ用にスキップして進む」を持つ。
+- UserHome (`/user`): 一般ユーザー・企業管理者共通のマイページ。初期版では面談、カルテ閲覧・出力、プロフィール編集を主要導線とする。面談カードの見出しは「面談」、初回面談へ進む主要ボタンは「キャリアカルテの作成」と表示する。継続面談、ユーザーアンケート、面談前コンディションチェックは準備中として disabled または非表示にし、開始できない状態にする。ステータスは summary 表示を基本とし、詳細 badge の羅列は表示しない。カルテ出力は最新の保存済みカルテ1件を対象に、ブラウザ経由で CSV / PDF を直接ダウンロードできるようにする。一般ユーザー画面では面談利用回数、残り回数、AI利用可能回数を表示せず、利用状況は管理者・企業管理者画面で確認する。企業管理者権限のユーザーには、マイページ下部に企業管理者画面へ移動するカードを表示する。
 - ConsultantHome (`/consultant`): コンサルタント用。担当ユーザーのカルテ閲覧・修正、AI練習面談（ロードマップ）。
 - Admin (`/admin`): 管理者用。アカウント管理、利用回数（初回/継続を別カラム）設定、面談1回あたりのAI使用可能回数設定、企業別オプション管理。
 - CompanyAdminHome (`/company-admin`): 企業管理者用。自社テナントの従業員カルテ一覧、検索、並び替え、一括選択、カルテ表示、個別/一括PDF出力、個別/一括印刷、面談利用回数・会話ターン制限の設定、緊張度スコア表示オプションのON/OFF、コンディション測定件数の集計表示。
@@ -28,9 +28,9 @@
 - 現時点では本番認証未接続のため、`src/lib/demoAuth.ts` のダミー認証を使う。
 - 未ログイン状態で保護ページへアクセスした場合、通常ページは `/login?returnTo=...`、管理者ページは `/admin/login?returnTo=...` へ必ずリダイレクトする。
 - `/` は表示ページではなく、未ログインなら `/login`、ログイン済みなら `getDefaultRouteForRole(session.role)` の返すロール別既定ページへリダイレクトする。
-- ロール別にアクセス可能画面を分離する。`user` は `/user`, `/user/demographics`, `/user/condition-check`, `/app/initial`, `/app/continuous`、`company-admin` は `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を対象とする。
+- ロール別にアクセス可能画面を分離する。`user` は `/user`, `/user/demographics`, `/user/condition-check`, `/app/initial`, `/app/continuous`、`company-admin` は `/user`, `/user/demographics`, `/user/condition-check`, `/app/initial`, `/app/continuous`, `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を対象とする。
 - ログイン済みの保護ページ右上には `src/components/AuthNavigation.tsx` の開閉式ナビゲーションを表示する。デフォルトは歯車アイコンボタンの縮小表示とし、初回表示時は展開状態から短時間で縮小して、ナビゲーションの存在が分かるアニメーションを入れる。展開時は `Career Karte Assistant`、アカウントID、ロール、権限内ページリンク、ログアウトボタンを表示する。
-- AuthNavigation のページリンクは権限内かつ初期版で利用可能なページのみ表示する。`user` は `/user`, `/user/demographics?returnTo=%2Fuser`, `/app/initial`、`company-admin` は `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を表示対象とする。旧 `Home.tsx` は廃止済みのため `/` へのリンクは追加しない。継続面談、ユーザーアンケート、面談前コンディションチェックは初期版ではナビリンクに出さない。
+- AuthNavigation のページリンクは権限内かつ初期版で利用可能なページのみ表示する。`user` は `/user`, `/user/demographics?returnTo=%2Fuser`, `/app/initial`、`company-admin` は `/user`, `/user/demographics?returnTo=%2Fuser`, `/app/initial`, `/company-admin`、`consultant` は `/consultant`、`admin` は `/admin` を表示対象とする。旧 `Home.tsx` は廃止済みのため `/` へのリンクは追加しない。継続面談、ユーザーアンケート、面談前コンディションチェックは初期版ではナビリンクに出さない。
 - AuthNavigation の展開/縮小には `framer-motion` を使う。ただし `prefers-reduced-motion` が有効な場合は自動展開プレビューや大きな動きを抑制する。
 - 通常ログイン画面は一般ユーザー・企業管理者・キャリアコンサルタント共通入口とし、管理者ログイン画面は別入口にする。企業管理者は一般ユーザーと同じ入口を使う。
 - 「常にログインした状態にしておく」がONの場合は `localStorage`、OFFの場合は `sessionStorage` に `cca-demo-auth-session` を保存する。ログアウト時は両方を削除する。

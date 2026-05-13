@@ -81,6 +81,31 @@ const formFieldSurfaceProps = {
   _placeholder: { color: 'gray.500' },
 } as const;
 
+const readOnlyFieldSurfaceProps = {
+  bg: 'rgba(15, 23, 42, 0.64)',
+  color: 'rgba(248, 250, 252, 0.88)',
+  borderColor: 'rgba(148, 163, 184, 0.34)',
+  cursor: 'default',
+  opacity: 1,
+  _placeholder: { color: 'rgba(203, 213, 225, 0.48)' },
+  _readOnly: {
+    bg: 'rgba(15, 23, 42, 0.64)',
+    color: 'rgba(248, 250, 252, 0.88)',
+    borderColor: 'rgba(148, 163, 184, 0.34)',
+  },
+  _hover: { borderColor: 'rgba(148, 163, 184, 0.44)' },
+  _focus: {
+    bg: 'rgba(15, 23, 42, 0.64)',
+    borderColor: 'rgba(148, 163, 184, 0.44)',
+    boxShadow: 'none',
+  },
+} as const;
+
+const formatPlaceholder = (placeholder?: string) => {
+  if (!placeholder) return undefined;
+  return placeholder.startsWith('例:') ? placeholder : `例: ${placeholder}`;
+};
+
 type FieldDefinition = {
   key: keyof DemographicData;
   label: string;
@@ -331,12 +356,13 @@ function DemographicsSetup() {
                       ) : (
                         <Input
                           {...formFieldSurfaceProps}
+                          {...(field.isReadOnly ? readOnlyFieldSurfaceProps : {})}
                           type={field.kind === 'number' ? 'number' : 'text'}
                           inputMode={field.kind === 'number' ? 'numeric' : undefined}
                           min={field.kind === 'number' ? field.min : undefined}
                           step={field.kind === 'number' ? field.step : undefined}
                           value={formValues[field.key] ?? ''}
-                          placeholder={field.placeholder}
+                          placeholder={formatPlaceholder(field.placeholder)}
                           isReadOnly={field.isReadOnly}
                           isDisabled={field.key === 'youngestChildAge' && isYoungestChildAgeDisabled}
                           onChange={(event) =>
