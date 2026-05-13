@@ -13,6 +13,7 @@ import type {
   TenantFeatureFlags,
 } from '../types';
 import { INITIAL_PROMPT_VARIANTS } from '../types';
+import { demoAccounts, joinName, joinNameKana, type DemoAccountRecord } from './demoAccounts';
 import { cloneShirpDetails, createEmptyShirpDetails, SHIRP_DETAIL_CATEGORY_KEYS, SHIRP_DETAIL_FIELDS, SHIRP_DETAIL_ITEM_LABELS } from './shirp';
 
 export const LOCAL_STORAGE_DEMO_USER_KEY = 'cca-demo-user-state';
@@ -167,6 +168,14 @@ export const createDefaultTenants = (): Tenant[] => [
     enabledFeatures: ['turnTaking'],
     createdAt: '2026-04-10',
   },
+  {
+    id: 'tenant-alpha-robotics',
+    name: 'Alpha Robotics',
+    status: 'active',
+    plan: 'standard',
+    enabledFeatures: [],
+    createdAt: '2026-05-13',
+  },
 ];
 
 export const createDefaultFeatureFlags = (): TenantFeatureFlags[] => [
@@ -182,13 +191,25 @@ export const createDefaultFeatureFlags = (): TenantFeatureFlags[] => [
     turnTakingEnabled: true,
     lightThemeEnabled: false,
   },
+  {
+    tenantId: 'tenant-alpha-robotics',
+    stressAnalysisEnabled: false,
+    turnTakingEnabled: false,
+    lightThemeEnabled: false,
+  },
 ];
 
 export const createEmptyDemographics = (): DemographicData => ({
   accountId: null,
   name: null,
+  lastName: null,
+  firstName: null,
+  nameKana: null,
+  lastNameKana: null,
+  firstNameKana: null,
   email: null,
   age: null,
+  birthDate: null,
   company: null,
   department: null,
   jobTitle: null,
@@ -200,6 +221,24 @@ export const createEmptyDemographics = (): DemographicData => ({
   maritalStatus: null,
   childrenCount: null,
   youngestChildAge: null,
+  managerExperience: null,
+  currentManager: null,
+});
+
+export const createDemographicsFromDemoAccount = (account: DemoAccountRecord): DemographicData => ({
+  ...createEmptyDemographics(),
+  accountId: account.id,
+  name: joinName(account.lastName, account.firstName),
+  lastName: account.lastName,
+  firstName: account.firstName,
+  nameKana: joinNameKana(account.lastNameKana, account.firstNameKana),
+  lastNameKana: account.lastNameKana,
+  firstNameKana: account.firstNameKana,
+  email: account.email,
+  company: account.company,
+  department: account.department,
+  jobTitle: account.jobTitle,
+  permission: account.permission,
 });
 
 export const createEmptySurvey = (): SurveyResult => ({
@@ -266,134 +305,69 @@ const createSampleKarteRecord = (
 });
 
 export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
-  const employeeAkarte = createSampleKarte(
-    {
-      accountId: 'USR-2026-101',
-      name: '佐伯 美咲',
-      email: 'misaki.saeki@example.com',
-      age: '34',
-      company: 'Career Carte Inc.',
-      department: 'Customer Success',
-      jobTitle: 'カスタマーサクセス',
-      permission: '一般ユーザー',
-      workLocationPrefecture: '東京都',
-      yearsOfService: '5',
-    },
-    {
+  const sampleKarteById: Record<string, KarteData> = {
+    'USR-2026-101': createSampleKarte(createDemographicsFromDemoAccount(demoAccounts[0]), {
       S: '顧客対応とチーム内調整にやりがいを感じる一方、業務量の波に負担がある。',
       H: '顧客支援の専門性を高め、柔軟な働き方も維持したい。',
       I: '次の役割に必要なデータ活用経験と自己PRの整理が課題。',
       R: '上司への相談機会と顧客理解の蓄積が強み。',
       P: '実績整理とデータ分析の学習を進め、次回面談で方向性を確認する。',
       '#': '管理者画面の一括出力確認用データ。',
-    },
-  );
-  const employeeBkarte = createSampleKarte(
-    {
-      accountId: 'USR-2026-102',
-      name: '井上 健太',
-      email: 'kenta.inoue@example.com',
-      age: '41',
-      company: 'Career Carte Inc.',
-      department: 'Sales Planning',
-      jobTitle: '営業企画',
-      permission: '一般ユーザー',
-      workLocationPrefecture: '大阪府',
-      yearsOfService: '8',
-    },
-    {
+    }),
+    'USR-2026-102': createSampleKarte(createDemographicsFromDemoAccount(demoAccounts[1]), {
       S: '営業企画として数値管理を担い、部門横断の調整に手応えがある。',
       H: 'マネジメントだけでなく企画専門性も伸ばせる役割を希望している。',
       I: '管理職志向と専門職志向の優先順位を整理する必要がある。',
       R: '営業現場との関係性と過去の改善実績を活用できる。',
       P: '希望役割の条件を整理し、社内面談で相談する準備を進める。',
       '#': null,
-    },
-  );
-  const otherTenantKarte = createSampleKarte(
-    {
-      accountId: 'USR-2026-201',
-      name: '田中 太郎',
-      email: 'taro.tanaka@example.com',
-      age: '38',
-      company: 'Connect Systems',
-      department: 'Engineering',
-      jobTitle: 'Engineering Manager',
-      permission: '一般ユーザー',
-      workLocationPrefecture: '福岡県',
-    },
-    {
+    }),
+    'USR-2026-201': createSampleKarte(createDemographicsFromDemoAccount(demoAccounts[3]), {
       S: '技術組織の運営に責任を持ち、採用と育成に課題を感じている。',
       H: '組織開発と技術戦略の両面に関われる役割を希望している。',
       I: '事業視点での意思決定経験を増やす必要がある。',
       R: '開発経験とチームからの信頼を活用できる。',
       P: '経営視点の学習と上長への相談を進める。',
       '#': null,
-    },
-  );
+    }),
+  };
 
-  return [
-    {
-      id: 'USR-2026-101',
-      tenantId: DEFAULT_TENANT_ID,
-      name: '佐伯 美咲',
-      email: 'misaki.saeki@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Customer Success',
-      jobTitle: 'カスタマーサクセス',
-      permission: '一般ユーザー',
-      status: '完了',
-      latestKarte: employeeAkarte,
-      karteRecords: [createSampleKarteRecord('karte-2026-101', '2026-04-12T10:00:00.000Z', employeeAkarte, '強みと希望条件の接点が明確になっています。次回は優先順位を絞ると実行計画に移しやすくなります。')],
-      createdAt: '2026-04-01T09:00:00.000Z',
-      updatedAt: '2026-04-12T10:00:00.000Z',
-    },
-    {
-      id: 'USR-2026-102',
-      tenantId: DEFAULT_TENANT_ID,
-      name: '井上 健太',
-      email: 'kenta.inoue@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Sales Planning',
-      jobTitle: '営業企画',
-      permission: '一般ユーザー',
-      status: '完了',
-      latestKarte: employeeBkarte,
-      karteRecords: [createSampleKarteRecord('karte-2026-102', '2026-04-18T14:30:00.000Z', employeeBkarte, '役割希望の整理が進んでいます。社内で相談する材料として、成果と希望条件を短くまとめるとよいです。')],
-      createdAt: '2026-04-02T09:00:00.000Z',
-      updatedAt: '2026-04-18T14:30:00.000Z',
-    },
-    {
-      id: 'USR-2026-103',
-      tenantId: DEFAULT_TENANT_ID,
-      name: '小林 真央',
-      email: 'mao.kobayashi@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Human Resources',
-      jobTitle: '人事',
-      permission: '一般ユーザー',
-      status: '未作成',
-      latestKarte: null,
-      karteRecords: [],
-      createdAt: '2026-04-05T09:00:00.000Z',
-      updatedAt: '2026-04-05T09:00:00.000Z',
-    },
-    {
-      id: 'USR-2026-201',
-      tenantId: 'tenant-connect-systems',
-      name: '田中 太郎',
-      email: 'taro.tanaka@example.com',
-      company: 'Connect Systems',
-      department: 'Engineering',
-      jobTitle: 'Engineering Manager',
-      permission: '一般ユーザー',
-      status: '完了',
-      latestKarte: otherTenantKarte,
-      karteRecords: [createSampleKarteRecord('karte-2026-201', '2026-04-20T11:00:00.000Z', otherTenantKarte, '組織開発と技術戦略の両面を扱える点が強みです。次回は事業視点の経験づくりを具体化しましょう。')],
-      createdAt: '2026-04-04T09:00:00.000Z',
-      updatedAt: '2026-04-20T11:00:00.000Z',
-    },
-  ];
+  return demoAccounts
+    .filter((account) => account.role === 'user')
+    .map((account, index) => {
+      const latestKarte = sampleKarteById[account.id] ?? null;
+      const createdAt = `2026-04-${String(index + 1).padStart(2, '0')}T09:00:00.000Z`;
+      const updatedAt = latestKarte ? `2026-04-${String(index + 12).padStart(2, '0')}T10:00:00.000Z` : createdAt;
+      return {
+        id: account.id,
+        tenantId: account.tenantId ?? DEFAULT_TENANT_ID,
+        name: account.name,
+        lastName: account.lastName,
+        firstName: account.firstName,
+        nameKana: account.nameKana,
+        lastNameKana: account.lastNameKana,
+        firstNameKana: account.firstNameKana,
+        email: account.email,
+        company: account.company,
+        department: account.department,
+        jobTitle: account.jobTitle,
+        permission: account.permission,
+        status: latestKarte ? '完了' : '未作成',
+        latestKarte,
+        karteRecords: latestKarte
+          ? [
+              createSampleKarteRecord(
+                `karte-${account.id.toLowerCase()}`,
+                updatedAt,
+                latestKarte,
+                '希望条件と現状整理が進んでいます。次回は優先順位と実行計画を具体化しましょう。',
+              ),
+            ]
+          : [],
+        createdAt,
+        updatedAt,
+      };
+    });
 };
 
 export const createEmptyDemoUserState = (): DemoUserState => ({
@@ -430,10 +404,15 @@ export const mergeDemographics = (
   base: DemographicData | null | undefined,
   incoming: DemographicData | null | undefined,
 ): DemographicData => {
-  return {
+  const merged = {
     ...createEmptyDemographics(),
     ...(base ?? {}),
     ...(incoming ?? {}),
+  };
+  return {
+    ...merged,
+    name: joinName(merged.lastName, merged.firstName),
+    nameKana: joinNameKana(merged.lastNameKana, merged.firstNameKana),
   };
 };
 
@@ -485,6 +464,11 @@ export const normalizeCompanyEmployees = (value: unknown): CompanyEmployeeRecord
         id: typeof employee.id === 'string' ? employee.id : `employee-${Date.now()}`,
         tenantId: typeof employee.tenantId === 'string' ? employee.tenantId : DEFAULT_TENANT_ID,
         name: typeof employee.name === 'string' ? employee.name : latestKarte?.demographics.name ?? '未設定',
+        lastName: typeof employee.lastName === 'string' ? employee.lastName : '',
+        firstName: typeof employee.firstName === 'string' ? employee.firstName : '',
+        nameKana: typeof employee.nameKana === 'string' ? employee.nameKana : '',
+        lastNameKana: typeof employee.lastNameKana === 'string' ? employee.lastNameKana : '',
+        firstNameKana: typeof employee.firstNameKana === 'string' ? employee.firstNameKana : '',
         email: typeof employee.email === 'string' ? employee.email : '',
         company: typeof employee.company === 'string' ? employee.company : latestKarte?.demographics.company ?? '',
         department: typeof employee.department === 'string' ? employee.department : '',
@@ -588,6 +572,11 @@ export const getCompanyAdminEmployees = (
     id: DEFAULT_DEMO_USER_ID,
     tenantId,
     name: state.demographics.name || demoKarte?.demographics.name || 'デモユーザー',
+    lastName: state.demographics.lastName || demoKarte?.demographics.lastName || '',
+    firstName: state.demographics.firstName || demoKarte?.demographics.firstName || '',
+    nameKana: state.demographics.nameKana || demoKarte?.demographics.nameKana || '',
+    lastNameKana: state.demographics.lastNameKana || demoKarte?.demographics.lastNameKana || '',
+    firstNameKana: state.demographics.firstNameKana || demoKarte?.demographics.firstNameKana || '',
     email: state.demographics.email || demoKarte?.demographics.email || 'demo.user@example.com',
     company: state.demographics.company || demoKarte?.demographics.company || tenant?.name || 'デモ企業',
     department: state.demographics.department || demoKarte?.demographics.department || 'Demo',

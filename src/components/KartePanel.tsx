@@ -148,6 +148,12 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                     </Text>
                   </Box>
                   <Box>
+                    <Text {...labelTextProps}>フリガナ</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.nameKana ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
                     <Text {...labelTextProps}>メール</Text>
                     <Text {...valueTextProps}>
                       {data.demographics.email ?? '未入力'}
@@ -171,20 +177,14 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                       {data.demographics.jobTitle ?? '未入力'}
                     </Text>
                   </Box>
-                  <Box>
-                    <Text {...labelTextProps}>権限</Text>
-                    <Text {...valueTextProps}>
-                      {data.demographics.permission ?? '未入力'}
-                    </Text>
-                  </Box>
                 </SimpleGrid>
               </TabPanel>
               <TabPanel px={0}>
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                   <Box>
-                    <Text {...labelTextProps}>年齢</Text>
+                    <Text {...labelTextProps}>生年月日</Text>
                     <Text {...valueTextProps}>
-                      {data.demographics.age ?? '未入力'}
+                      {data.demographics.birthDate ?? '未入力'}
                     </Text>
                   </Box>
                   <Box>
@@ -227,6 +227,18 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                     <Text {...labelTextProps}>末子の年齢(歳)</Text>
                     <Text {...valueTextProps}>
                       {data.demographics.youngestChildAge ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text {...labelTextProps}>過去のマネージャー経験</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.managerExperience ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text {...labelTextProps}>現在マネージャーか</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.currentManager ?? '未入力'}
                     </Text>
                   </Box>
                 </SimpleGrid>

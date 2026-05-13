@@ -763,7 +763,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [isTextareaExpanded, setTextareaExpanded] = useState(false);
   const [isKarteModalOpen, setKarteModalOpen] = useState(false);
   const [apiUsageCount, setApiUsageCount] = useState(0);
-  const [hasSessionStarted, setSessionStarted] = useState(false);
+  const [hasSessionStarted, setSessionStarted] = useState(true);
   const [feedbackText, setFeedbackText] = useState('');
   const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
@@ -1064,9 +1064,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       window.localStorage.setItem(LOCAL_STORAGE_OPENAI_KEY, legacyOpenAiKey);
       window.localStorage.removeItem(LEGACY_LOCAL_STORAGE_OPENAI_KEY);
     }
-    if (!resolvedOpenAiKey) {
-      setApiModalOpen(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -1114,7 +1111,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setKarte(currentDraft.karte);
       setApiUsageCount(0);
       setConversationStarted(currentDraft.conversationStarted);
-      setSessionStarted(currentDraft.hasSessionStarted);
+      setSessionStarted(true);
       setInitialPromptVariant(
         meetingType === 'initial' ? normalizeInitialPromptVariant(currentDraft.initialPromptVariant) : 'current',
       );
@@ -1135,7 +1132,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setKarte(baseKarte);
       setConversationStarted(false);
       setApiUsageCount(0);
-      setSessionStarted(false);
+      setSessionStarted(true);
       setInitialPromptVariant('current');
       setHasFinalizedInitial(false);
       setFeedbackText('');
@@ -1143,12 +1140,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
     setHasInitializedState(true);
   }, [draftAction, meetingType, saveUserState]);
-
-  useEffect(() => {
-    if (!openAiApiKey) {
-      setApiModalOpen(true);
-    }
-  }, [openAiApiKey]);
 
   useEffect(
     () => () => {
@@ -1272,7 +1263,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       status: 'warning',
       duration: 4000,
     });
-    setApiModalOpen(true);
     return false;
   }, [openAiApiKey, toast]);
 
@@ -1544,10 +1534,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       notifyApiLimit('API制限に達したため、カルテとプランの最終整理を生成できません。');
       return;
     }
-    if (!openAiApiKey) {
-      setApiModalOpen(true);
-      return;
-    }
+    if (!openAiApiKey) return;
 
     isInitialFinalizeRunningRef.current = true;
     void (async () => {
@@ -1979,12 +1966,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   <Icon as={FaUserDoctor} color="blue.500" boxSize={6} />
                   <Box>
                     <Text fontWeight="bold" fontSize="lg">
-                      {isInitialMeeting ? '初回面談ルーム' : '継続面談ルーム'}
+                      面談ルーム
                     </Text>
                     <Text fontSize="sm" color="gray.500">
-                      {isInitialMeeting
-                        ? 'SHIRPの順次ヒアリングでカルテを作成します'
-                        : '自由対話でカルテを更新し、フィードバックをまとめます'}
+                      キャリアに関連したヒアリングを実施し、カルテを作成します。※所要想定時間10〜30分程度
                     </Text>
                   </Box>
                 </HStack>
@@ -1998,7 +1983,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   {isInitialMeeting && hasUsedApi && (
                     <Badge colorScheme="purple">プロンプト: {selectedInitialPromptVariantOption.label}</Badge>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)}>
+                  <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)} display="none">
                     API設定
                   </Button>
                 </Flex>
@@ -2011,7 +1996,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                 )}
               </Flex>
               {isInitialMeeting && !hasUsedApi && (
-                <Box w="full" mt={5}>
+                <Box w="full" mt={5} display="none">
                   <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>
                     初回面談プロンプト
                   </Text>
@@ -2045,7 +2030,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </RadioGroup>
                 </Box>
               )}
-              <Button mt={6} colorScheme="blue" size="md" w="full" onClick={() => setSessionStarted(true)} isDisabled={hasUsedApi}>
+              <Button mt={6} colorScheme="blue" size="md" w="full" onClick={() => setSessionStarted(true)} isDisabled={hasUsedApi} display="none">
                 {isInitialMeeting ? '初回面談を開始する' : '継続面談を開始する'}
               </Button>
             </Box>
@@ -2211,6 +2196,9 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Stack>
                 </Stack>
               </Box>
+              <Button variant="outline" colorScheme="blue" onClick={() => navigate('/user')}>
+                面談を中断しマイページへ戻る
+              </Button>
             </Box>
           </Flex>
         </Flex>

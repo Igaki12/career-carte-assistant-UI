@@ -11,7 +11,8 @@ export type DemoAuthSession = {
 export type DemoAuthLoginInput = {
   accountId: string;
   password: string;
-  role: DemoAuthRole;
+  role?: DemoAuthRole;
+  tenantId?: string | null;
   remember: boolean;
 };
 
@@ -74,10 +75,10 @@ export const clearDemoAuthSession = () => {
   window.sessionStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
 };
 
-export const createDemoAuthSession = ({ accountId, role, remember }: DemoAuthLoginInput): DemoAuthSession => ({
+export const createDemoAuthSession = ({ accountId, role = 'user', tenantId, remember }: DemoAuthLoginInput): DemoAuthSession => ({
   role,
   accountId: accountId.trim(),
-  tenantId: role === 'admin' ? null : 'tenant-career-carte-demo',
+  tenantId: role === 'admin' ? null : tenantId ?? 'tenant-career-carte-demo',
   remember,
   loggedInAt: new Date().toISOString(),
 });

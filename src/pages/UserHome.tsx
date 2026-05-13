@@ -164,12 +164,13 @@ type SurveyQuestion = {
 type ProfileView = {
   id: string;
   name: string;
+  nameKana: string;
   email: string;
   company: string;
   department: string;
   jobTitle: string;
   permission: string;
-  age: string;
+  birthDate: string;
   workLocationPrefecture: string;
   jobChangeCount: string;
   yearsOfService: string;
@@ -177,6 +178,8 @@ type ProfileView = {
   maritalStatus: string;
   childrenCount: string;
   youngestChildAge: string;
+  managerExperience: string;
+  currentManager: string;
   statusSummary: string;
   statusDetails: Array<{
     label: string;
@@ -321,12 +324,13 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
   return {
     id: demographics.accountId || 'USR-2024-021',
     name: demographics.name || '未設定',
+    nameKana: demographics.nameKana || '未設定',
     email: demographics.email || 'hanako.yamada@example.com',
     company: demographics.company || 'Career Carte Assistant Demo',
     department: demographics.department || '未設定',
     jobTitle: demographics.jobTitle || '未設定',
     permission: demographics.permission || '一般ユーザー',
-    age: demographics.age || '未設定',
+    birthDate: demographics.birthDate || '未設定',
     workLocationPrefecture: demographics.workLocationPrefecture || '未設定',
     jobChangeCount: demographics.jobChangeCount || '未設定',
     yearsOfService: demographics.yearsOfService || '未設定',
@@ -334,6 +338,8 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
     maritalStatus: demographics.maritalStatus || '未設定',
     childrenCount: demographics.childrenCount || '未設定',
     youngestChildAge: demographics.youngestChildAge || '未設定',
+    managerExperience: demographics.managerExperience || '未設定',
+    currentManager: demographics.currentManager || '未設定',
     statusSummary,
     statusDetails,
     tags: [demographics.company, demographics.department, demographics.jobTitle, demographics.workLocationPrefecture].filter(
@@ -787,15 +793,16 @@ function UserHome() {
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
                           <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {profile.nameKana}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.jobTitle}</Text>
-                          <Text fontSize="sm" color="whiteAlpha.900">権限: {profile.permission}</Text>
                         </SimpleGrid>
                       </TabPanel>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
+                          <Text fontSize="sm" color="whiteAlpha.900">生年月日: {profile.birthDate}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">勤務地(都道府県): {profile.workLocationPrefecture}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">転職歴(回数): {profile.jobChangeCount}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">勤続年数(年): {profile.yearsOfService}</Text>
@@ -803,13 +810,15 @@ function UserHome() {
                           <Text fontSize="sm" color="whiteAlpha.900">現在の婚姻関係: {profile.maritalStatus}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">子供の有無(人): {profile.childrenCount}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">末子の年齢(歳): {profile.youngestChildAge}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">過去のマネージャー経験: {profile.managerExperience}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">現在マネージャーか: {profile.currentManager}</Text>
                         </SimpleGrid>
                       </TabPanel>
                     </TabPanels>
                   </Tabs>
                 </Box>
               </Stack>
-              <Stack align="flex-start" spacing={2}>
+              <Stack align="flex-start" spacing={2} display="none">
                 <Badge colorScheme="purple" borderRadius="full" px={3} py={1}>
                   {profile.statusSummary}
                 </Badge>
@@ -828,14 +837,14 @@ function UserHome() {
             <Box {...decoratedPanelProps}>
               <Stack spacing={4}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
-                  <FiPlayCircle /> 面談スタート
+                  <FiPlayCircle /> キャリアカルテの作成
                 </Heading>
                 <Text color={mutedTextColor}>
-                  初期版では初回面談を利用できます。継続面談は今後の実装対象です。
+                  面談を実施し、キャリアカルテを作成しましょう。※途中での中断も可能です
                 </Text>
                 <Stack spacing={3}>
                   <PrimaryButton size="lg" onClick={handleStartInitial}>
-                    初回面談を開始
+                    初回面談
                   </PrimaryButton>
                   <Button
                     variant="outline"
@@ -845,6 +854,7 @@ function UserHome() {
                     _hover={{ bg: 'whiteAlpha.160' }}
                     onClick={handleStartContinuous}
                     isDisabled
+                    display="none"
                   >
                     継続面談を開始（準備中）
                   </Button>
@@ -874,7 +884,7 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box {...decoratedPanelProps}>
+            <Box {...decoratedPanelProps} display="none">
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiClipboard /> ユーザアンケート
@@ -906,7 +916,7 @@ function UserHome() {
               </Stack>
             </Box>
 
-            <Box {...decoratedPanelProps}>
+            <Box {...decoratedPanelProps} display="none">
               <Stack spacing={3}>
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiActivity /> 面談前コンディションチェック
@@ -1012,6 +1022,10 @@ function UserHome() {
                               <Text fontWeight="semibold">{profile.name}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>フリガナ</Text>
+                              <Text fontWeight="semibold">{profile.nameKana}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>メール</Text>
                               <Text fontWeight="semibold">{profile.email}</Text>
                             </Stack>
@@ -1028,10 +1042,6 @@ function UserHome() {
                               <Text fontWeight="semibold">{profile.jobTitle}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>権限</Text>
-                              <Text fontWeight="semibold">{profile.permission}</Text>
-                            </Stack>
-                            <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>パスワード更新</Text>
                               <Text fontWeight="semibold">{passwordUpdatedAt ?? '未更新（デモ）'}</Text>
                             </Stack>
@@ -1039,6 +1049,10 @@ function UserHome() {
                         </TabPanel>
                         <TabPanel px={0} pt={3}>
                           <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>生年月日</Text>
+                              <Text fontWeight="semibold">{profile.birthDate}</Text>
+                            </Stack>
                             <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>勤務地(都道府県)</Text>
                               <Text fontWeight="semibold">{profile.workLocationPrefecture}</Text>
@@ -1066,6 +1080,14 @@ function UserHome() {
                             <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>末子の年齢(歳)</Text>
                               <Text fontWeight="semibold">{profile.youngestChildAge}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>過去のマネージャー経験</Text>
+                              <Text fontWeight="semibold">{profile.managerExperience}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>現在マネージャーか</Text>
+                              <Text fontWeight="semibold">{profile.currentManager}</Text>
                             </Stack>
                           </SimpleGrid>
                         </TabPanel>

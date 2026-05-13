@@ -22,6 +22,7 @@ import {
   loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
+import { joinName, joinNameKana } from '../lib/demoAccounts';
 import type { DemographicData } from '../types';
 
 const bgGradientAnim = keyframes`
@@ -88,31 +89,48 @@ type FieldDefinition = {
   min?: number;
   step?: number;
   options?: string[];
+  isReadOnly?: boolean;
 };
 
+const JOB_TITLE_OPTIONS = [
+  '営業職',
+  '事務／管理職',
+  '販売／サービススタッフ職',
+  'クリエイティブ職',
+  '医療／福祉職',
+  '専門／資格（弁護士等）職',
+  'IT／エンジニア職',
+  '製造／技術職',
+  '物流／軽作業職',
+  '公務／教育職',
+  'その他',
+];
+
 const FIELD_LABELS: FieldDefinition[] = [
-  { key: 'accountId', label: 'ID', placeholder: 'USR-2024-021' },
-  { key: 'name', label: '氏名', placeholder: '山田 花子' },
-  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com' },
-  { key: 'company', label: '会社名', placeholder: 'Career Carte Inc.' },
+  { key: 'accountId', label: 'ID', placeholder: 'USR-2024-021', isReadOnly: true },
+  { key: 'lastName', label: '姓', placeholder: '山田', isReadOnly: true },
+  { key: 'firstName', label: '名', placeholder: '花子', isReadOnly: true },
+  { key: 'lastNameKana', label: 'フリガナ（姓）', placeholder: 'ヤマダ', isReadOnly: true },
+  { key: 'firstNameKana', label: 'フリガナ（名）', placeholder: 'ハナコ', isReadOnly: true },
+  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com', isReadOnly: true },
+  { key: 'company', label: '会社名', placeholder: 'Career Carte Inc.', isReadOnly: true },
   { key: 'department', label: '部署', placeholder: 'Product Division' },
-  { key: 'jobTitle', label: '職種', placeholder: 'Product Manager' },
-  { key: 'permission', label: '権限', kind: 'select', options: ['一般ユーザー', '企業管理者', 'キャリアコンサルタント'] },
-  { key: 'age', label: '年齢', placeholder: '32', kind: 'number', min: 0, step: 1 },
+  { key: 'jobTitle', label: '職種', kind: 'select', options: JOB_TITLE_OPTIONS },
+  { key: 'birthDate', label: '生年月日', placeholder: '19800501' },
   { key: 'workLocationPrefecture', label: '勤務地(都道府県)', placeholder: '東京都' },
   { key: 'jobChangeCount', label: '転職歴(回数)', placeholder: '2', kind: 'number', min: 0, step: 1 },
   { key: 'yearsOfService', label: '勤続年数(年)', placeholder: '4', kind: 'number', min: 0, step: 1 },
   { key: 'gender', label: '性別', kind: 'select', options: ['男', '女', 'その他'] },
-  { key: 'maritalStatus', label: '現在の婚姻関係', kind: 'select', options: ['独身', '既婚', 'その他'] },
-  { key: 'childrenCount', label: '子供の有無(人)', placeholder: '1', kind: 'number', min: 0, step: 1 },
+  { key: 'maritalStatus', label: '現在の婚姻関係', kind: 'select', options: ['独身', '既婚', 'その他', '回答しない'] },
+  { key: 'childrenCount', label: '子供の有無(人)', kind: 'select', options: ['0', '1', '2', '3', '4以上', '回答しない'] },
   { key: 'youngestChildAge', label: '末子の年齢(歳)', placeholder: '4', kind: 'number', min: 0, step: 1 },
+  { key: 'managerExperience', label: '過去にマネージャー経験があるか', kind: 'select', options: ['ある', 'ない', '回答しない'] },
+  { key: 'currentManager', label: '現在マネージャーか', kind: 'select', options: ['はい', 'いいえ', '回答しない'] },
 ];
 
 const NUMBER_FIELD_KEYS: Array<keyof DemographicData> = [
-  'age',
   'jobChangeCount',
   'yearsOfService',
-  'childrenCount',
   'youngestChildAge',
 ];
 
@@ -127,8 +145,10 @@ const normalizeFormValues = (values: DemographicData): DemographicData => {
   NUMBER_FIELD_KEYS.forEach((key) => {
     normalized[key] = normalizeNumberInput(normalized[key] ?? '');
   });
+  normalized.name = joinName(normalized.lastName, normalized.firstName);
+  normalized.nameKana = joinNameKana(normalized.lastNameKana, normalized.firstNameKana);
 
-  if ((normalized.childrenCount ?? '0') === '0') {
+  if (!normalized.childrenCount || normalized.childrenCount === '0' || normalized.childrenCount === '回答しない') {
     normalized.youngestChildAge = null;
   }
 
@@ -149,7 +169,7 @@ function DemographicsSetup() {
 
   const returnTo = useMemo(() => searchParams.get('returnTo') || '/user', [searchParams]);
   const childrenCountValue = formValues.childrenCount ?? '';
-  const isYoungestChildAgeDisabled = !childrenCountValue || childrenCountValue === '0';
+  const isYoungestChildAgeDisabled = !childrenCountValue || childrenCountValue === '0' || childrenCountValue === '回答しない';
 
   const handleSave = () => {
     const currentState = loadDemoUserState();
@@ -317,6 +337,7 @@ function DemographicsSetup() {
                           step={field.kind === 'number' ? field.step : undefined}
                           value={formValues[field.key] ?? ''}
                           placeholder={field.placeholder}
+                          isReadOnly={field.isReadOnly}
                           isDisabled={field.key === 'youngestChildAge' && isYoungestChildAgeDisabled}
                           onChange={(event) =>
                             setFormValues((prev) => ({

@@ -189,12 +189,13 @@ const buildCsvRows = ({ karte, meta }: KarteExportPayload): CsvRow[] => {
   const demographicsRows: Array<[string, string | null]> = [
     ['ID', karte.demographics.accountId],
     ['氏名', karte.demographics.name],
+    ['フリガナ', karte.demographics.nameKana],
     ['メール', karte.demographics.email],
     ['会社名', karte.demographics.company],
     ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],
     ['権限', karte.demographics.permission],
-    ['年齢', karte.demographics.age],
+    ['生年月日', karte.demographics.birthDate],
     ['勤務地(都道府県)', karte.demographics.workLocationPrefecture],
     ['転職歴(回数)', karte.demographics.jobChangeCount],
     ['勤続年数(年)', karte.demographics.yearsOfService],
@@ -202,6 +203,8 @@ const buildCsvRows = ({ karte, meta }: KarteExportPayload): CsvRow[] => {
     ['現在の婚姻関係', karte.demographics.maritalStatus],
     ['子供の有無(人)', karte.demographics.childrenCount],
     ['末子の年齢(歳)', karte.demographics.youngestChildAge],
+    ['過去のマネージャー経験', karte.demographics.managerExperience],
+    ['現在マネージャーか', karte.demographics.currentManager],
   ];
   demographicsRows.forEach(([item, value]) => rows.push({ section: 'profile', item, value: formatPlainValue(value) }));
 
@@ -489,13 +492,14 @@ const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) 
 
   const leftRows: Array<[string, string]> = [
     ['氏名', formatPlainValue(demographics.name)],
+    ['フリガナ', formatPlainValue(demographics.nameKana)],
     ['会社名', formatPlainValue(demographics.company)],
     ['部署', formatPlainValue(demographics.department)],
     ['職種', formatPlainValue(demographics.jobTitle)],
     ['権限', formatPlainValue(demographics.permission)],
   ];
   const rightRows: Array<[string, string]> = [
-    ['年齢', formatPlainValue(demographics.age)],
+    ['生年月日', formatPlainValue(demographics.birthDate)],
     ['性別', formatPlainValue(demographics.gender)],
     ['勤続年数(年)', formatPlainValue(demographics.yearsOfService)],
     ['転職歴(回数)', formatPlainValue(demographics.jobChangeCount)],
@@ -503,6 +507,8 @@ const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) 
     ['現在の婚姻関係', formatPlainValue(demographics.maritalStatus)],
     ['子供の有無(人)', formatPlainValue(demographics.childrenCount, '-')],
     ['末子の年齢(歳)', formatPlainValue(demographics.youngestChildAge, '-')],
+    ['過去のマネージャー経験', formatPlainValue(demographics.managerExperience, '-')],
+    ['現在マネージャーか', formatPlainValue(demographics.currentManager, '-')],
   ];
 
   const drawProfileGrid = (

@@ -42,6 +42,7 @@ import {
   saveDemoUserState,
   updateTenantFeatureFlags,
 } from '../lib/demoUserState';
+import { demoAccounts, joinName, joinNameKana, type DemoAccountRecord } from '../lib/demoAccounts';
 import {
   buildPasswordNotification,
   copyTextToClipboard,
@@ -59,6 +60,11 @@ import type { DemoUserState } from '../types';
 type AccountRecord = {
   id: string;
   name: string;
+  lastName: string;
+  firstName: string;
+  nameKana: string;
+  lastNameKana: string;
+  firstNameKana: string;
   email: string;
   company: string;
   department: string;
@@ -82,6 +88,11 @@ type SortState = {
 type CsvPreviewRecord = {
   id: string;
   name: string;
+  lastName: string;
+  firstName: string;
+  nameKana: string;
+  lastNameKana: string;
+  firstNameKana: string;
   email: string;
   company: string;
   department: string;
@@ -96,7 +107,10 @@ type CsvState = {
 
 type AccountEditForm = {
   id: string;
-  name: string;
+  lastName: string;
+  firstName: string;
+  lastNameKana: string;
+  firstNameKana: string;
   email: string;
   company: string;
   department: string;
@@ -191,6 +205,43 @@ const tableActionButtonProps = {
   },
 } as const;
 
+const createAccountRecordFromDemo = (account: DemoAccountRecord, timestamp = '2026-05-13 09:00'): AccountRecord => ({
+  id: account.id,
+  name: account.name,
+  lastName: account.lastName,
+  firstName: account.firstName,
+  nameKana: account.nameKana,
+  lastNameKana: account.lastNameKana,
+  firstNameKana: account.firstNameKana,
+  email: account.email,
+  company: account.company,
+  department: account.department,
+  role: account.jobTitle,
+  permission: account.permission,
+  status: account.status,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  logs: 0,
+  initialInterviewRemaining: 10,
+  continuousInterviewRemaining: 4,
+  initialLlmCallsPerInterview: 10,
+  continuousLlmCallsPerInterview: 7,
+});
+
+const createEmptyAddForm = (permission: string, status: string) => ({
+  id: '',
+  lastName: '',
+  firstName: '',
+  lastNameKana: '',
+  firstNameKana: '',
+  email: '',
+  company: '',
+  department: '',
+  role: '',
+  permission,
+  status,
+});
+
 function Admin() {
   const toast = useToast();
   const csvModalDisclosure = useDisclosure();
@@ -199,120 +250,27 @@ function Admin() {
   const editModalDisclosure = useDisclosure();
   const bulkEditDisclosure = useDisclosure();
 
-  const [userAccounts, setUserAccounts] = useState<AccountRecord[]>([
-    {
-      id: 'USR-2024-021',
-      name: '山田 花子',
-      email: 'hanako.yamada@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Product Division',
-      role: 'Product Manager',
-      permission: '一般ユーザー',
-      status: '面談準備中',
-      createdAt: '2024-09-05 10:20',
-      updatedAt: '2024-11-30 14:02',
-      logs: 23,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 4,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
-    },
-    {
-      id: 'USR-2024-019',
-      name: '田中 太郎',
-      email: 'taro.tanaka@example.com',
-      company: 'Connect Systems',
-      department: 'Engineering',
-      role: 'Engineering Manager',
-      permission: '一般ユーザー',
-      status: '進行中',
-      createdAt: '2024-08-12 09:50',
-      updatedAt: '2024-11-18 16:35',
-      logs: 17,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 7,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
-    },
-    {
-      id: 'USR-2024-016',
-      name: '鈴木 未来',
-      email: 'mirai.suzuki@example.com',
-      company: 'Alpha Robotics',
-      department: 'Research',
-      role: 'AI Researcher',
-      permission: '一般ユーザー',
-      status: '完了',
-      createdAt: '2024-07-25 11:05',
-      updatedAt: '2024-10-28 13:12',
-      logs: 29,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 1,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
-    },
-  ]);
+  const [userAccounts, setUserAccounts] = useState<AccountRecord[]>(() =>
+    demoAccounts
+      .filter((account) => account.role === 'user' || account.role === 'company-admin')
+      .map((account) => createAccountRecordFromDemo(account)),
+  );
 
-  const [consultantAccounts, setConsultantAccounts] = useState<AccountRecord[]>([
-    {
-      id: 'CNS-400',
-      name: '佐藤 陽介',
-      email: 'yosuke.sato@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Career Consulting',
-      role: 'Lead Career Consultant',
-      permission: 'キャリアコンサルタント',
-      status: 'アクティブ',
-      createdAt: '2024-05-10 08:45',
-      updatedAt: '2024-11-28 17:25',
-      logs: 61,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 2,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
-    },
-    {
-      id: 'CNS-398',
-      name: '井上 彩',
-      email: 'aya.inoue@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Career Consulting',
-      role: 'Senior Consultant',
-      permission: 'キャリアコンサルタント',
-      status: 'アクティブ',
-      createdAt: '2024-06-02 11:30',
-      updatedAt: '2024-11-15 12:05',
-      logs: 48,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 6,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
-    },
-    {
-      id: 'CNS-395',
-      name: '木村 隼人',
-      email: 'hayato.kimura@example.com',
-      company: 'Career Carte Inc.',
-      department: 'Career Consulting',
-      role: 'Consultant',
-      permission: 'キャリアコンサルタント',
-      status: '休止中',
-      createdAt: '2024-04-22 14:20',
-      updatedAt: '2024-09-01 09:15',
-      logs: 12,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 9,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
-    },
-  ]);
+  const [consultantAccounts, setConsultantAccounts] = useState<AccountRecord[]>(() =>
+    demoAccounts
+      .filter((account) => account.role === 'consultant')
+      .map((account) => createAccountRecordFromDemo(account)),
+  );
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedConsultantIds, setSelectedConsultantIds] = useState<string[]>([]);
   const [editTarget, setEditTarget] = useState<'user' | 'consultant' | null>(null);
   const [editingAccount, setEditingAccount] = useState<AccountRecord | null>(null);
   const [editForm, setEditForm] = useState<AccountEditForm>({
     id: '',
-    name: '',
+    lastName: '',
+    firstName: '',
+    lastNameKana: '',
+    firstNameKana: '',
     email: '',
     company: '',
     department: '',
@@ -344,40 +302,22 @@ function Admin() {
     direction: 'desc',
   });
 
-  const [newUserForm, setNewUserForm] = useState({
-    id: '',
-    name: '',
-    email: '',
-    company: '',
-    department: '',
-    role: '',
-    permission: '一般ユーザー',
-    status: '面談準備中',
-  });
+  const [newUserForm, setNewUserForm] = useState(() => createEmptyAddForm('一般ユーザー', '面談準備中'));
 
-  const [newConsultantForm, setNewConsultantForm] = useState({
-    id: '',
-    name: '',
-    email: '',
-    company: '',
-    department: '',
-    role: '',
-    permission: 'キャリアコンサルタント',
-    status: 'アクティブ',
-  });
+  const [newConsultantForm, setNewConsultantForm] = useState(() => createEmptyAddForm('キャリアコンサルタント', 'アクティブ'));
 
   const [userCsvState, setUserCsvState] = useState<CsvState>({
     fileName: 'user_accounts.csv',
     preview: [
-      { id: 'USR-2024-030', name: '高橋 洋介', email: 'y.takahashi@example.com', company: 'Career Carte Inc.', department: 'Marketing', role: 'Marketing Manager', permission: '一般ユーザー' },
-      { id: 'USR-2024-031', name: '吉田 里奈', email: 'rina.yoshida@example.com', company: 'Career Carte Inc.', department: 'Human Resources', role: 'HR Manager', permission: '一般ユーザー' },
+      { id: 'USR-2026-401', lastName: '高橋', firstName: '洋介', lastNameKana: 'タカハシ', firstNameKana: 'ヨウスケ', name: '高橋 洋介', nameKana: 'タカハシ ヨウスケ', email: 'y.takahashi@example.com', company: 'Career Carte Inc.', department: 'Marketing', role: 'Marketing Manager', permission: '一般ユーザー' },
+      { id: 'USR-2026-402', lastName: '吉田', firstName: '里奈', lastNameKana: 'ヨシダ', firstNameKana: 'リナ', name: '吉田 里奈', nameKana: 'ヨシダ リナ', email: 'rina.yoshida@example.com', company: 'Career Carte Inc.', department: 'Human Resources', role: 'HR Manager', permission: '一般ユーザー' },
     ],
   });
   const [consultantCsvState, setConsultantCsvState] = useState<CsvState>({
     fileName: 'consultant_accounts.csv',
     preview: [
-      { id: 'CNS-405', name: '大谷 翼', email: 't.subasa@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Senior Consultant', permission: 'キャリアコンサルタント' },
-      { id: 'CNS-406', name: '広瀬 翔', email: 'sho.hirose@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Associate Consultant', permission: 'キャリアコンサルタント' },
+      { id: 'CNS-2026-405', lastName: '大谷', firstName: '翼', lastNameKana: 'オオタニ', firstNameKana: 'ツバサ', name: '大谷 翼', nameKana: 'オオタニ ツバサ', email: 't.subasa@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Senior Consultant', permission: 'キャリアコンサルタント' },
+      { id: 'CNS-2026-406', lastName: '広瀬', firstName: '翔', lastNameKana: 'ヒロセ', firstNameKana: 'ショウ', name: '広瀬 翔', nameKana: 'ヒロセ ショウ', email: 'sho.hirose@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Associate Consultant', permission: 'キャリアコンサルタント' },
     ],
   });
   const [csvModalType, setCsvModalType] = useState<'user' | 'consultant'>('user');
@@ -416,7 +356,10 @@ function Admin() {
     const isDemoUser = account.id === DEFAULT_DEMO_USER_ID;
     return {
       id: account.id,
-      name: account.name,
+      lastName: account.lastName,
+      firstName: account.firstName,
+      lastNameKana: account.lastNameKana,
+      firstNameKana: account.firstNameKana,
       email: account.email,
       company: account.company,
       department: account.department,
@@ -508,7 +451,7 @@ function Admin() {
     return userAccounts
       .filter((account) => {
         const keyword =
-          account.id + account.name + account.email + account.company + account.department + account.role + account.permission;
+          account.id + account.name + account.nameKana + account.email + account.company + account.department + account.role + account.permission;
         const matchesQuery = keyword.toLowerCase().includes(userQuery.toLowerCase());
         return matchesQuery;
       })
@@ -519,7 +462,7 @@ function Admin() {
     return consultantAccounts
       .filter((account) => {
         const keyword =
-          account.id + account.name + account.email + account.company + account.department + account.role + account.permission;
+          account.id + account.name + account.nameKana + account.email + account.company + account.department + account.role + account.permission;
         const matchesQuery = keyword.toLowerCase().includes(consultantQuery.toLowerCase());
         return matchesQuery;
       })
@@ -538,10 +481,10 @@ function Admin() {
 
   const handleAddUser = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!newUserForm.name || !newUserForm.email) {
+    if (!newUserForm.lastName || !newUserForm.firstName || !newUserForm.lastNameKana || !newUserForm.firstNameKana || !newUserForm.email || !newUserForm.company || !newUserForm.permission) {
       toast({
         title: '入力不足',
-        description: '氏名とメールを入力してください。',
+        description: '姓、名、フリガナ、メール、会社名、権限を入力してください。',
         status: 'warning',
         duration: 2600,
         isClosable: true,
@@ -556,7 +499,12 @@ function Admin() {
       id: newUserForm.id || `USR-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
           .toString()
           .padStart(3, '0')}`,
-      name: newUserForm.name,
+      name: joinName(newUserForm.lastName, newUserForm.firstName) ?? '',
+      lastName: newUserForm.lastName,
+      firstName: newUserForm.firstName,
+      nameKana: joinNameKana(newUserForm.lastNameKana, newUserForm.firstNameKana) ?? '',
+      lastNameKana: newUserForm.lastNameKana,
+      firstNameKana: newUserForm.firstNameKana,
       email: newUserForm.email,
       company: newUserForm.company || 'Unassigned',
       department: newUserForm.department || '未設定',
@@ -575,7 +523,7 @@ function Admin() {
     setUserAccounts((prev) => [nextAccount, ...prev]);
     appendPasswordNotifications([nextAccount]);
 
-    setNewUserForm({ id: '', name: '', email: '', company: '', department: '', role: '', permission: '一般ユーザー', status: '面談準備中' });
+    setNewUserForm(createEmptyAddForm('一般ユーザー', '面談準備中'));
     toast({
       title: 'アカウントを追加しました',
       description: '一時パスワード通知文を一覧に作成しました。',
@@ -587,10 +535,10 @@ function Admin() {
 
   const handleAddConsultant = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!newConsultantForm.name || !newConsultantForm.email) {
+    if (!newConsultantForm.lastName || !newConsultantForm.firstName || !newConsultantForm.lastNameKana || !newConsultantForm.firstNameKana || !newConsultantForm.email || !newConsultantForm.company || !newConsultantForm.permission) {
       toast({
         title: '入力不足',
-        description: '氏名とメールを入力してください。',
+        description: '姓、名、フリガナ、メール、会社名、権限を入力してください。',
         status: 'warning',
         duration: 2600,
         isClosable: true,
@@ -605,7 +553,12 @@ function Admin() {
       id: newConsultantForm.id || `CNS-${now.getFullYear()}-${Math.floor(Math.random() * 1000)
           .toString()
           .padStart(3, '0')}`,
-      name: newConsultantForm.name,
+      name: joinName(newConsultantForm.lastName, newConsultantForm.firstName) ?? '',
+      lastName: newConsultantForm.lastName,
+      firstName: newConsultantForm.firstName,
+      nameKana: joinNameKana(newConsultantForm.lastNameKana, newConsultantForm.firstNameKana) ?? '',
+      lastNameKana: newConsultantForm.lastNameKana,
+      firstNameKana: newConsultantForm.firstNameKana,
       email: newConsultantForm.email,
       company: newConsultantForm.company || 'Career Carte Inc.',
       department: newConsultantForm.department || 'Career Consulting',
@@ -624,7 +577,7 @@ function Admin() {
     setConsultantAccounts((prev) => [nextAccount, ...prev]);
     appendPasswordNotifications([nextAccount]);
 
-    setNewConsultantForm({ id: '', name: '', email: '', company: '', department: '', role: '', permission: 'キャリアコンサルタント', status: 'アクティブ' });
+    setNewConsultantForm(createEmptyAddForm('キャリアコンサルタント', 'アクティブ'));
     toast({
       title: 'コンサルタントアカウントを追加しました',
       description: '一時パスワード通知文を一覧に作成しました。',
@@ -646,12 +599,12 @@ function Admin() {
     const nextPreview: CsvPreviewRecord[] =
       csvModalType === 'user'
         ? [
-            { id: 'USR-2024-041', name: '中村 愛', email: 'ai.nakamura@example.com', company: 'Career Carte Inc.', department: 'Customer Success', role: 'CS Lead', permission: '一般ユーザー' },
-            { id: 'USR-2024-042', name: '小林 真', email: 'makoto.kobayashi@example.com', company: 'Career Carte Inc.', department: 'Sales', role: 'Sales', permission: '一般ユーザー' },
+            { id: 'USR-2026-041', lastName: '中村', firstName: '愛', lastNameKana: 'ナカムラ', firstNameKana: 'アイ', name: '中村 愛', nameKana: 'ナカムラ アイ', email: 'ai.nakamura@example.com', company: 'Career Carte Inc.', department: 'Customer Success', role: 'CS Lead', permission: '一般ユーザー' },
+            { id: 'USR-2026-042', lastName: '小林', firstName: '真', lastNameKana: 'コバヤシ', firstNameKana: 'マコト', name: '小林 真', nameKana: 'コバヤシ マコト', email: 'makoto.kobayashi@example.com', company: 'Career Carte Inc.', department: 'Sales', role: 'Sales', permission: '一般ユーザー' },
           ]
         : [
-            { id: 'CNS-407', name: '石井 拓', email: 'taku.ishii@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Lead Consultant', permission: 'キャリアコンサルタント' },
-            { id: 'CNS-408', name: '森本 莉子', email: 'riko.morimoto@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Consultant', permission: 'キャリアコンサルタント' },
+            { id: 'CNS-2026-407', lastName: '石井', firstName: '拓', lastNameKana: 'イシイ', firstNameKana: 'タク', name: '石井 拓', nameKana: 'イシイ タク', email: 'taku.ishii@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Lead Consultant', permission: 'キャリアコンサルタント' },
+            { id: 'CNS-2026-408', lastName: '森本', firstName: '莉子', lastNameKana: 'モリモト', firstNameKana: 'リコ', name: '森本 莉子', nameKana: 'モリモト リコ', email: 'riko.morimoto@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Consultant', permission: 'キャリアコンサルタント' },
           ];
 
     if (csvModalType === 'user') {
@@ -668,6 +621,11 @@ function Admin() {
     const nextAccounts: AccountRecord[] = previewRecords.map((record) => ({
       id: record.id,
       name: record.name,
+      lastName: record.lastName,
+      firstName: record.firstName,
+      nameKana: record.nameKana,
+      lastNameKana: record.lastNameKana,
+      firstNameKana: record.firstNameKana,
       email: record.email,
       company: record.company,
       department: record.department,
@@ -799,10 +757,15 @@ function Admin() {
       accounts.map((account) =>
         account.id === editingAccount.id
           ? {
-              ...account,
-              id: editForm.id,
-              name: editForm.name,
-              email: editForm.email,
+	            ...account,
+	              id: editForm.id,
+	              name: joinName(editForm.lastName, editForm.firstName) ?? '',
+	              lastName: editForm.lastName,
+	              firstName: editForm.firstName,
+	              nameKana: joinNameKana(editForm.lastNameKana, editForm.firstNameKana) ?? '',
+	              lastNameKana: editForm.lastNameKana,
+	              firstNameKana: editForm.firstNameKana,
+	              email: editForm.email,
               company: editForm.company,
               department: editForm.department,
               role: editForm.role,
@@ -1074,7 +1037,7 @@ function Admin() {
                 <Text color="whiteAlpha.800">ユーザーアカウント専用の一覧。Excelライクな表で状態を確認できます。</Text>
                 <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                   <Input
-                    placeholder="ID / 氏名 / メール / 会社名 / 部署 / 職種 / 権限 で検索"
+                    placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 / 権限 で検索"
                     value={userQuery}
                     onChange={(event) => setUserQuery(event.target.value)}
                   />
@@ -1128,9 +1091,10 @@ function Admin() {
                       <Th>
                         <SortButton onSort={handleSort} label="ID" target="user" column="id" />
                       </Th>
-                      <Th>
-                        <SortButton onSort={handleSort} label="氏名" target="user" column="name" />
-                      </Th>
+	                      <Th>
+	                        <SortButton onSort={handleSort} label="氏名" target="user" column="name" />
+	                      </Th>
+	                      <Th>フリガナ</Th>
                       <Th>
                         <SortButton onSort={handleSort} label="メール" target="user" column="email" />
                       </Th>
@@ -1173,9 +1137,10 @@ function Admin() {
                           />
                         </Td>
                         <Td fontWeight="medium">{account.id}</Td>
-                        <Td>
-                          <Text fontWeight="semibold">{account.name}</Text>
-                        </Td>
+	                        <Td>
+	                          <Text fontWeight="semibold">{account.name}</Text>
+	                        </Td>
+	                        <Td>{account.nameKana || '未設定'}</Td>
                         <Td fontSize="sm">{account.email}</Td>
                         <Td>{account.company}</Td>
                         <Td>{account.department}</Td>
@@ -1244,15 +1209,24 @@ function Admin() {
                                 }
                               />
                             </FormControl>
-                            <FormControl isRequired>
-                              <FormLabel>氏名</FormLabel>
-                              <Input
-                                value={newUserForm.name}
-                                onChange={(event) =>
-                                  setNewUserForm((prev) => ({ ...prev, name: event.target.value }))
-                                }
-                              />
-                            </FormControl>
+                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                              <FormControl isRequired>
+                                <FormLabel>姓</FormLabel>
+                                <Input value={newUserForm.lastName} onChange={(event) => setNewUserForm((prev) => ({ ...prev, lastName: event.target.value }))} />
+                              </FormControl>
+                              <FormControl isRequired>
+                                <FormLabel>名</FormLabel>
+                                <Input value={newUserForm.firstName} onChange={(event) => setNewUserForm((prev) => ({ ...prev, firstName: event.target.value }))} />
+                              </FormControl>
+                              <FormControl isRequired>
+                                <FormLabel>フリガナ（姓）</FormLabel>
+                                <Input value={newUserForm.lastNameKana} onChange={(event) => setNewUserForm((prev) => ({ ...prev, lastNameKana: event.target.value }))} />
+                              </FormControl>
+                              <FormControl isRequired>
+                                <FormLabel>フリガナ（名）</FormLabel>
+                                <Input value={newUserForm.firstNameKana} onChange={(event) => setNewUserForm((prev) => ({ ...prev, firstNameKana: event.target.value }))} />
+                              </FormControl>
+                            </SimpleGrid>
                             <FormControl isRequired>
                               <FormLabel>メール</FormLabel>
                               <Input
@@ -1318,7 +1292,7 @@ function Admin() {
                           </Heading>
                           <Text color="whiteAlpha.800">
                             CSVをアップロードして内容を確認後、一括登録を実行します。ヘッダーは
-                            <strong> ID, Name, Email, Company, Department, JobTitle, Permission </strong>
+                            <strong> ID, LastName, FirstName, LastNameKana, FirstNameKana, Email, Company, Permission </strong>
                             の順で設定してください。
                           </Text>
                           <Button
@@ -1354,7 +1328,7 @@ function Admin() {
                 </Text>
                 <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                   <Input
-                    placeholder="ID / 氏名 / メール / 会社名 / 部署 / 職種 / 権限 で検索"
+                    placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 / 権限 で検索"
                     value={consultantQuery}
                     onChange={(event) => setConsultantQuery(event.target.value)}
                   />
@@ -1414,9 +1388,10 @@ function Admin() {
                       <Th>
                         <SortButton onSort={handleSort} label="ID" target="consultant" column="id" />
                       </Th>
-                      <Th>
-                        <SortButton onSort={handleSort} label="氏名" target="consultant" column="name" />
-                      </Th>
+	                      <Th>
+	                        <SortButton onSort={handleSort} label="氏名" target="consultant" column="name" />
+	                      </Th>
+	                      <Th>フリガナ</Th>
                       <Th>
                         <SortButton onSort={handleSort} label="メール" target="consultant" column="email" />
                       </Th>
@@ -1457,9 +1432,10 @@ function Admin() {
                           />
                         </Td>
                         <Td fontWeight="medium">{account.id}</Td>
-                        <Td>
-                          <Text fontWeight="semibold">{account.name}</Text>
-                        </Td>
+	                        <Td>
+	                          <Text fontWeight="semibold">{account.name}</Text>
+	                        </Td>
+	                        <Td>{account.nameKana || '未設定'}</Td>
                         <Td fontSize="sm">{account.email}</Td>
                         <Td>{account.company}</Td>
                         <Td>{account.department}</Td>
@@ -1527,15 +1503,24 @@ function Admin() {
                                 }
                               />
                             </FormControl>
-                            <FormControl isRequired>
-                              <FormLabel>氏名</FormLabel>
-                              <Input
-                                value={newConsultantForm.name}
-                                onChange={(event) =>
-                                  setNewConsultantForm((prev) => ({ ...prev, name: event.target.value }))
-                                }
-                              />
-                            </FormControl>
+                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                              <FormControl isRequired>
+                                <FormLabel>姓</FormLabel>
+                                <Input value={newConsultantForm.lastName} onChange={(event) => setNewConsultantForm((prev) => ({ ...prev, lastName: event.target.value }))} />
+                              </FormControl>
+                              <FormControl isRequired>
+                                <FormLabel>名</FormLabel>
+                                <Input value={newConsultantForm.firstName} onChange={(event) => setNewConsultantForm((prev) => ({ ...prev, firstName: event.target.value }))} />
+                              </FormControl>
+                              <FormControl isRequired>
+                                <FormLabel>フリガナ（姓）</FormLabel>
+                                <Input value={newConsultantForm.lastNameKana} onChange={(event) => setNewConsultantForm((prev) => ({ ...prev, lastNameKana: event.target.value }))} />
+                              </FormControl>
+                              <FormControl isRequired>
+                                <FormLabel>フリガナ（名）</FormLabel>
+                                <Input value={newConsultantForm.firstNameKana} onChange={(event) => setNewConsultantForm((prev) => ({ ...prev, firstNameKana: event.target.value }))} />
+                              </FormControl>
+                            </SimpleGrid>
                             <FormControl isRequired>
                               <FormLabel>メール</FormLabel>
                               <Input
@@ -1717,8 +1702,9 @@ function Admin() {
                 <Table size="sm">
                   <Thead bg="gray.50">
                     <Tr>
-                      <Th>ID</Th>
-                      <Th>氏名</Th>
+	                      <Th>ID</Th>
+	                      <Th>氏名</Th>
+	                      <Th>フリガナ</Th>
                       <Th>メール</Th>
                       <Th>会社名</Th>
                       <Th>部署</Th>
@@ -1729,8 +1715,9 @@ function Admin() {
                   <Tbody>
                     {activeCsvState.preview.map((record) => (
                       <Tr key={record.id}>
-                        <Td>{record.id}</Td>
-                        <Td>{record.name}</Td>
+	                        <Td>{record.id}</Td>
+	                        <Td>{record.name}</Td>
+	                        <Td>{record.nameKana}</Td>
                         <Td>{record.email}</Td>
                         <Td>{record.company}</Td>
                         <Td>{record.department}</Td>
@@ -1778,15 +1765,22 @@ function Admin() {
                         }
                       />
                     </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>氏名</FormLabel>
-                      <Input
-                        value={editForm.name}
-                        onChange={(event) =>
-                          setEditForm((prev) => ({ ...prev, name: event.target.value }))
-                        }
-                      />
-                    </FormControl>
+	                    <FormControl isRequired>
+	                      <FormLabel>姓</FormLabel>
+	                      <Input value={editForm.lastName} onChange={(event) => setEditForm((prev) => ({ ...prev, lastName: event.target.value }))} />
+	                    </FormControl>
+	                    <FormControl isRequired>
+	                      <FormLabel>名</FormLabel>
+	                      <Input value={editForm.firstName} onChange={(event) => setEditForm((prev) => ({ ...prev, firstName: event.target.value }))} />
+	                    </FormControl>
+	                    <FormControl isRequired>
+	                      <FormLabel>フリガナ（姓）</FormLabel>
+	                      <Input value={editForm.lastNameKana} onChange={(event) => setEditForm((prev) => ({ ...prev, lastNameKana: event.target.value }))} />
+	                    </FormControl>
+	                    <FormControl isRequired>
+	                      <FormLabel>フリガナ（名）</FormLabel>
+	                      <Input value={editForm.firstNameKana} onChange={(event) => setEditForm((prev) => ({ ...prev, firstNameKana: event.target.value }))} />
+	                    </FormControl>
                     <FormControl isRequired>
                       <FormLabel>メール</FormLabel>
                       <Input

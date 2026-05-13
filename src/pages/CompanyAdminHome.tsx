@@ -61,7 +61,7 @@ import {
 import { downloadKarteCsv, downloadKarteCsvBatch, printKartePayloads, type KarteBatchExportPayload } from '../lib/karteExport';
 import type { CompanyEmployeeRecord, DemoUserState } from '../types';
 
-type EmployeeSortColumn = 'id' | 'name' | 'email' | 'company' | 'department' | 'jobTitle' | 'permission' | 'status' | 'updatedAt';
+type EmployeeSortColumn = 'id' | 'name' | 'nameKana' | 'email' | 'company' | 'department' | 'jobTitle' | 'permission' | 'status' | 'updatedAt';
 
 type EmployeeSortState = {
   column: EmployeeSortColumn;
@@ -220,6 +220,7 @@ function CompanyAdminHome() {
         const haystack = [
           employee.id,
           employee.name,
+          employee.nameKana,
           employee.email,
           employee.company,
           employee.department,
@@ -491,14 +492,14 @@ function CompanyAdminHome() {
             </Box>
             <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel color="whiteAlpha.700">企業API使用状況</StatLabel>
-                <StatNumber>{apiUsage.usageLabel}</StatNumber>
+                <StatLabel color="whiteAlpha.700">残り面談回数</StatLabel>
+                <StatNumber>{apiUsage.remaining}</StatNumber>
               </Stat>
               <Text mt={2} fontSize="xs" color="whiteAlpha.700">
-                残り{apiUsage.remaining}回
+                使用状況: {apiUsage.usageLabel}
               </Text>
             </Box>
-            <Box {...translucentPanelProps} p={5}>
+            <Box {...translucentPanelProps} p={5} display="none">
               <Stat>
                 <StatLabel color="whiteAlpha.700">コンディション測定件数</StatLabel>
                 <StatNumber>{tenantConditionRecords.length}</StatNumber>
@@ -507,7 +508,7 @@ function CompanyAdminHome() {
                 直近: {latestMeasuredAt}
               </Text>
             </Box>
-            <Box {...translucentPanelProps} p={5}>
+            <Box {...translucentPanelProps} p={5} display="none">
               <Stat>
                 <StatLabel color="whiteAlpha.700">緊張度スコア表示</StatLabel>
                 <StatNumber>{flags.stressAnalysisEnabled ? 'ON' : 'OFF'}</StatNumber>
@@ -518,7 +519,7 @@ function CompanyAdminHome() {
             </Box>
           </SimpleGrid>
 
-          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }} display="none">
             <Stack spacing={4}>
               <Flex justify="space-between" gap={3} align={{ base: 'stretch', md: 'center' }} direction={{ base: 'column', md: 'row' }}>
                 <Stack spacing={1}>
@@ -572,7 +573,7 @@ function CompanyAdminHome() {
             </Stack>
           </Box>
 
-          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }} display="none">
             <form onSubmit={handleQuotaSubmit}>
               <Stack spacing={4}>
                 <Heading size="md">企業API使用枠・会話ターン制限</Heading>
@@ -604,7 +605,7 @@ function CompanyAdminHome() {
             </form>
           </Box>
 
-          <Box {...linePanelProps} p={{ base: 5, md: 7 }}>
+          <Box {...linePanelProps} p={{ base: 5, md: 7 }} display="none">
             <Stack spacing={4}>
               <Heading size="md">企業別オプション</Heading>
               <Checkbox isChecked={flags.stressAnalysisEnabled} onChange={(event) => handleStressToggle(event.target.checked)}>
@@ -640,7 +641,7 @@ function CompanyAdminHome() {
 
               <Flex direction={{ base: 'column', md: 'row' }} gap={4}>
                 <Input
-                  placeholder="ID / 氏名 / メール / 会社名 / 部署 / 職種 / 権限 で検索"
+                  placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 / 権限 で検索"
                   value={query}
                   {...formControlProps}
                   onChange={(event) => setQuery(event.target.value)}
@@ -662,6 +663,7 @@ function CompanyAdminHome() {
                       <Th>選択</Th>
                       <Th><SortButton label="ID" column="id" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="氏名" column="name" sort={sort} onSort={handleSort} /></Th>
+                      <Th><SortButton label="フリガナ" column="nameKana" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="メール" column="email" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="会社名" column="company" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="部署" column="department" sort={sort} onSort={handleSort} /></Th>
@@ -691,6 +693,7 @@ function CompanyAdminHome() {
                           </Td>
                           <Td fontWeight="medium">{employee.id}</Td>
                           <Td>{employee.name}</Td>
+                          <Td>{employee.nameKana || '未設定'}</Td>
                           <Td color="whiteAlpha.800">{employee.email || '未設定'}</Td>
                           <Td>{employee.company || tenant?.name || '未設定'}</Td>
                           <Td>{employee.department || '未設定'}</Td>
@@ -711,7 +714,7 @@ function CompanyAdminHome() {
                               <Button size="xs" {...tableActionButtonProps} onClick={() => handleEmployeePrint(employee)} isDisabled={!hasKarte}>
                                 印刷
                               </Button>
-                              <Button size="xs" {...tableActionButtonProps} onClick={() => handleEmployeePasswordReset(employee)}>
+                              <Button size="xs" {...tableActionButtonProps} onClick={() => handleEmployeePasswordReset(employee)} display="none">
                                 再発行
                               </Button>
                               <Button

@@ -41,8 +41,14 @@ export type ShirpDetailUpdates = Partial<Record<ShirpDetailCategoryKey, Record<s
 export type DemographicData = {
   accountId: string | null;
   name: string | null;
+  lastName: string | null;
+  firstName: string | null;
+  nameKana: string | null;
+  lastNameKana: string | null;
+  firstNameKana: string | null;
   email: string | null;
   age: string | null;
+  birthDate: string | null;
   company: string | null;
   department: string | null;
   jobTitle: string | null;
@@ -54,6 +60,8 @@ export type DemographicData = {
   maritalStatus: string | null;
   childrenCount: string | null;
   youngestChildAge: string | null;
+  managerExperience: string | null;
+  currentManager: string | null;
 };
 
 export type SurveyFactorKey =
@@ -133,6 +141,11 @@ export type CompanyEmployeeRecord = {
   id: string;
   tenantId: string;
   name: string;
+  lastName: string;
+  firstName: string;
+  nameKana: string;
+  lastNameKana: string;
+  firstNameKana: string;
   email: string;
   company: string;
   department: string;
