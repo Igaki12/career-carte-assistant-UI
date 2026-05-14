@@ -17,12 +17,13 @@ import {
   ModalOverlay,
   Radio,
   RadioGroup,
+  SimpleGrid,
   Stack,
   Text,
   Textarea,
   useToast,
 } from '@chakra-ui/react';
-import { FaMicrophone, FaPaperPlane, FaUpDown, FaUserDoctor, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaArrowLeft, FaMicrophone, FaPaperPlane, FaUpDown, FaUserDoctor, FaWandMagicSparkles } from 'react-icons/fa6';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ApiKeyModal from './ApiKeyModal';
 import KartePanel from './KartePanel';
@@ -277,8 +278,8 @@ const buildDemographicPromptContext = (karte: KarteData) => {
   const demographicPairs = [
     // 面談内容の推論に直接使いにくい識別・連絡・権限情報は、AI応答プロンプトには含めない。
     // ['ID', karte.demographics.accountId],
-    // ['氏名', karte.demographics.name],
     // ['メール', karte.demographics.email],
+    // ['氏名', karte.demographics.name],
     ['会社名', karte.demographics.company],
     ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],
@@ -2182,23 +2183,27 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                       />
                     </Flex>
                   )}
-                  <Stack spacing={2}>
-                    {!isTurnTakingMode && (
-                      <Button leftIcon={<FaWandMagicSparkles />} variant="ghost" colorScheme="purple" onClick={handleOpenKarteModal} isDisabled={messages.length <= 1 || isBusy}>
-                        カルテを確認
+                  <Stack spacing={2} w="full">
+                    <SimpleGrid columns={2} spacing={2} w="full">
+                      <Button leftIcon={<FaArrowLeft />} variant="outline" colorScheme="blue" onClick={() => navigate('/user')} w="full">
+                        中断して戻る
                       </Button>
-                    )}
+                      {!isTurnTakingMode ? (
+                        <Button leftIcon={<FaWandMagicSparkles />} variant="ghost" colorScheme="purple" onClick={handleOpenKarteModal} isDisabled={messages.length <= 1 || isBusy} w="full">
+                          カルテを確認
+                        </Button>
+                      ) : (
+                        <Box />
+                      )}
+                    </SimpleGrid>
                     {!isInitialMeeting && (
-                      <Button variant="solid" colorScheme="teal" onClick={handleFinalizeContinuous} isDisabled={messages.length <= 1 || isBusy}>
+                      <Button variant="solid" colorScheme="teal" onClick={handleFinalizeContinuous} isDisabled={messages.length <= 1 || isBusy} w="full">
                         面談を終了してフィードバックを見る
                       </Button>
                     )}
                   </Stack>
                 </Stack>
               </Box>
-              <Button variant="outline" colorScheme="blue" onClick={() => navigate('/user')}>
-                面談を中断しマイページへ戻る
-              </Button>
             </Box>
           </Flex>
         </Flex>

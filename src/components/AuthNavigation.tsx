@@ -51,7 +51,7 @@ const getNavigationItems = (role: DemoAuthRole): NavigationItem[] => {
     return [
       { label: 'マイページ', to: '/user', pathname: '/user', icon: <FiUser /> },
       { label: 'プロフィール設定', to: '/user/demographics?returnTo=%2Fuser', pathname: '/user/demographics', icon: <FiEdit3 /> },
-      { label: '初回面談', to: '/app/initial', pathname: '/app/initial', icon: <FiPlayCircle /> },
+      { label: 'キャリアカルテの作成', to: '/app/initial', pathname: '/app/initial', icon: <FiPlayCircle /> },
       { label: '企業管理者画面', to: '/company-admin', pathname: '/company-admin', icon: <FiBriefcase /> },
     ];
   }
@@ -61,7 +61,7 @@ const getNavigationItems = (role: DemoAuthRole): NavigationItem[] => {
   return [
     { label: 'マイページ', to: '/user', pathname: '/user', icon: <FiUser /> },
     { label: 'プロフィール設定', to: '/user/demographics?returnTo=%2Fuser', pathname: '/user/demographics', icon: <FiEdit3 /> },
-    { label: '初回面談', to: '/app/initial', pathname: '/app/initial', icon: <FiPlayCircle /> },
+    { label: 'キャリアカルテの作成', to: '/app/initial', pathname: '/app/initial', icon: <FiPlayCircle /> },
   ];
 };
 
