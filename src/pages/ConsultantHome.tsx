@@ -603,8 +603,8 @@ function ConsultantHome() {
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
                     <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.title}</Text>
@@ -700,6 +700,14 @@ function ConsultantHome() {
                   <Box pt={4}>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                       <Stack spacing={0.5}>
+                        <Text fontSize="sm" color="whiteAlpha.700">ID</Text>
+                        <Text fontWeight="semibold">{profile.id}</Text>
+                      </Stack>
+                      <Stack spacing={0.5}>
+                        <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
+                        <Text fontWeight="semibold">{profile.email}</Text>
+                      </Stack>
+                      <Stack spacing={0.5}>
                         <Text fontSize="sm" color="whiteAlpha.700">氏名</Text>
                         <Text fontWeight="semibold">{profile.name}</Text>
                       </Stack>
@@ -708,15 +716,11 @@ function ConsultantHome() {
                         <Text fontWeight="semibold">{profile.company} / {profile.title}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
-                        <Text fontWeight="semibold">{profile.email}</Text>
-                      </Stack>
-                      <Stack spacing={0.5}>
                         <Text fontSize="sm" color="whiteAlpha.700">パスワード更新</Text>
                         <Text fontWeight="semibold">{passwordUpdatedAt ?? '未更新（デモ）'}</Text>
                       </Stack>
                     </SimpleGrid>
-                    <Button mt={4} {...whiteOutlineButtonProps} onClick={resetModalDisclosure.onOpen}>
+                    <Button mt={4} w="full" justifyContent="center" {...whiteOutlineButtonProps} onClick={resetModalDisclosure.onOpen}>
                       パスワードを再設定する
                     </Button>
                   </Box>
@@ -788,8 +792,8 @@ function ConsultantHome() {
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
                     <Text fontSize="sm" color="whiteAlpha.900">ID: {selectedRecord.data.demographics.accountId ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">メール: {selectedRecord.data.demographics.email ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">会社名: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">部署: {selectedRecord.data.demographics.department ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>

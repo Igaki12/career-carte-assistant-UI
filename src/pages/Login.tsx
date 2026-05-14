@@ -132,6 +132,9 @@ function Login({ session, onLogin }: LoginProps) {
               >
                 Career Karte Assistant
               </Heading>
+              <Text mt={3} fontSize="xs" color="rgba(148, 163, 184, 0.72)" letterSpacing="0.02em">
+                © 2026 HRdock All rights reserved.
+              </Text>
             </Box>
           </Stack>
 

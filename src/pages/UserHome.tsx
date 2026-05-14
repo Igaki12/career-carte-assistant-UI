@@ -283,7 +283,7 @@ const formatShortDate = () =>
     day: '2-digit',
   });
 
-const getDraftMetaLabel = (meetingType: MeetingType) => (meetingType === 'initial' ? '初回面談の下書き' : '継続面談の下書き');
+const getDraftMetaLabel = (meetingType: MeetingType) => (meetingType === 'initial' ? '前回面談の下書き' : '継続面談の下書き');
 
 const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): ProfileView => {
   const latestRecord = userState.karteRecords[0];
@@ -795,9 +795,9 @@ function UserHome() {
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
                           <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
+                          <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {profile.nameKana}</Text>
-                          <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.jobTitle}</Text>
@@ -1037,16 +1037,16 @@ function UserHome() {
                               <Text fontWeight="semibold">{profile.id}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
+                              <Text fontSize="sm" color={mutedTextColor}>メール</Text>
+                              <Text fontWeight="semibold">{profile.email}</Text>
+                            </Stack>
+                            <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>氏名</Text>
                               <Text fontWeight="semibold">{profile.name}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>フリガナ</Text>
                               <Text fontWeight="semibold">{profile.nameKana}</Text>
-                            </Stack>
-                            <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>メール</Text>
-                              <Text fontWeight="semibold">{profile.email}</Text>
                             </Stack>
                             <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>会社名</Text>
@@ -1112,14 +1112,14 @@ function UserHome() {
                         </TabPanel>
                       </TabPanels>
                     </Tabs>
-                    <Flex mt={4} gap={3} wrap="wrap">
-                      <Button color="white" borderColor="whiteAlpha.500" variant="outline" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
+                    <Stack mt={4} spacing={3} w="full">
+                      <Button w="full" justifyContent="center" color="white" borderColor="whiteAlpha.500" variant="outline" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
                         プロフィールを編集
                       </Button>
-                      <Button color="white" borderColor="whiteAlpha.500" variant="outline" _hover={{ bg: 'whiteAlpha.160' }} onClick={resetModalDisclosure.onOpen}>
+                      <Button w="full" justifyContent="center" color="white" borderColor="whiteAlpha.500" variant="outline" _hover={{ bg: 'whiteAlpha.160' }} onClick={resetModalDisclosure.onOpen}>
                         パスワードを再設定する
                       </Button>
-                    </Flex>
+                    </Stack>
                   </Box>
                 </Collapse>
               </Stack>
