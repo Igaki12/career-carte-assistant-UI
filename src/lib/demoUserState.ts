@@ -315,7 +315,7 @@ export const createDefaultCompanyEmployees = (): CompanyEmployeeRecord[] => {
       '#': '管理者画面の一括出力確認用データ。',
     }),
     'USR-2026-102': createSampleKarte(createDemographicsFromDemoAccount(demoAccounts[1]), {
-      S: '営業企画として数値管理を担い、部門横断の調整に手応えがある。',
+      S: '営業職として数値管理を担い、部門横断の調整に手応えがある。',
       H: 'マネジメントだけでなく企画専門性も伸ばせる役割を希望している。',
       I: '管理職志向と専門職志向の優先順位を整理する必要がある。',
       R: '営業現場との関係性と過去の改善実績を活用できる。',

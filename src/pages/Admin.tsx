@@ -36,7 +36,6 @@ import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from '
 import { FiFileText, FiPlus, FiUpload } from 'react-icons/fi';
 import PrimaryButton from '../components/PrimaryButton';
 import {
-  DEFAULT_DEMO_USER_ID,
   getTenantFeatureFlags,
   loadDemoUserState,
   saveDemoUserState,
@@ -53,9 +52,10 @@ import {
   getDemoUsageQuota,
   subscribeDemoUsageQuota,
   updateDemoUsageQuota,
-  type DemoUsageQuota,
 } from '../lib/demoUsageQuota';
-import type { DemoUserState } from '../types';
+import { DEFAULT_JOB_TITLE, JOB_TITLE_OPTIONS } from '../lib/jobTitles';
+import { downloadKarteCsv, downloadKarteCsvBatch, printKartePayloads, type KarteBatchExportPayload } from '../lib/karteExport';
+import type { CompanyEmployeeRecord, DemoUserState } from '../types';
 
 type AccountRecord = {
   id: string;
@@ -71,6 +71,7 @@ type AccountRecord = {
   role: string;
   permission: string;
   status: string;
+  karteStatus: string;
   createdAt: string;
   updatedAt: string;
   logs: number;
@@ -134,6 +135,12 @@ type BulkEditForm = {
 };
 
 type AccountTarget = 'user' | 'consultant';
+
+type TenantQuotaForm = {
+  totalLimit: string;
+  used: string;
+  perMeetingTurnLimit: string;
+};
 
 type SortButtonProps = {
   label: string;
@@ -219,13 +226,14 @@ const createAccountRecordFromDemo = (account: DemoAccountRecord, timestamp = '20
   role: account.jobTitle,
   permission: account.permission,
   status: account.status,
+  karteStatus: account.karteStatus === '保存済み' ? '保存済み' : '未作成',
   createdAt: timestamp,
   updatedAt: timestamp,
   logs: 0,
-  initialInterviewRemaining: 10,
-  continuousInterviewRemaining: 4,
-  initialLlmCallsPerInterview: 10,
-  continuousLlmCallsPerInterview: 7,
+  initialInterviewRemaining: 1000,
+  continuousInterviewRemaining: 0,
+  initialLlmCallsPerInterview: 100,
+  continuousLlmCallsPerInterview: 100,
 });
 
 const createEmptyAddForm = (permission: string, status: string) => ({
@@ -241,6 +249,26 @@ const createEmptyAddForm = (permission: string, status: string) => ({
   permission,
   status,
 });
+
+const JobTitleSelectOptions = ({ includeNoChange = false }: { includeNoChange?: boolean }) => (
+  <>
+    {includeNoChange ? <option value="">変更しない</option> : <option value="">選択してください</option>}
+    {JOB_TITLE_OPTIONS.map((jobTitle) => (
+      <option key={jobTitle} value={jobTitle}>
+        {jobTitle}
+      </option>
+    ))}
+  </>
+);
+
+const createTenantQuotaForm = (tenantId: string): TenantQuotaForm => {
+  const quota = getDemoUsageQuota(tenantId);
+  return {
+    totalLimit: quota.totalLimit.toString(),
+    used: quota.used.toString(),
+    perMeetingTurnLimit: quota.perMeetingTurnLimit.toString(),
+  };
+};
 
 function Admin() {
   const toast = useToast();
@@ -309,25 +337,78 @@ function Admin() {
   const [userCsvState, setUserCsvState] = useState<CsvState>({
     fileName: 'user_accounts.csv',
     preview: [
-      { id: 'USR-2026-401', lastName: '高橋', firstName: '洋介', lastNameKana: 'タカハシ', firstNameKana: 'ヨウスケ', name: '高橋 洋介', nameKana: 'タカハシ ヨウスケ', email: 'y.takahashi@example.com', company: 'Career Carte Inc.', department: 'Marketing', role: 'Marketing Manager', permission: '一般ユーザー' },
-      { id: 'USR-2026-402', lastName: '吉田', firstName: '里奈', lastNameKana: 'ヨシダ', firstNameKana: 'リナ', name: '吉田 里奈', nameKana: 'ヨシダ リナ', email: 'rina.yoshida@example.com', company: 'Career Carte Inc.', department: 'Human Resources', role: 'HR Manager', permission: '一般ユーザー' },
+      { id: 'USR-2026-401', lastName: '高橋', firstName: '洋介', lastNameKana: 'タカハシ', firstNameKana: 'ヨウスケ', name: '高橋 洋介', nameKana: 'タカハシ ヨウスケ', email: 'y.takahashi@example.com', company: 'Career Carte Inc.', department: 'Marketing', role: '事務/管理職', permission: '一般ユーザー' },
+      { id: 'USR-2026-402', lastName: '吉田', firstName: '里奈', lastNameKana: 'ヨシダ', firstNameKana: 'リナ', name: '吉田 里奈', nameKana: 'ヨシダ リナ', email: 'rina.yoshida@example.com', company: 'Career Carte Inc.', department: 'Human Resources', role: '事務/管理職', permission: '一般ユーザー' },
     ],
   });
   const [consultantCsvState, setConsultantCsvState] = useState<CsvState>({
     fileName: 'consultant_accounts.csv',
     preview: [
-      { id: 'CNS-2026-405', lastName: '大谷', firstName: '翼', lastNameKana: 'オオタニ', firstNameKana: 'ツバサ', name: '大谷 翼', nameKana: 'オオタニ ツバサ', email: 't.subasa@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Senior Consultant', permission: 'キャリアコンサルタント' },
-      { id: 'CNS-2026-406', lastName: '広瀬', firstName: '翔', lastNameKana: 'ヒロセ', firstNameKana: 'ショウ', name: '広瀬 翔', nameKana: 'ヒロセ ショウ', email: 'sho.hirose@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Associate Consultant', permission: 'キャリアコンサルタント' },
+      { id: 'CNS-2026-405', lastName: '大谷', firstName: '翼', lastNameKana: 'オオタニ', firstNameKana: 'ツバサ', name: '大谷 翼', nameKana: 'オオタニ ツバサ', email: 't.subasa@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: '専門/資格（弁護士等）職', permission: 'キャリアコンサルタント' },
+      { id: 'CNS-2026-406', lastName: '広瀬', firstName: '翔', lastNameKana: 'ヒロセ', firstNameKana: 'ショウ', name: '広瀬 翔', nameKana: 'ヒロセ ショウ', email: 'sho.hirose@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: '専門/資格（弁護士等）職', permission: 'キャリアコンサルタント' },
     ],
   });
   const [csvModalType, setCsvModalType] = useState<'user' | 'consultant'>('user');
 
   const [activeSection, setActiveSection] = useState<'user' | 'consultant' | 'tenant'>('user');
   const [demoState, setDemoState] = useState<DemoUserState>(() => loadDemoUserState());
-  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
+  const [tenantQuotaForms, setTenantQuotaForms] = useState<Record<string, TenantQuotaForm>>(() =>
+    Object.fromEntries(loadDemoUserState().tenants.map((tenant) => [tenant.id, createTenantQuotaForm(tenant.id)])),
+  );
   const [passwordNotifications, setPasswordNotifications] = useState<DemoPasswordNotification[]>([]);
 
-  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
+  useEffect(() => {
+    let isActive = true;
+    const unsubscribers = demoState.tenants.map((tenant) =>
+      subscribeDemoUsageQuota((quota) => {
+        setTenantQuotaForms((prev) => ({
+          ...prev,
+          [tenant.id]: {
+            totalLimit: quota.totalLimit.toString(),
+            used: quota.used.toString(),
+            perMeetingTurnLimit: quota.perMeetingTurnLimit.toString(),
+          },
+        }));
+      }, tenant.id),
+    );
+
+    queueMicrotask(() => {
+      if (!isActive) return;
+      setTenantQuotaForms((prev) => ({
+        ...Object.fromEntries(demoState.tenants.map((tenant) => [tenant.id, prev[tenant.id] ?? createTenantQuotaForm(tenant.id)])),
+      }));
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribers.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [demoState.tenants]);
+
+  const employeeById = useMemo(
+    () => new Map(demoState.companyEmployees.map((employee) => [employee.id, employee])),
+    [demoState.companyEmployees],
+  );
+
+  const getAccountEmployee = (account: AccountRecord): CompanyEmployeeRecord | null =>
+    employeeById.get(account.id) ?? null;
+
+  const buildAccountKartePayload = (account: AccountRecord): KarteBatchExportPayload | null => {
+    const employee = getAccountEmployee(account);
+    if (!employee?.latestKarte) return null;
+    const latestRecord = employee.karteRecords[0] ?? null;
+    return {
+      karte: employee.latestKarte,
+      employeeName: employee.name,
+      employeeId: employee.id,
+      meta: {
+        meetingType: latestRecord?.meetingType ?? null,
+        createdAt: latestRecord?.atCreated ?? employee.createdAt,
+        updatedAt: latestRecord?.atUpdated ?? employee.updatedAt,
+        feedback: latestRecord?.feedback ?? null,
+      },
+    };
+  };
 
   const buildTimestamp = () => {
     const now = new Date();
@@ -339,21 +420,7 @@ function Admin() {
       .padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  const getQuotaBackedAccount = (account: AccountRecord): AccountRecord => {
-    if (account.id !== DEFAULT_DEMO_USER_ID) return account;
-    const apiUsage = getCompanyApiUsageSummary(usageQuota);
-    return {
-      ...account,
-      initialInterviewRemaining: apiUsage.totalLimit,
-      continuousInterviewRemaining: apiUsage.remaining,
-      initialLlmCallsPerInterview: apiUsage.perMeetingTurnLimit,
-      continuousLlmCallsPerInterview: apiUsage.perMeetingTurnLimit,
-    };
-  };
-
   const buildEditForm = (account: AccountRecord): AccountEditForm => {
-    const apiUsage = getCompanyApiUsageSummary(usageQuota);
-    const isDemoUser = account.id === DEFAULT_DEMO_USER_ID;
     return {
       id: account.id,
       lastName: account.lastName,
@@ -366,12 +433,9 @@ function Admin() {
       role: account.role,
       permission: account.permission,
       status: account.status,
-      initialInterviewRemaining: (isDemoUser ? apiUsage.totalLimit : account.initialInterviewRemaining).toString(),
-      continuousInterviewRemaining: (isDemoUser ? apiUsage.used : account.continuousInterviewRemaining).toString(),
-      initialLlmCallsPerInterview: (isDemoUser
-        ? apiUsage.perMeetingTurnLimit
-        : account.initialLlmCallsPerInterview
-      ).toString(),
+      initialInterviewRemaining: account.initialInterviewRemaining.toString(),
+      continuousInterviewRemaining: account.continuousInterviewRemaining.toString(),
+      initialLlmCallsPerInterview: account.initialLlmCallsPerInterview.toString(),
     };
   };
 
@@ -441,6 +505,12 @@ function Admin() {
         valueB = valueB.toLowerCase();
       }
 
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        const compared = valueA.localeCompare(valueB, 'ja');
+        if (compared !== 0) return sort.direction === 'asc' ? compared : -compared;
+        return 0;
+      }
+
       if (valueA < valueB) return sort.direction === 'asc' ? -1 : 1;
       if (valueA > valueB) return sort.direction === 'asc' ? 1 : -1;
       return 0;
@@ -449,14 +519,18 @@ function Admin() {
 
   const filteredUserAccounts = useMemo(() => {
     return userAccounts
+      .map((account) => ({
+        ...account,
+        karteStatus: employeeById.get(account.id)?.latestKarte ? '保存済み' : '未作成',
+      }))
       .filter((account) => {
         const keyword =
-          account.id + account.name + account.nameKana + account.email + account.company + account.department + account.role + account.permission;
+          account.id + account.name + account.nameKana + account.email + account.company + account.department + account.role + account.permission + account.karteStatus;
         const matchesQuery = keyword.toLowerCase().includes(userQuery.toLowerCase());
         return matchesQuery;
       })
       .sort(getComparator(userSort));
-  }, [userAccounts, userQuery, userSort]);
+  }, [employeeById, userAccounts, userQuery, userSort]);
 
   const filteredConsultantAccounts = useMemo(() => {
     return consultantAccounts
@@ -481,10 +555,10 @@ function Admin() {
 
   const handleAddUser = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!newUserForm.lastName || !newUserForm.firstName || !newUserForm.lastNameKana || !newUserForm.firstNameKana || !newUserForm.email || !newUserForm.company || !newUserForm.permission) {
+    if (!newUserForm.lastName || !newUserForm.firstName || !newUserForm.lastNameKana || !newUserForm.firstNameKana || !newUserForm.email || !newUserForm.company || !newUserForm.role || !newUserForm.permission) {
       toast({
         title: '入力不足',
-        description: '姓、名、フリガナ、メール、会社名、権限を入力してください。',
+        description: '姓、名、フリガナ、メール、会社名、職種、権限を入力してください。',
         status: 'warning',
         duration: 2600,
         isClosable: true,
@@ -508,16 +582,17 @@ function Admin() {
       email: newUserForm.email,
       company: newUserForm.company || 'Unassigned',
       department: newUserForm.department || '未設定',
-      role: newUserForm.role || 'Candidate',
+      role: newUserForm.role || DEFAULT_JOB_TITLE,
       permission: newUserForm.permission || '一般ユーザー',
       status: newUserForm.status,
+      karteStatus: '未作成',
       createdAt: timestamp,
       updatedAt: timestamp,
       logs: 0,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 10,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
+      initialInterviewRemaining: 1000,
+      continuousInterviewRemaining: 0,
+      initialLlmCallsPerInterview: 100,
+      continuousLlmCallsPerInterview: 100,
     };
 
     setUserAccounts((prev) => [nextAccount, ...prev]);
@@ -535,10 +610,10 @@ function Admin() {
 
   const handleAddConsultant = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!newConsultantForm.lastName || !newConsultantForm.firstName || !newConsultantForm.lastNameKana || !newConsultantForm.firstNameKana || !newConsultantForm.email || !newConsultantForm.company || !newConsultantForm.permission) {
+    if (!newConsultantForm.lastName || !newConsultantForm.firstName || !newConsultantForm.lastNameKana || !newConsultantForm.firstNameKana || !newConsultantForm.email || !newConsultantForm.company || !newConsultantForm.role || !newConsultantForm.permission) {
       toast({
         title: '入力不足',
-        description: '姓、名、フリガナ、メール、会社名、権限を入力してください。',
+        description: '姓、名、フリガナ、メール、会社名、職種、権限を入力してください。',
         status: 'warning',
         duration: 2600,
         isClosable: true,
@@ -562,16 +637,17 @@ function Admin() {
       email: newConsultantForm.email,
       company: newConsultantForm.company || 'Career Carte Inc.',
       department: newConsultantForm.department || 'Career Consulting',
-      role: newConsultantForm.role || 'Consultant',
+      role: newConsultantForm.role || DEFAULT_JOB_TITLE,
       permission: newConsultantForm.permission || 'キャリアコンサルタント',
       status: newConsultantForm.status,
+      karteStatus: '未作成',
       createdAt: timestamp,
       updatedAt: timestamp,
       logs: 0,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 10,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
+      initialInterviewRemaining: 1000,
+      continuousInterviewRemaining: 0,
+      initialLlmCallsPerInterview: 100,
+      continuousLlmCallsPerInterview: 100,
     };
 
     setConsultantAccounts((prev) => [nextAccount, ...prev]);
@@ -599,12 +675,12 @@ function Admin() {
     const nextPreview: CsvPreviewRecord[] =
       csvModalType === 'user'
         ? [
-            { id: 'USR-2026-041', lastName: '中村', firstName: '愛', lastNameKana: 'ナカムラ', firstNameKana: 'アイ', name: '中村 愛', nameKana: 'ナカムラ アイ', email: 'ai.nakamura@example.com', company: 'Career Carte Inc.', department: 'Customer Success', role: 'CS Lead', permission: '一般ユーザー' },
-            { id: 'USR-2026-042', lastName: '小林', firstName: '真', lastNameKana: 'コバヤシ', firstNameKana: 'マコト', name: '小林 真', nameKana: 'コバヤシ マコト', email: 'makoto.kobayashi@example.com', company: 'Career Carte Inc.', department: 'Sales', role: 'Sales', permission: '一般ユーザー' },
+            { id: 'USR-2026-041', lastName: '中村', firstName: '愛', lastNameKana: 'ナカムラ', firstNameKana: 'アイ', name: '中村 愛', nameKana: 'ナカムラ アイ', email: 'ai.nakamura@example.com', company: 'Career Carte Inc.', department: 'Customer Success', role: '販売/サービススタッフ職', permission: '一般ユーザー' },
+            { id: 'USR-2026-042', lastName: '小林', firstName: '真', lastNameKana: 'コバヤシ', firstNameKana: 'マコト', name: '小林 真', nameKana: 'コバヤシ マコト', email: 'makoto.kobayashi@example.com', company: 'Career Carte Inc.', department: 'Sales', role: '営業職', permission: '一般ユーザー' },
           ]
         : [
-            { id: 'CNS-2026-407', lastName: '石井', firstName: '拓', lastNameKana: 'イシイ', firstNameKana: 'タク', name: '石井 拓', nameKana: 'イシイ タク', email: 'taku.ishii@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Lead Consultant', permission: 'キャリアコンサルタント' },
-            { id: 'CNS-2026-408', lastName: '森本', firstName: '莉子', lastNameKana: 'モリモト', firstNameKana: 'リコ', name: '森本 莉子', nameKana: 'モリモト リコ', email: 'riko.morimoto@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: 'Consultant', permission: 'キャリアコンサルタント' },
+            { id: 'CNS-2026-407', lastName: '石井', firstName: '拓', lastNameKana: 'イシイ', firstNameKana: 'タク', name: '石井 拓', nameKana: 'イシイ タク', email: 'taku.ishii@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: '専門/資格（弁護士等）職', permission: 'キャリアコンサルタント' },
+            { id: 'CNS-2026-408', lastName: '森本', firstName: '莉子', lastNameKana: 'モリモト', firstNameKana: 'リコ', name: '森本 莉子', nameKana: 'モリモト リコ', email: 'riko.morimoto@example.com', company: 'Career Carte Inc.', department: 'Career Consulting', role: '専門/資格（弁護士等）職', permission: 'キャリアコンサルタント' },
           ];
 
     if (csvModalType === 'user') {
@@ -632,13 +708,14 @@ function Admin() {
       role: record.role,
       permission: record.permission,
       status: csvModalType === 'user' ? '面談準備中' : 'アクティブ',
+      karteStatus: '未作成',
       createdAt: timestamp,
       updatedAt: timestamp,
       logs: 0,
-      initialInterviewRemaining: 10,
-      continuousInterviewRemaining: 10,
-      initialLlmCallsPerInterview: 10,
-      continuousLlmCallsPerInterview: 7,
+      initialInterviewRemaining: 1000,
+      continuousInterviewRemaining: 0,
+      initialLlmCallsPerInterview: 100,
+      continuousLlmCallsPerInterview: 100,
     }));
 
     if (csvModalType === 'user') {
@@ -723,33 +800,15 @@ function Admin() {
     event.preventDefault();
     if (!editingAccount || !editTarget) return;
 
-    const initialRemainingValue = Number(editForm.initialInterviewRemaining);
-    const continuousRemainingValue = Number(editForm.continuousInterviewRemaining);
-    const initialLlmValue = Number(editForm.initialLlmCallsPerInterview);
-
-    if (
-      Number.isNaN(initialRemainingValue) ||
-      Number.isNaN(continuousRemainingValue) ||
-      Number.isNaN(initialLlmValue) ||
-      initialRemainingValue < 0 ||
-      continuousRemainingValue < 0 ||
-      initialLlmValue <= 0
-    ) {
+    if (!editForm.role) {
       toast({
-        title: '入力値が正しくありません',
+        title: '入力不足',
+        description: '職種を選択してください。',
         status: 'warning',
         duration: 2400,
         isClosable: true,
       });
       return;
-    }
-
-    if (editTarget === 'user' && editingAccount.id === DEFAULT_DEMO_USER_ID) {
-      updateDemoUsageQuota({
-        totalLimit: initialRemainingValue,
-        used: continuousRemainingValue,
-        perMeetingTurnLimit: initialLlmValue,
-      });
     }
 
     const nextTimestamp = buildTimestamp();
@@ -771,10 +830,6 @@ function Admin() {
               role: editForm.role,
               permission: editForm.permission,
               status: editForm.status,
-              initialInterviewRemaining: initialRemainingValue,
-              continuousInterviewRemaining: continuousRemainingValue,
-              initialLlmCallsPerInterview: initialLlmValue,
-              continuousLlmCallsPerInterview: initialLlmValue,
               updatedAt: nextTimestamp,
             }
           : account,
@@ -802,41 +857,6 @@ function Admin() {
 
     if (selectedIds.length === 0) return;
 
-    const initialRemainingValue =
-      bulkForm.initialInterviewRemaining.trim() === ''
-        ? null
-        : Number(bulkForm.initialInterviewRemaining);
-    const continuousRemainingValue =
-      bulkForm.continuousInterviewRemaining.trim() === ''
-        ? null
-        : Number(bulkForm.continuousInterviewRemaining);
-    const llmValue =
-      bulkForm.initialLlmCallsPerInterview.trim() === '' ? null : Number(bulkForm.initialLlmCallsPerInterview);
-
-    if (
-      (initialRemainingValue !== null &&
-        (Number.isNaN(initialRemainingValue) || initialRemainingValue < 0)) ||
-      (continuousRemainingValue !== null &&
-        (Number.isNaN(continuousRemainingValue) || continuousRemainingValue < 0)) ||
-      (llmValue !== null && (Number.isNaN(llmValue) || llmValue <= 0))
-    ) {
-      toast({
-        title: '入力値が正しくありません',
-        status: 'warning',
-        duration: 2400,
-        isClosable: true,
-      });
-      return;
-    }
-
-    if (bulkTarget === 'user' && selectedIds.includes(DEFAULT_DEMO_USER_ID)) {
-      updateDemoUsageQuota({
-        ...(initialRemainingValue !== null ? { totalLimit: initialRemainingValue } : {}),
-        ...(continuousRemainingValue !== null ? { used: continuousRemainingValue } : {}),
-        ...(llmValue !== null ? { perMeetingTurnLimit: llmValue } : {}),
-      });
-    }
-
     const nextTimestamp = buildTimestamp();
     const applyUpdate = (accounts: AccountRecord[]) =>
       accounts.map((account) => {
@@ -848,11 +868,6 @@ function Admin() {
           role: bulkForm.role.trim() === '' ? account.role : bulkForm.role,
           permission: bulkForm.permission.trim() === '' ? account.permission : bulkForm.permission,
           status: bulkForm.status.trim() === '' ? account.status : bulkForm.status,
-          initialInterviewRemaining: initialRemainingValue ?? account.initialInterviewRemaining,
-          continuousInterviewRemaining:
-            continuousRemainingValue ?? account.continuousInterviewRemaining,
-          initialLlmCallsPerInterview: llmValue ?? account.initialLlmCallsPerInterview,
-          continuousLlmCallsPerInterview: llmValue ?? account.continuousLlmCallsPerInterview,
           updatedAt: nextTimestamp,
         };
       });
@@ -902,6 +917,96 @@ function Admin() {
     });
   };
 
+  const getSelectedUserKartePayloads = () => {
+    const selectedAccounts = userAccounts.filter((account) => selectedUserIds.includes(account.id));
+    const payloads = selectedAccounts
+      .map(buildAccountKartePayload)
+      .filter((payload): payload is KarteBatchExportPayload => Boolean(payload));
+    const skipped = selectedAccounts.length - payloads.length;
+    if (skipped > 0) {
+      toast({
+        title: 'カルテ未作成のユーザーをスキップしました',
+        description: `${skipped}件は出力対象から除外しました。`,
+        status: 'info',
+        duration: 2600,
+        isClosable: true,
+      });
+    }
+    return payloads;
+  };
+
+  const handleUserKarteCsv = (account: AccountRecord) => {
+    const payload = buildAccountKartePayload(account);
+    if (!payload) return;
+    try {
+      downloadKarteCsv(payload);
+      toast({ title: 'CSVをダウンロードしました', status: 'success', duration: 2200, isClosable: true });
+    } catch (error) {
+      toast({
+        title: 'CSV出力に失敗しました',
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3200,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleUserKartePrint = async (account: AccountRecord) => {
+    const payload = buildAccountKartePayload(account);
+    if (!payload) return;
+    try {
+      await printKartePayloads([payload]);
+    } catch (error) {
+      toast({
+        title: '印刷画面を開けませんでした',
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3200,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleSelectedUserKarteCsv = () => {
+    const payloads = getSelectedUserKartePayloads();
+    if (payloads.length === 0) {
+      toast({ title: '出力できるカルテがありません', status: 'warning', duration: 2400, isClosable: true });
+      return;
+    }
+    try {
+      downloadKarteCsvBatch(payloads);
+      toast({ title: '一括CSVをダウンロードしました', status: 'success', duration: 2200, isClosable: true });
+    } catch (error) {
+      toast({
+        title: '一括CSV出力に失敗しました',
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3200,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleSelectedUserKartePrint = async () => {
+    const payloads = getSelectedUserKartePayloads();
+    if (payloads.length === 0) {
+      toast({ title: '印刷できるカルテがありません', status: 'warning', duration: 2400, isClosable: true });
+      return;
+    }
+    try {
+      await printKartePayloads(payloads);
+    } catch (error) {
+      toast({
+        title: '一括印刷画面を開けませんでした',
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3200,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleTenantStressToggle = (tenantId: string, isChecked: boolean) => {
     const nextState = updateTenantFeatureFlags(demoState, tenantId, { stressAnalysisEnabled: isChecked });
     setDemoState(nextState);
@@ -910,6 +1015,66 @@ function Admin() {
       title: isChecked ? '緊張度スコア表示を有効にしました' : '緊張度スコア表示を無効にしました',
       status: 'success',
       duration: 2200,
+      isClosable: true,
+    });
+  };
+
+  const handleTenantQuotaFormChange = (tenantId: string, key: keyof TenantQuotaForm, value: string) => {
+    setTenantQuotaForms((prev) => ({
+      ...prev,
+      [tenantId]: {
+        ...(prev[tenantId] ?? createTenantQuotaForm(tenantId)),
+        [key]: value,
+      },
+    }));
+  };
+
+  const handleTenantQuotaSubmit = (tenantId: string) => {
+    const form = tenantQuotaForms[tenantId] ?? createTenantQuotaForm(tenantId);
+    const totalLimit = Number(form.totalLimit);
+    const used = Number(form.used);
+    const perMeetingTurnLimit = Number(form.perMeetingTurnLimit);
+
+    if (
+      Number.isNaN(totalLimit) ||
+      Number.isNaN(used) ||
+      Number.isNaN(perMeetingTurnLimit) ||
+      totalLimit < 0 ||
+      used < 0 ||
+      used > totalLimit ||
+      perMeetingTurnLimit <= 0
+    ) {
+      toast({
+        title: '企業API設定の入力値が正しくありません',
+        description: '総回数は0以上、使用済み回数は総回数以下、最大ターン数は1以上で入力してください。',
+        status: 'warning',
+        duration: 3200,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const nextQuota = updateDemoUsageQuota(
+      {
+        totalLimit,
+        used,
+        perMeetingTurnLimit,
+      },
+      tenantId,
+    );
+    setTenantQuotaForms((prev) => ({
+      ...prev,
+      [tenantId]: {
+        totalLimit: nextQuota.totalLimit.toString(),
+        used: nextQuota.used.toString(),
+        perMeetingTurnLimit: nextQuota.perMeetingTurnLimit.toString(),
+      },
+    }));
+    toast({
+      title: '企業API設定を更新しました',
+      description: '同じ企業の企業管理画面、ユーザーホーム、面談画面へ同期されます。',
+      status: 'success',
+      duration: 2600,
       isClosable: true,
     });
   };
@@ -1065,6 +1230,16 @@ function Admin() {
                       </PrimaryButton>
                       <Button
                         size="sm"
+                        {...outlineLightButtonProps}
+                        onClick={handleSelectedUserKartePrint}
+                      >
+                        選択カルテ印刷
+                      </Button>
+                      <PrimaryButton size="sm" onClick={handleSelectedUserKarteCsv}>
+                        選択カルテCSV
+                      </PrimaryButton>
+                      <Button
+                        size="sm"
                           {...outlineLightButtonProps}
                           colorScheme="red"
                           onClick={() => handleBulkDelete('user')}
@@ -1094,7 +1269,9 @@ function Admin() {
 	                      <Th>
 	                        <SortButton onSort={handleSort} label="氏名" target="user" column="name" />
 	                      </Th>
-	                      <Th>フリガナ</Th>
+                      <Th minW="160px">
+                        <SortButton onSort={handleSort} label="フリガナ" target="user" column="nameKana" />
+                      </Th>
                       <Th>
                         <SortButton onSort={handleSort} label="メール" target="user" column="email" />
                       </Th>
@@ -1110,12 +1287,16 @@ function Admin() {
                       <Th>
                         <SortButton onSort={handleSort} label="権限" target="user" column="permission" />
                       </Th>
+                      <Th>
+                        <SortButton onSort={handleSort} label="カルテ" target="user" column="karteStatus" />
+                      </Th>
                       <Th>アクション</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {filteredUserAccounts.map((rawAccount) => {
-                      const account = getQuotaBackedAccount(rawAccount);
+                      const account = rawAccount;
+                      const hasKarte = account.karteStatus === '保存済み';
                       return (
                       <Tr
                         key={account.id}
@@ -1140,12 +1321,15 @@ function Admin() {
 	                        <Td>
 	                          <Text fontWeight="semibold">{account.name}</Text>
 	                        </Td>
-	                        <Td>{account.nameKana || '未設定'}</Td>
+                        <Td minW="160px">{account.nameKana || '未設定'}</Td>
                         <Td fontSize="sm">{account.email}</Td>
                         <Td>{account.company}</Td>
                         <Td>{account.department}</Td>
                         <Td>{account.role}</Td>
                         <Td><Badge colorScheme="blue">{account.permission}</Badge></Td>
+                        <Td>
+                          <Badge colorScheme={hasKarte ? 'green' : 'gray'}>{account.karteStatus}</Badge>
+                        </Td>
                         <Td>
                           <Stack direction="row" spacing={2}>
                             <Button
@@ -1161,6 +1345,22 @@ function Admin() {
                               onClick={() => handlePasswordReset(account)}
                             >
                               再発行
+                            </Button>
+                            <Button
+                              size="xs"
+                              {...tableActionButtonProps}
+                              onClick={() => handleUserKartePrint(account)}
+                              isDisabled={!hasKarte}
+                            >
+                              印刷
+                            </Button>
+                            <Button
+                              size="xs"
+                              {...tableActionButtonProps}
+                              onClick={() => handleUserKarteCsv(account)}
+                              isDisabled={!hasKarte}
+                            >
+                              CSV
                             </Button>
                           </Stack>
                         </Td>
@@ -1255,14 +1455,16 @@ function Admin() {
                                 }
                               />
                             </FormControl>
-                            <FormControl>
+                            <FormControl isRequired>
                               <FormLabel>職種</FormLabel>
-                              <Input
+                              <Select
                                 value={newUserForm.role}
                                 onChange={(event) =>
                                   setNewUserForm((prev) => ({ ...prev, role: event.target.value }))
                                 }
-                              />
+                              >
+                                <JobTitleSelectOptions />
+                              </Select>
                             </FormControl>
                             <FormControl>
                               <FormLabel>権限</FormLabel>
@@ -1391,7 +1593,9 @@ function Admin() {
 	                      <Th>
 	                        <SortButton onSort={handleSort} label="氏名" target="consultant" column="name" />
 	                      </Th>
-	                      <Th>フリガナ</Th>
+                      <Th minW="160px">
+                        <SortButton onSort={handleSort} label="フリガナ" target="consultant" column="nameKana" />
+                      </Th>
                       <Th>
                         <SortButton onSort={handleSort} label="メール" target="consultant" column="email" />
                       </Th>
@@ -1435,7 +1639,7 @@ function Admin() {
 	                        <Td>
 	                          <Text fontWeight="semibold">{account.name}</Text>
 	                        </Td>
-	                        <Td>{account.nameKana || '未設定'}</Td>
+                        <Td minW="160px">{account.nameKana || '未設定'}</Td>
                         <Td fontSize="sm">{account.email}</Td>
                         <Td>{account.company}</Td>
                         <Td>{account.department}</Td>
@@ -1549,14 +1753,16 @@ function Admin() {
                                 }
                               />
                             </FormControl>
-                            <FormControl>
+                            <FormControl isRequired>
                               <FormLabel>職種</FormLabel>
-                              <Input
+                              <Select
                                 value={newConsultantForm.role}
                                 onChange={(event) =>
                                   setNewConsultantForm((prev) => ({ ...prev, role: event.target.value }))
                                 }
-                              />
+                              >
+                                <JobTitleSelectOptions />
+                              </Select>
                             </FormControl>
                             <FormControl>
                               <FormLabel>権限</FormLabel>
@@ -1615,7 +1821,7 @@ function Admin() {
               <Stack spacing={3}>
                 <Heading size="md">企業別オプション管理</Heading>
                 <Text color="whiteAlpha.800">
-                  企業テナントごとに、面談前コンディションチェックと緊張度スコア表示の有効/無効を切り替えます。
+                  企業テナントごとに、企業API使用枠、面談1回あたり最大ターン数、面談前コンディションチェックと緊張度スコア表示の有効/無効を管理します。
                 </Text>
               </Stack>
               <Box border="1px solid" borderColor="whiteAlpha.200" borderRadius="0" overflowX="auto" bg="whiteAlpha.100">
@@ -1626,16 +1832,23 @@ function Admin() {
                       <Th>企業名</Th>
                       <Th>プラン</Th>
                       <Th>ステータス</Th>
+                      <Th>企業API総回数</Th>
+                      <Th>企業API使用済み回数</Th>
+                      <Th>面談1回あたり最大ターン数</Th>
+                      <Th>使用状況</Th>
                       <Th>緊張度スコア表示</Th>
                       <Th>ターンテイキング</Th>
                       <Th>ライトテーマ</Th>
                       <Th>測定件数</Th>
+                      <Th>API設定</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {demoState.tenants.map((tenant) => {
                       const flags = getTenantFeatureFlags(demoState, tenant.id);
                       const conditionCount = demoState.conditionRecords.filter((record) => record.tenantId === tenant.id).length;
+                      const quotaForm = tenantQuotaForms[tenant.id] ?? createTenantQuotaForm(tenant.id);
+                      const apiUsage = getCompanyApiUsageSummary(getDemoUsageQuota(tenant.id));
                       return (
                         <Tr key={tenant.id}>
                           <Td fontWeight="medium">{tenant.id}</Td>
@@ -1645,6 +1858,39 @@ function Admin() {
                             <Badge colorScheme={tenant.status === 'active' ? 'green' : 'gray'}>
                               {tenant.status}
                             </Badge>
+                          </Td>
+                          <Td minW="140px">
+                            <Input
+                              size="sm"
+                              type="number"
+                              min="0"
+                              value={quotaForm.totalLimit}
+                              onChange={(event) => handleTenantQuotaFormChange(tenant.id, 'totalLimit', event.target.value)}
+                            />
+                          </Td>
+                          <Td minW="150px">
+                            <Input
+                              size="sm"
+                              type="number"
+                              min="0"
+                              value={quotaForm.used}
+                              onChange={(event) => handleTenantQuotaFormChange(tenant.id, 'used', event.target.value)}
+                            />
+                          </Td>
+                          <Td minW="180px">
+                            <Input
+                              size="sm"
+                              type="number"
+                              min="1"
+                              value={quotaForm.perMeetingTurnLimit}
+                              onChange={(event) => handleTenantQuotaFormChange(tenant.id, 'perMeetingTurnLimit', event.target.value)}
+                            />
+                          </Td>
+                          <Td minW="160px">
+                            <Stack spacing={1}>
+                              <Text fontWeight="semibold">{apiUsage.usageLabel}</Text>
+                              <Text fontSize="xs" color="whiteAlpha.700">残り {apiUsage.remaining} 回</Text>
+                            </Stack>
                           </Td>
                           <Td>
                             <Checkbox
@@ -1665,6 +1911,11 @@ function Admin() {
                             </Badge>
                           </Td>
                           <Td>{conditionCount}件</Td>
+                          <Td>
+                            <PrimaryButton size="xs" onClick={() => handleTenantQuotaSubmit(tenant.id)}>
+                              保存
+                            </PrimaryButton>
+                          </Td>
                         </Tr>
                       );
                     })}
@@ -1672,7 +1923,7 @@ function Admin() {
                 </Table>
               </Box>
               <Text fontSize="sm" color="whiteAlpha.700">
-                デモ版では localStorage の featureFlags を更新します。本番ではサーバー側セッションの tenantId と契約情報から判定します。
+                デモ版では featureFlags は localStorage、企業API設定は `src/lib/demoUsageQuota.ts` のメモリ状態を更新します。本番ではサーバー側の契約情報・利用実績・tenantId に接続します。
               </Text>
             </Stack>
           </Box>
@@ -1809,14 +2060,16 @@ function Admin() {
                         }
                       />
                     </FormControl>
-                    <FormControl>
+                    <FormControl isRequired>
                       <FormLabel>職種</FormLabel>
-                      <Input
+                      <Select
                         value={editForm.role}
                         onChange={(event) =>
                           setEditForm((prev) => ({ ...prev, role: event.target.value }))
                         }
-                      />
+                      >
+                        <JobTitleSelectOptions />
+                      </Select>
                     </FormControl>
                     <FormControl isRequired>
                       <FormLabel>権限</FormLabel>
@@ -1832,51 +2085,6 @@ function Admin() {
                           </option>
                         ))}
                       </Select>
-                    </FormControl>
-                  </SimpleGrid>
-                  <Divider />
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <FormControl isRequired>
-                      <FormLabel>企業API総回数</FormLabel>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={editForm.initialInterviewRemaining}
-                        onChange={(event) =>
-                          setEditForm((prev) => ({
-                            ...prev,
-                            initialInterviewRemaining: event.target.value,
-                          }))
-                        }
-                      />
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>企業API使用済み回数</FormLabel>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={editForm.continuousInterviewRemaining}
-                        onChange={(event) =>
-                          setEditForm((prev) => ({
-                            ...prev,
-                            continuousInterviewRemaining: event.target.value,
-                          }))
-                        }
-                      />
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel>面談1回あたり最大ターン数</FormLabel>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={editForm.initialLlmCallsPerInterview}
-                        onChange={(event) =>
-                          setEditForm((prev) => ({
-                            ...prev,
-                            initialLlmCallsPerInterview: event.target.value,
-                          }))
-                        }
-                      />
                     </FormControl>
                   </SimpleGrid>
                 </>
@@ -1936,13 +2144,14 @@ function Admin() {
                 </FormControl>
                 <FormControl>
                   <FormLabel>職種</FormLabel>
-                  <Input
-                    placeholder="変更しない"
+                  <Select
                     value={bulkForm.role}
                     onChange={(event) =>
                       setBulkForm((prev) => ({ ...prev, role: event.target.value }))
                     }
-                  />
+                  >
+                    <JobTitleSelectOptions includeNoChange />
+                  </Select>
                 </FormControl>
                 <FormControl>
                   <FormLabel>権限</FormLabel>
@@ -1959,54 +2168,6 @@ function Admin() {
                       </option>
                     ))}
                   </Select>
-                </FormControl>
-              </SimpleGrid>
-              <Divider />
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                <FormControl>
-                  <FormLabel>企業API総回数</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="変更しない"
-                    value={bulkForm.initialInterviewRemaining}
-                    onChange={(event) =>
-                      setBulkForm((prev) => ({
-                        ...prev,
-                        initialInterviewRemaining: event.target.value,
-                      }))
-                    }
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>企業API使用済み回数</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="変更しない"
-                    value={bulkForm.continuousInterviewRemaining}
-                    onChange={(event) =>
-                      setBulkForm((prev) => ({
-                        ...prev,
-                        continuousInterviewRemaining: event.target.value,
-                      }))
-                    }
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>面談1回あたり最大ターン数</FormLabel>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="変更しない"
-                    value={bulkForm.initialLlmCallsPerInterview}
-                    onChange={(event) =>
-                      setBulkForm((prev) => ({
-                        ...prev,
-                        initialLlmCallsPerInterview: event.target.value,
-                      }))
-                    }
-                  />
                 </FormControl>
               </SimpleGrid>
             </Stack>

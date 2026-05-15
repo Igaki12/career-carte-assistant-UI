@@ -2,26 +2,16 @@ import {
   Alert,
   AlertIcon,
   Box,
-  Button,
   Checkbox,
   Container,
   Divider,
-  Flex,
   FormControl,
   FormLabel,
   Heading,
   Input,
   Link,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Stack,
   Text,
-  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 import { type FormEvent, useEffect, useState } from 'react';
@@ -50,10 +40,8 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const termsDisclosure = useDisclosure();
   const [accountId, setAccountId] = useState('');
   const [password, setPassword] = useState('');
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [remember, setRemember] = useState(true);
 
   useEffect(() => {
@@ -72,16 +60,6 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
       });
       return;
     }
-    if (!acceptedTerms) {
-      toast({
-        title: '管理者利用条件への同意が必要です',
-        status: 'warning',
-        duration: 2400,
-        isClosable: true,
-      });
-      return;
-    }
-
     const nextSession = createDemoAuthSession({
       accountId,
       password,
@@ -198,14 +176,6 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
                 <Checkbox isChecked={remember} onChange={(event) => setRemember(event.target.checked)}>
                   常にログインした状態にしておく
                 </Checkbox>
-                <Flex align="center" justify="space-between" gap={3} wrap="wrap">
-                  <Checkbox isChecked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)}>
-                    管理者利用条件に同意する
-                  </Checkbox>
-                  <Button variant="link" color="blue.200" ml="auto" onClick={termsDisclosure.onOpen}>
-                    管理者利用条件を確認する
-                  </Button>
-                </Flex>
               </Stack>
               <PrimaryButton type="submit" size="lg">
                 管理者画面へログイン
@@ -232,53 +202,6 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
         </Stack>
       </Container>
 
-      <Modal isOpen={termsDisclosure.isOpen} onClose={termsDisclosure.onClose} size="lg">
-        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(6px)" />
-        <ModalContent
-          bg="rgba(15, 23, 42, 0.96)"
-          color="white"
-          borderRadius="0"
-          borderWidth="1px"
-          borderColor="whiteAlpha.200"
-          boxShadow="0 30px 90px rgba(0, 0, 0, 0.56)"
-          overflow="hidden"
-          position="relative"
-          _before={{
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.7), rgba(226, 232, 240, 0.92), transparent)',
-          }}
-        >
-          <ModalHeader borderBottomWidth="1px" borderColor="whiteAlpha.160" pt={8}>
-            管理者利用条件
-          </ModalHeader>
-          <ModalCloseButton color="whiteAlpha.800" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
-          <ModalBody py={6}>
-            <Stack spacing={3} color="rgba(255, 255, 255, 0.84)">
-              <Text>管理者画面ではアカウント、企業設定、カルテ出力など強い権限を扱います。</Text>
-              <Text>本番実装では管理者専用の認証、監査ログ、操作権限をサーバー側で管理します。</Text>
-              <Text>デモ版では操作確認用のため、実データや機密情報は入力しないでください。</Text>
-            </Stack>
-          </ModalBody>
-          <ModalFooter gap={2} borderTopWidth="1px" borderColor="whiteAlpha.160">
-            <PrimaryButton
-              onClick={() => {
-                setAcceptedTerms(true);
-                termsDisclosure.onClose();
-              }}
-            >
-              同意して閉じる
-            </PrimaryButton>
-            <Button variant="ghost" color="whiteAlpha.900" _hover={{ bg: 'whiteAlpha.160', color: 'white' }} onClick={termsDisclosure.onClose}>
-              閉じる
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </Box>
   );
 }

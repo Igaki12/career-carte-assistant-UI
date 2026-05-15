@@ -36,6 +36,7 @@ import {
   getLatestConditionRecord,
   isStressAnalysisEnabled,
   loadDemoUserState,
+  resolveTenantId,
   saveDemoUserState,
 } from '../lib/demoUserState';
 import {
@@ -751,7 +752,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isApiModalOpen, setApiModalOpen] = useState(false);
   const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
-  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
+  const tenantId = resolveTenantId(userState);
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota(resolveTenantId(loadDemoUserState())));
   const [karte, setKarte] = useState<KarteData>(createEmptyKarte);
   const [messages, setMessages] = useState<ConversationMessage[]>([
     { role: 'assistant', content: greetingForMeeting(meetingType) },
@@ -768,7 +770,9 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [feedbackText, setFeedbackText] = useState('');
   const [hasInitializedState, setHasInitializedState] = useState(false);
   const [hasStoredKarte, setHasStoredKarte] = useState(false);
-  const [hasPassedStartGate, setHasPassedStartGate] = useState(() => getMeetingQuotaSummary(getDemoUsageQuota(), meetingType).canStartMeeting);
+  const [hasPassedStartGate, setHasPassedStartGate] = useState(() =>
+    getMeetingQuotaSummary(getDemoUsageQuota(resolveTenantId(loadDemoUserState())), meetingType).canStartMeeting,
+  );
   const [initialPromptVariant, setInitialPromptVariant] = useState<InitialPromptVariant>('current');
   const [hasFinalizedInitial, setHasFinalizedInitial] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
@@ -839,7 +843,17 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     saveDemoUserState(nextState);
   }, []);
 
-  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
+  useEffect(() => {
+    let isActive = true;
+    queueMicrotask(() => {
+      if (isActive) setUsageQuota(getDemoUsageQuota(tenantId));
+    });
+    const unsubscribe = subscribeDemoUsageQuota(setUsageQuota, tenantId);
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [tenantId]);
 
   useEffect(() => {
     if (meetingQuota.canStartMeeting) {
@@ -1444,7 +1458,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             : isInitialMeeting
               ? buildInitialPrompt(karte, nextStep, initialPromptVariant)
               : buildContinuousPrompt(karte);
-      if (!consumeCompanyApiUsage(1)) {
+      if (!consumeCompanyApiUsage(1, tenantId)) {
         notifyApiLimit('企業のAPI残枠がないため、AIを呼び出せません。');
         return false;
       }
@@ -1524,7 +1538,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
         setProcessingText('');
       }
     },
-    [ensureApiKey, initialPromptVariant, isInitialMeeting, karte, maxApiCalls, notifyApiLimit, openAiApiKey, playTextToSpeech, toast],
+    [ensureApiKey, initialPromptVariant, isInitialMeeting, karte, maxApiCalls, notifyApiLimit, openAiApiKey, playTextToSpeech, tenantId, toast],
   );
 
   useEffect(() => {

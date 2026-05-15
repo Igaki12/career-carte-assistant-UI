@@ -48,6 +48,7 @@ import {
   hasSavedDemographics,
   isStressAnalysisEnabled,
   loadDemoUserState,
+  resolveTenantId,
   saveDemoUserState,
 } from '../lib/demoUserState';
 import { buildDemoPasswordIssuedAt, validateDemoPassword } from '../lib/demoPassword';
@@ -374,7 +375,8 @@ function UserHome() {
   const resumeDraftDisclosure = useDisclosure();
 
   const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
-  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
+  const tenantId = resolveTenantId(userState);
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota(resolveTenantId(loadDemoUserState())));
   const [continuousMode, setContinuousMode] = useState<ContinuousMode>('normal');
   const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
   const [isEditingLatest, setIsEditingLatest] = useState(false);
@@ -398,7 +400,17 @@ function UserHome() {
   const session = useMemo(() => loadDemoAuthSession(), []);
   const isCompanyAdmin = session?.role === 'company-admin';
 
-  useEffect(() => subscribeDemoUsageQuota(setUsageQuota), []);
+  useEffect(() => {
+    let isActive = true;
+    queueMicrotask(() => {
+      if (isActive) setUsageQuota(getDemoUsageQuota(tenantId));
+    });
+    const unsubscribe = subscribeDemoUsageQuota(setUsageQuota, tenantId);
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [tenantId]);
 
   const profile = useMemo(() => resolveProfile(userState, usageQuota), [usageQuota, userState]);
   const stressAnalysisEnabled = isStressAnalysisEnabled(userState);

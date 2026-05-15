@@ -6,8 +6,6 @@ import {
   Checkbox,
   Container,
   Flex,
-  FormControl,
-  FormLabel,
   Heading,
   Input,
   Modal,
@@ -32,7 +30,7 @@ import {
   Tr,
   useToast,
 } from '@chakra-ui/react';
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import KartePanel from '../components/KartePanel';
 import PrimaryButton from '../components/PrimaryButton';
@@ -53,22 +51,28 @@ import {
   getCompanyApiUsageSummary,
   getDemoUsageQuota,
   subscribeDemoUsageQuota,
-  updateDemoUsageQuota,
   type DemoUsageQuota,
 } from '../lib/demoUsageQuota';
 import { downloadKarteCsv, downloadKarteCsvBatch, printKartePayloads, type KarteBatchExportPayload } from '../lib/karteExport';
 import type { CompanyEmployeeRecord, DemoUserState } from '../types';
 
-type EmployeeSortColumn = 'id' | 'name' | 'nameKana' | 'email' | 'company' | 'department' | 'jobTitle' | 'permission' | 'status' | 'updatedAt';
+type EmployeeSortColumn =
+  | 'id'
+  | 'name'
+  | 'nameKana'
+  | 'email'
+  | 'company'
+  | 'department'
+  | 'jobTitle'
+  | 'permission'
+  | 'status'
+  | 'updatedAt'
+  | 'karteStatus';
 
 type EmployeeSortState = {
   column: EmployeeSortColumn;
   direction: 'asc' | 'desc';
 };
-
-const quotaToForm = (quota: DemoUsageQuota) => ({
-  totalLimit: quota.totalLimit.toString(),
-});
 
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) return '未設定';
@@ -181,8 +185,6 @@ function CompanyAdminHome() {
   const toast = useToast();
   const navigate = useNavigate();
   const [userState, setUserState] = useState<DemoUserState>(() => loadDemoUserState());
-  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota());
-  const [quotaForm, setQuotaForm] = useState(() => quotaToForm(getDemoUsageQuota()));
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sort, setSort] = useState<EmployeeSortState>({ column: 'updatedAt', direction: 'desc' });
@@ -191,6 +193,7 @@ function CompanyAdminHome() {
   const [passwordNotifications, setPasswordNotifications] = useState<DemoPasswordNotification[]>([]);
 
   const tenantId = resolveTenantId(userState);
+  const [usageQuota, setUsageQuota] = useState<DemoUsageQuota>(() => getDemoUsageQuota(resolveTenantId(loadDemoUserState())));
   const tenant = userState.tenants.find((entry) => entry.id === tenantId) ?? userState.tenants[0];
   const flags = getTenantFeatureFlags(userState, tenantId);
   const employees = useMemo(() => getCompanyAdminEmployees(userState, tenantId), [tenantId, userState]);
@@ -205,11 +208,16 @@ function CompanyAdminHome() {
   const employeesWithKarte = employees.filter((employee) => employee.latestKarte).length;
 
   useEffect(() => {
-    return subscribeDemoUsageQuota((nextQuota) => {
-      setUsageQuota(nextQuota);
-      setQuotaForm(quotaToForm(nextQuota));
+    let isActive = true;
+    queueMicrotask(() => {
+      if (isActive) setUsageQuota(getDemoUsageQuota(tenantId));
     });
-  }, []);
+    const unsubscribe = subscribeDemoUsageQuota(setUsageQuota, tenantId);
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [tenantId]);
 
   const filteredEmployees = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -230,10 +238,25 @@ function CompanyAdminHome() {
         return matchesQuery && matchesStatus;
       })
       .sort((a, b) => {
-        const rawA = sort.column === 'updatedAt' ? new Date(a.updatedAt || 0).getTime() : a[sort.column];
-        const rawB = sort.column === 'updatedAt' ? new Date(b.updatedAt || 0).getTime() : b[sort.column];
+        const rawA =
+          sort.column === 'updatedAt'
+            ? new Date(a.updatedAt || 0).getTime()
+            : sort.column === 'karteStatus'
+              ? (a.latestKarte ? '保存済み' : '未作成')
+              : a[sort.column];
+        const rawB =
+          sort.column === 'updatedAt'
+            ? new Date(b.updatedAt || 0).getTime()
+            : sort.column === 'karteStatus'
+              ? (b.latestKarte ? '保存済み' : '未作成')
+              : b[sort.column];
         const valueA = typeof rawA === 'string' ? rawA.toLowerCase() : rawA;
         const valueB = typeof rawB === 'string' ? rawB.toLowerCase() : rawB;
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+          const compared = valueA.localeCompare(valueB, 'ja');
+          if (compared !== 0) return sort.direction === 'asc' ? compared : -compared;
+          return 0;
+        }
         if (valueA < valueB) return sort.direction === 'asc' ? -1 : 1;
         if (valueA > valueB) return sort.direction === 'asc' ? 1 : -1;
         return 0;
@@ -409,34 +432,6 @@ function CompanyAdminHome() {
     });
   };
 
-  const handleQuotaSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const totalLimit = Number(quotaForm.totalLimit);
-
-    if (
-      Number.isNaN(totalLimit) ||
-      totalLimit < 0
-    ) {
-      toast({
-        title: '入力値が正しくありません',
-        status: 'warning',
-        duration: 2400,
-        isClosable: true,
-      });
-      return;
-    }
-
-    updateDemoUsageQuota({
-      totalLimit,
-    });
-    toast({
-      title: '企業API使用枠を更新しました',
-      status: 'success',
-      duration: 2200,
-      isClosable: true,
-    });
-  };
-
   return (
     <Box bgGradient={adminPageBg} color="white" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
       <Container maxW="7xl">
@@ -570,38 +565,6 @@ function CompanyAdminHome() {
           </Box>
 
           <Box {...linePanelProps} p={{ base: 5, md: 7 }} display="none">
-            <form onSubmit={handleQuotaSubmit}>
-              <Stack spacing={4}>
-                <Heading size="md">企業API使用枠・会話ターン制限</Heading>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>企業API総回数</FormLabel>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={quotaForm.totalLimit}
-                      {...formControlProps}
-                      onChange={(event) => setQuotaForm((prev) => ({ ...prev, totalLimit: event.target.value }))}
-                    />
-                  </FormControl>
-                  <Box {...translucentPanelProps} p={4}>
-                    <Text fontSize="sm" color="whiteAlpha.700">面談1回あたりの最大ターン数</Text>
-                    <Text fontSize="2xl" fontWeight="bold">{apiUsage.perMeetingTurnLimit}</Text>
-                    <Text fontSize="xs" color="whiteAlpha.700">固定値。初回・継続とも同じ制限を適用します。</Text>
-                  </Box>
-                </SimpleGrid>
-                <Text fontSize="sm" color="whiteAlpha.700">
-                  企業API使用状況: {apiUsage.usageLabel}、残り{apiUsage.remaining}回。面談開始には残り
-                  {apiUsage.perMeetingTurnLimit}回以上が必要です。
-                </Text>
-                <PrimaryButton type="submit" alignSelf="flex-start">
-                  設定を保存
-                </PrimaryButton>
-              </Stack>
-            </form>
-          </Box>
-
-          <Box {...linePanelProps} p={{ base: 5, md: 7 }} display="none">
             <Stack spacing={4}>
               <Heading size="md">企業別オプション</Heading>
               <Checkbox isChecked={flags.stressAnalysisEnabled} onChange={(event) => handleStressToggle(event.target.checked)}>
@@ -667,7 +630,7 @@ function CompanyAdminHome() {
                       <Th><SortButton label="権限" column="permission" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="ステータス" column="status" sort={sort} onSort={handleSort} /></Th>
                       <Th><SortButton label="更新日時" column="updatedAt" sort={sort} onSort={handleSort} /></Th>
-                      <Th>カルテ</Th>
+                      <Th><SortButton label="カルテ" column="karteStatus" sort={sort} onSort={handleSort} /></Th>
                       <Th>操作</Th>
                     </Tr>
                   </Thead>

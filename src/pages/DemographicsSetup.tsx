@@ -23,6 +23,7 @@ import {
   saveDemoUserState,
 } from '../lib/demoUserState';
 import { joinName, joinNameKana } from '../lib/demoAccounts';
+import { JOB_TITLE_OPTIONS } from '../lib/jobTitles';
 import type { DemographicData } from '../types';
 
 const bgGradientAnim = keyframes`
@@ -113,23 +114,9 @@ type FieldDefinition = {
   kind?: 'text' | 'number' | 'select' | 'date';
   min?: number;
   step?: number;
-  options?: string[];
+  options?: readonly string[];
   isReadOnly?: boolean;
 };
-
-const JOB_TITLE_OPTIONS = [
-  '営業職',
-  '事務／管理職',
-  '販売／サービススタッフ職',
-  'クリエイティブ職',
-  '医療／福祉職',
-  '専門／資格（弁護士等）職',
-  'IT／エンジニア職',
-  '製造／技術職',
-  '物流／軽作業職',
-  '公務／教育職',
-  'その他',
-];
 
 const PREFECTURE_OPTIONS = [
   '北海道',

@@ -39,8 +39,15 @@ export const DEFAULT_DEMO_USAGE_QUOTA: DemoUsageQuota = {
   continuousLlmCallsPerInterview: 100,
 };
 
-const listeners = new Set<(quota: DemoUsageQuota) => void>();
-let currentQuota: DemoUsageQuota = { ...DEFAULT_DEMO_USAGE_QUOTA };
+const DEFAULT_USAGE_TENANT_ID = 'tenant-career-carte-demo';
+
+type QuotaListenerEntry = {
+  tenantId: string;
+  listener: (quota: DemoUsageQuota) => void;
+};
+
+const listeners = new Set<QuotaListenerEntry>();
+let currentQuotas: Record<string, DemoUsageQuota> = {};
 
 const toNonNegativeInteger = (value: number, fallback: number) => {
   if (!Number.isFinite(value)) return fallback;
@@ -76,12 +83,27 @@ const normalizeQuota = (quota: DemoUsageQuota): DemoUsageQuota => {
   };
 };
 
-const emitQuota = () => {
-  const snapshot = getDemoUsageQuota();
-  listeners.forEach((listener) => listener(snapshot));
+const getTenantQuota = (tenantId = DEFAULT_USAGE_TENANT_ID) => {
+  const existing = currentQuotas[tenantId];
+  if (existing) return existing;
+  const nextQuota = normalizeQuota({ ...DEFAULT_DEMO_USAGE_QUOTA });
+  currentQuotas = {
+    ...currentQuotas,
+    [tenantId]: nextQuota,
+  };
+  return nextQuota;
 };
 
-export const getDemoUsageQuota = (): DemoUsageQuota => ({ ...currentQuota });
+const emitQuota = (tenantId = DEFAULT_USAGE_TENANT_ID) => {
+  const snapshot = getDemoUsageQuota(tenantId);
+  listeners.forEach((entry) => {
+    if (entry.tenantId === tenantId) entry.listener(snapshot);
+  });
+};
+
+export const getDemoUsageQuota = (tenantId = DEFAULT_USAGE_TENANT_ID): DemoUsageQuota => ({
+  ...getTenantQuota(tenantId),
+});
 
 export const getCompanyApiUsageSummary = (quota: DemoUsageQuota): MeetingQuotaSummary => {
   const normalized = normalizeQuota(quota);
@@ -107,44 +129,64 @@ export const getMeetingQuotaSummary = (
   return getCompanyApiUsageSummary(quota);
 };
 
-export const updateDemoUsageQuota = (patch: Partial<DemoUsageQuota>): DemoUsageQuota => {
+export const updateDemoUsageQuota = (
+  patch: Partial<DemoUsageQuota>,
+  tenantId = DEFAULT_USAGE_TENANT_ID,
+): DemoUsageQuota => {
+  const currentQuota = getTenantQuota(tenantId);
   const nextLimit = patch.totalLimit ?? patch.initialMonthlyLimit ?? patch.continuousMonthlyLimit;
   const nextUsed = patch.used ?? patch.initialUsed ?? patch.continuousUsed;
   const nextTurnLimit = patch.perMeetingTurnLimit ?? patch.initialLlmCallsPerInterview ?? patch.continuousLlmCallsPerInterview;
 
-  currentQuota = normalizeQuota({
+  const nextQuota = normalizeQuota({
     ...currentQuota,
     ...patch,
     ...(nextLimit !== undefined ? { totalLimit: nextLimit } : {}),
     ...(nextUsed !== undefined ? { used: nextUsed } : {}),
     ...(nextTurnLimit !== undefined ? { perMeetingTurnLimit: nextTurnLimit } : {}),
   });
-  emitQuota();
-  return getDemoUsageQuota();
+  currentQuotas = {
+    ...currentQuotas,
+    [tenantId]: nextQuota,
+  };
+  emitQuota(tenantId);
+  return getDemoUsageQuota(tenantId);
 };
 
-export const consumeCompanyApiUsage = (amount = 1): boolean => {
+export const consumeCompanyApiUsage = (amount = 1, tenantId = DEFAULT_USAGE_TENANT_ID): boolean => {
   const normalizedAmount = toPositiveInteger(amount, 1);
+  const currentQuota = getTenantQuota(tenantId);
   const summary = getCompanyApiUsageSummary(currentQuota);
   if (summary.remaining < normalizedAmount) return false;
 
-  currentQuota = normalizeQuota({
-    ...currentQuota,
-    used: currentQuota.used + normalizedAmount,
-  });
-  emitQuota();
+  currentQuotas = {
+    ...currentQuotas,
+    [tenantId]: normalizeQuota({
+      ...currentQuota,
+      used: currentQuota.used + normalizedAmount,
+    }),
+  };
+  emitQuota(tenantId);
   return true;
 };
 
-export const consumeMeetingQuota = (_meetingType: MeetingType, _sessionId: string): boolean => {
+export const consumeMeetingQuota = (
+  _meetingType: MeetingType,
+  _sessionId: string,
+  tenantId = DEFAULT_USAGE_TENANT_ID,
+): boolean => {
   void _meetingType;
   void _sessionId;
-  return consumeCompanyApiUsage(1);
+  return consumeCompanyApiUsage(1, tenantId);
 };
 
-export const subscribeDemoUsageQuota = (listener: (quota: DemoUsageQuota) => void) => {
-  listeners.add(listener);
+export const subscribeDemoUsageQuota = (
+  listener: (quota: DemoUsageQuota) => void,
+  tenantId = DEFAULT_USAGE_TENANT_ID,
+) => {
+  const entry = { tenantId, listener };
+  listeners.add(entry);
   return () => {
-    listeners.delete(listener);
+    listeners.delete(entry);
   };
 };
