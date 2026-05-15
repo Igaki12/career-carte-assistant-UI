@@ -194,7 +194,6 @@ const buildCsvRows = ({ karte, meta }: KarteExportPayload): CsvRow[] => {
     ['会社名', karte.demographics.company],
     ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],
-    ['権限', karte.demographics.permission],
     ['生年月日', karte.demographics.birthDate],
     ['勤務地(都道府県)', karte.demographics.workLocationPrefecture],
     ['転職歴(回数)', karte.demographics.jobChangeCount],
@@ -496,7 +495,6 @@ const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) 
     ['会社名', formatPlainValue(demographics.company)],
     ['部署', formatPlainValue(demographics.department)],
     ['職種', formatPlainValue(demographics.jobTitle)],
-    ['権限', formatPlainValue(demographics.permission)],
   ];
   const rightRows: Array<[string, string]> = [
     ['生年月日', formatPlainValue(demographics.birthDate)],
