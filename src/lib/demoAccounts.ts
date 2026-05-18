@@ -19,6 +19,7 @@ export type DemoAccountRecord = {
   nameKana: string;
   status: string;
   karteStatus: string;
+  managedTenantIds?: string[];
 };
 
 export const joinName = (lastName: string | null | undefined, firstName: string | null | undefined) =>
@@ -32,18 +33,13 @@ export const demoAccounts = demoAccountsPayload.accounts as DemoAccountRecord[];
 export const findDemoAccount = (identifier: string) => {
   const normalized = identifier.trim().toLowerCase();
   if (!normalized) return null;
-  return (
-    demoAccounts.find(
-      (account) =>
-        account.id.toLowerCase() === normalized ||
-        account.email.toLowerCase() === normalized,
-    ) ?? null
-  );
+  return demoAccounts.find((account) => account.email.toLowerCase() === normalized) ?? null;
 };
 
 export const inferDemoRoleFromIdentifier = (identifier: string): Exclude<DemoAuthRole, 'admin'> => {
   const normalized = identifier.trim().toLowerCase();
   if (normalized.includes('cns-') || normalized.includes('consultant')) return 'consultant';
+  if (normalized.includes('ops-') || normalized.includes('operations')) return 'operations-admin';
   if (
     normalized.includes('cmp-') ||
     normalized.includes('cad-') ||
@@ -61,4 +57,3 @@ export const resolveDemoLoginRole = (identifier: string): Exclude<DemoAuthRole, 
   if (account?.role && account.role !== 'admin') return account.role;
   return inferDemoRoleFromIdentifier(identifier);
 };
-

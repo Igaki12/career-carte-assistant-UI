@@ -164,7 +164,6 @@ type SurveyQuestion = {
 };
 
 type ProfileView = {
-  id: string;
   name: string;
   nameKana: string;
   email: string;
@@ -324,7 +323,6 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
   const apiUsage = getCompanyApiUsageSummary(usageQuota);
 
   return {
-    id: demographics.accountId || 'USR-2024-021',
     name: demographics.name || '未設定',
     nameKana: demographics.nameKana || '未設定',
     email: demographics.email || 'hanako.yamada@example.com',
@@ -755,7 +753,6 @@ function UserHome() {
                   {profile.name} さんのマイページ
                 </Heading>
                 <Text color="whiteAlpha.900">{profile.company} / {profile.department} / {profile.jobTitle}</Text>
-                <Text color="whiteAlpha.800">ID: {profile.id}</Text>
                 <Box
                   mt={3}
                   borderWidth="1px"
@@ -806,7 +803,6 @@ function UserHome() {
                     <TabPanels>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                          <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
                           <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {profile.nameKana}</Text>
@@ -1044,10 +1040,6 @@ function UserHome() {
                       <TabPanels>
                         <TabPanel px={0} pt={3}>
                           <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                            <Stack spacing={0.5}>
-                              <Text fontSize="sm" color={mutedTextColor}>ID</Text>
-                              <Text fontWeight="semibold">{profile.id}</Text>
-                            </Stack>
                             <Stack spacing={0.5}>
                               <Text fontSize="sm" color={mutedTextColor}>メール</Text>
                               <Text fontWeight="semibold">{profile.email}</Text>

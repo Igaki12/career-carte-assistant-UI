@@ -587,7 +587,6 @@ function ConsultantHome() {
               <Stack spacing={1} flex="1">
                 <Heading size="lg" color="white">{profile.name} さんのコンサルタント画面</Heading>
                 <Text color="whiteAlpha.900">{profile.company} / {profile.department} / {profile.title}</Text>
-                <Text color="whiteAlpha.800">ID: {profile.id}</Text>
                 <Box
                   mt={3}
                   borderWidth="1px"
@@ -602,7 +601,6 @@ function ConsultantHome() {
                     コンサルタント概要
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                    <Text fontSize="sm" color="whiteAlpha.900">ID: {profile.id}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
@@ -699,10 +697,6 @@ function ConsultantHome() {
                 <Collapse in={profileDisclosure.isOpen} animateOpacity>
                   <Box pt={4}>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                      <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">ID</Text>
-                        <Text fontWeight="semibold">{profile.id}</Text>
-                      </Stack>
                       <Stack spacing={0.5}>
                         <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
                         <Text fontWeight="semibold">{profile.email}</Text>

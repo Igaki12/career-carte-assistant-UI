@@ -280,7 +280,7 @@ function Admin() {
 
   const [userAccounts, setUserAccounts] = useState<AccountRecord[]>(() =>
     demoAccounts
-      .filter((account) => account.role === 'user' || account.role === 'company-admin')
+      .filter((account) => account.role === 'user' || account.role === 'company-admin' || account.role === 'operations-admin')
       .map((account) => createAccountRecordFromDemo(account)),
   );
 
@@ -543,7 +543,7 @@ function Admin() {
       .sort(getComparator(consultantSort));
   }, [consultantAccounts, consultantQuery, consultantSort]);
 
-  const permissionOptions = ['一般ユーザー', '企業管理者', 'キャリアコンサルタント', 'システム管理者'];
+  const permissionOptions = ['一般ユーザー', '企業管理者', '運用管理者', 'キャリアコンサルタント', 'システム管理者'];
 
   const filteredUserIds = filteredUserAccounts.map((account) => account.id);
   const filteredConsultantIds = filteredConsultantAccounts.map((account) => account.id);

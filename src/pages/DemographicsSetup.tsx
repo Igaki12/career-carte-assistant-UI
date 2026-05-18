@@ -169,7 +169,6 @@ const PREFECTURE_OPTIONS = [
 ];
 
 const FIELD_LABELS: FieldDefinition[] = [
-  { key: 'accountId', label: 'ID', placeholder: 'USR-2024-021', isReadOnly: true },
   { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com', isReadOnly: true },
   { key: 'lastName', label: '姓', placeholder: '山田', isReadOnly: true },
   { key: 'firstName', label: '名', placeholder: '花子', isReadOnly: true },

@@ -10,6 +10,7 @@ import ConsultantHome from './pages/ConsultantHome';
 import DemographicsSetup from './pages/DemographicsSetup';
 import InitialMeetingRoom from './pages/InitialMeetingRoom';
 import Login from './pages/Login';
+import OperationsAdminHome from './pages/OperationsAdminHome';
 import UserHome from './pages/UserHome';
 import {
   clearDemoAuthSession,
@@ -102,6 +103,14 @@ function App() {
           element={
             <ProtectedRoute session={session} allowedRoles={['admin']} onLogout={handleLogout}>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/operations-admin"
+          element={
+            <ProtectedRoute session={session} allowedRoles={['operations-admin']} onLogout={handleLogout}>
+              <OperationsAdminHome />
             </ProtectedRoute>
           }
         />

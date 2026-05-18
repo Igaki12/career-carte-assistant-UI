@@ -172,6 +172,30 @@
       "karteStatus": "担当者"
     },
     {
+      "id": "OPS-2026-001",
+      "email": "operations.manager@example.com",
+      "password": "demo",
+      "role": "operations-admin",
+      "tenantId": null,
+      "managedTenantIds": [
+        "tenant-career-carte-demo",
+        "tenant-connect-systems",
+        "tenant-alpha-robotics"
+      ],
+      "company": "Career Carte Inc.",
+      "department": "Client Operations",
+      "jobTitle": "事務/管理職",
+      "permission": "運用管理者",
+      "lastName": "井垣",
+      "firstName": "運用",
+      "lastNameKana": "イガキ",
+      "firstNameKana": "ウンヨウ",
+      "name": "井垣 運用",
+      "nameKana": "イガキ ウンヨウ",
+      "status": "アクティブ",
+      "karteStatus": "横断管理"
+    },
+    {
       "id": "ADM-2026-001",
       "email": "admin@example.com",
       "password": "demo",

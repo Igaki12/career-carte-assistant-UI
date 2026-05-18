@@ -38,6 +38,7 @@ type NavigationItem = {
 
 const getRoleColorScheme = (role: DemoAuthRole) => {
   if (role === 'admin') return 'orange';
+  if (role === 'operations-admin') return 'cyan';
   if (role === 'company-admin') return 'pink';
   if (role === 'consultant') return 'purple';
   return 'teal';
@@ -46,6 +47,9 @@ const getRoleColorScheme = (role: DemoAuthRole) => {
 const getNavigationItems = (role: DemoAuthRole): NavigationItem[] => {
   if (role === 'admin') {
     return [{ label: '管理コンソール', to: '/admin', pathname: '/admin', icon: <FiShield /> }];
+  }
+  if (role === 'operations-admin') {
+    return [{ label: '運用管理者画面', to: '/operations-admin', pathname: '/operations-admin', icon: <FiBriefcase /> }];
   }
   if (role === 'company-admin') {
     return [

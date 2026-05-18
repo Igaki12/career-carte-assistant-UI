@@ -55,7 +55,7 @@ function Login({ session, onLogin }: LoginProps) {
     event.preventDefault();
     if (!accountId.trim() || !password.trim()) {
       toast({
-        title: 'IDとパスワードを入力してください',
+        title: 'メールアドレスとパスワードを入力してください',
         status: 'warning',
         duration: 2400,
         isClosable: true,
@@ -175,12 +175,13 @@ function Login({ session, onLogin }: LoginProps) {
                 <Stack spacing={1}>
                   <Heading size="lg">ログイン</Heading>
                   <Text color="whiteAlpha.800" fontSize="sm">
-                    アカウントIDまたはメールアドレスを入力してください。
+                    メールアドレスを入力してください。
                   </Text>
                 </Stack>
                 <FormControl isRequired>
-                  <FormLabel>アカウントID / メールアドレス</FormLabel>
+                  <FormLabel>メールアドレス</FormLabel>
                   <Input
+                    type="email"
                     value={accountId}
                     onChange={(event) => setAccountId(event.target.value)}
                     placeholder="demo@example.com"

@@ -1,4 +1,4 @@
-export type DemoAuthRole = 'user' | 'company-admin' | 'consultant' | 'admin';
+export type DemoAuthRole = 'user' | 'company-admin' | 'operations-admin' | 'consultant' | 'admin';
 
 export type DemoAuthSession = {
   role: DemoAuthRole;
@@ -23,7 +23,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isDemoAuthRole = (value: unknown): value is DemoAuthRole =>
-  value === 'user' || value === 'company-admin' || value === 'consultant' || value === 'admin';
+  value === 'user' ||
+  value === 'company-admin' ||
+  value === 'operations-admin' ||
+  value === 'consultant' ||
+  value === 'admin';
 
 const normalizeSession = (value: unknown): DemoAuthSession | null => {
   if (!isRecord(value) || !isDemoAuthRole(value.role) || typeof value.accountId !== 'string') {
@@ -78,13 +82,14 @@ export const clearDemoAuthSession = () => {
 export const createDemoAuthSession = ({ accountId, role = 'user', tenantId, remember }: DemoAuthLoginInput): DemoAuthSession => ({
   role,
   accountId: accountId.trim(),
-  tenantId: role === 'admin' ? null : tenantId ?? 'tenant-career-carte-demo',
+  tenantId: role === 'admin' || role === 'operations-admin' ? null : tenantId ?? 'tenant-career-carte-demo',
   remember,
   loggedInAt: new Date().toISOString(),
 });
 
 export const getDefaultRouteForRole = (role: DemoAuthRole) => {
   if (role === 'admin') return '/admin';
+  if (role === 'operations-admin') return '/operations-admin';
   if (role === 'company-admin') return '/user';
   if (role === 'consultant') return '/consultant';
   return '/user';
@@ -92,6 +97,7 @@ export const getDefaultRouteForRole = (role: DemoAuthRole) => {
 
 export const getRoleLabel = (role: DemoAuthRole) => {
   if (role === 'admin') return 'システム管理者';
+  if (role === 'operations-admin') return '運用管理者';
   if (role === 'company-admin') return '企業管理者';
   if (role === 'consultant') return 'キャリアコンサルタント';
   return '一般ユーザー';
