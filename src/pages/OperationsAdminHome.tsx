@@ -212,7 +212,7 @@ function OperationsAdminHome() {
   });
 
   return (
-    <Box bgGradient={adminPageBg} color="white" minH="100dvh" py={{ base: 8, md: 12 }}>
+    <Box bgGradient={adminPageBg} color="white" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
       <Container maxW="7xl">
         <Stack spacing={8}>
           <Box {...panelProps}>
