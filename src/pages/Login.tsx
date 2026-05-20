@@ -1,6 +1,5 @@
 import {
   Box,
-  Checkbox,
   Container,
   Flex,
   FormControl,
@@ -21,8 +20,8 @@ import {
   type DemoAuthSession,
 } from '../lib/demoAuth';
 import {
+  createEmptyDemoUserState,
   createDemographicsFromDemoAccount,
-  loadDemoUserState,
   saveDemoUserState,
 } from '../lib/demoUserState';
 import { findDemoAccount, resolveDemoLoginRole } from '../lib/demoAccounts';
@@ -44,7 +43,6 @@ function Login({ session, onLogin }: LoginProps) {
   const toast = useToast();
   const [accountId, setAccountId] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(true);
 
   useEffect(() => {
     if (!session) return;
@@ -80,24 +78,22 @@ function Login({ session, onLogin }: LoginProps) {
       password,
       role,
       tenantId,
-      remember,
+      remember: false,
     });
-    if (matchedAccount) {
-      const currentState = loadDemoUserState();
-      saveDemoUserState({
-        ...currentState,
-        tenantId: matchedAccount.tenantId ?? currentState.tenantId,
-        demographics:
-          matchedAccount.role === 'user' || matchedAccount.role === 'company-admin'
-            ? createDemographicsFromDemoAccount(matchedAccount)
-            : currentState.demographics,
-        demographicsSavedAt:
-          matchedAccount.role === 'user' || matchedAccount.role === 'company-admin'
-            ? new Date().toISOString()
-            : currentState.demographicsSavedAt,
-      });
-    }
     saveDemoAuthSession(nextSession);
+    const nextUserState = createEmptyDemoUserState();
+    saveDemoUserState({
+      ...nextUserState,
+      tenantId: matchedAccount?.tenantId ?? nextUserState.tenantId,
+      demographics:
+        matchedAccount && (matchedAccount.role === 'user' || matchedAccount.role === 'company-admin')
+          ? createDemographicsFromDemoAccount(matchedAccount)
+          : nextUserState.demographics,
+      demographicsSavedAt:
+        matchedAccount && (matchedAccount.role === 'user' || matchedAccount.role === 'company-admin')
+          ? new Date().toISOString()
+          : nextUserState.demographicsSavedAt,
+    });
     onLogin(nextSession);
     navigate(getReturnTo(location.search) ?? getDefaultRouteForRole(role), { replace: true });
   };
@@ -204,11 +200,6 @@ function Login({ session, onLogin }: LoginProps) {
                     _placeholder={{ color: 'gray.500' }}
                   />
                 </FormControl>
-                <Stack spacing={3}>
-                  <Checkbox isChecked={remember} onChange={(event) => setRemember(event.target.checked)}>
-                    常にログインした状態にしておく
-                  </Checkbox>
-                </Stack>
                 <PrimaryButton type="submit" size="lg">
                   ログイン
                 </PrimaryButton>

@@ -1923,7 +1923,7 @@ function Admin() {
                 </Table>
               </Box>
               <Text fontSize="sm" color="whiteAlpha.700">
-                デモ版では featureFlags は localStorage、企業API設定は `src/lib/demoUsageQuota.ts` のメモリ状態を更新します。本番ではサーバー側の契約情報・利用実績・tenantId に接続します。
+                デモ版では企業API設定と企業別オプションはメモリ状態を更新します。本番ではサーバー側の契約情報・利用実績・tenantId に接続します。
               </Text>
             </Stack>
           </Box>

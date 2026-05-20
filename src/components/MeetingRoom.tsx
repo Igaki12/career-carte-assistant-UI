@@ -77,7 +77,6 @@ type Props = {
 
 type LlmProcessMode = 'normal' | 'initialFinalize' | 'continuousFinalize';
 
-const LEGACY_LOCAL_STORAGE_OPENAI_KEY = 'cca-api-key';
 const LOCAL_STORAGE_OPENAI_KEY = 'cca-openai-api-key';
 const LOCAL_STORAGE_GEMINI_KEY = 'cca-gemini-api-key';
 const OPENAI_MEETING_MODEL = 'gpt-4o-2024-11-20';
@@ -1060,18 +1059,13 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     if (typeof window === 'undefined') return;
     const savedOpenAiKey = window.localStorage.getItem(LOCAL_STORAGE_OPENAI_KEY);
     const savedGeminiKey = window.localStorage.getItem(LOCAL_STORAGE_GEMINI_KEY);
-    const legacyOpenAiKey = window.localStorage.getItem(LEGACY_LOCAL_STORAGE_OPENAI_KEY);
-    const resolvedOpenAiKey = savedOpenAiKey || legacyOpenAiKey || '';
+    window.localStorage.removeItem('cca-api-key');
 
-    if (resolvedOpenAiKey) {
-      setOpenAiApiKey(resolvedOpenAiKey);
+    if (savedOpenAiKey) {
+      setOpenAiApiKey(savedOpenAiKey);
     }
     if (savedGeminiKey) {
       setGeminiApiKey(savedGeminiKey);
-    }
-    if (legacyOpenAiKey && !savedOpenAiKey) {
-      window.localStorage.setItem(LOCAL_STORAGE_OPENAI_KEY, legacyOpenAiKey);
-      window.localStorage.removeItem(LEGACY_LOCAL_STORAGE_OPENAI_KEY);
     }
   }, []);
 

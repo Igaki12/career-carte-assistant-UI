@@ -14,10 +14,10 @@ import type {
 } from '../types';
 import { INITIAL_PROMPT_VARIANTS } from '../types';
 import { demoAccounts, joinName, joinNameKana, type DemoAccountRecord } from './demoAccounts';
+import { loadDemoAuthSession } from './demoAuth';
 import { cloneShirpDetails, createEmptyShirpDetails, SHIRP_DETAIL_CATEGORY_KEYS, SHIRP_DETAIL_FIELDS, SHIRP_DETAIL_ITEM_LABELS } from './shirp';
 
 export const LOCAL_STORAGE_DEMO_USER_KEY = 'cca-demo-user-state';
-export const LEGACY_LOCAL_STORAGE_KARTE_KEY = 'cca-karte';
 export const DEFAULT_TENANT_ID = 'tenant-career-carte-demo';
 export const DEFAULT_DEMO_USER_ID = 'USR-2024-021';
 export const CONDITION_CONSENT_VERSION = 'condition-demo-v1';
@@ -242,6 +242,67 @@ export const createDemographicsFromDemoAccount = (account: DemoAccountRecord): D
   jobTitle: account.jobTitle,
   permission: account.permission,
 });
+
+const findActiveDemoAccount = () => {
+  const session = loadDemoAuthSession();
+  if (!session?.accountId) return null;
+  const normalizedAccountId = session.accountId.trim().toLowerCase();
+  return (
+    demoAccounts.find(
+      (account) =>
+        account.id.toLowerCase() === normalizedAccountId ||
+        account.email.toLowerCase() === normalizedAccountId,
+    ) ?? null
+  );
+};
+
+const createDemographicsFromActiveSession = (): DemographicData => {
+  const account = findActiveDemoAccount();
+  if (account) return createDemographicsFromDemoAccount(account);
+  const session = loadDemoAuthSession();
+  return {
+    ...createEmptyDemographics(),
+    email: session?.accountId?.includes('@') ? session.accountId : null,
+    permission:
+      session?.role === 'company-admin'
+        ? '企業管理者'
+        : session?.role === 'operations-admin'
+          ? '運用管理者'
+          : session?.role === 'consultant'
+            ? 'キャリアコンサルタント'
+            : session?.role === 'admin'
+              ? 'システム管理者'
+              : session
+                ? '一般ユーザー'
+                : null,
+  };
+};
+
+const sanitizeDemographicsForLocalPersistence = (demographics: DemographicData | null | undefined): DemographicData => {
+  const source = demographics ?? createEmptyDemographics();
+  return {
+    ...createEmptyDemographics(),
+    age: source.age,
+    birthDate: source.birthDate,
+    workLocationPrefecture: source.workLocationPrefecture,
+    jobChangeCount: source.jobChangeCount,
+    yearsOfService: source.yearsOfService,
+    gender: source.gender,
+    maritalStatus: source.maritalStatus,
+    childrenCount: source.childrenCount,
+    youngestChildAge: source.youngestChildAge,
+    managerExperience: source.managerExperience,
+    currentManager: source.currentManager,
+  };
+};
+
+const sanitizeKarteForLocalPersistence = (karte: KarteData | null | undefined): KarteData | null =>
+  karte
+    ? {
+        ...karte,
+        demographics: sanitizeDemographicsForLocalPersistence(karte.demographics),
+      }
+    : null;
 
 export const createEmptySurvey = (): SurveyResult => ({
   factors: {
@@ -666,7 +727,11 @@ export const upsertConditionRecord = (
   };
 };
 
-const normalizeDraftSession = (meetingType: MeetingType, draft: DraftSession | null | undefined): DraftSession | null => {
+const normalizeDraftSession = (
+  meetingType: MeetingType,
+  draft: DraftSession | null | undefined,
+  baseDemographics = createEmptyDemographics(),
+): DraftSession | null => {
   if (!draft) return null;
   return {
     ...draft,
@@ -674,52 +739,72 @@ const normalizeDraftSession = (meetingType: MeetingType, draft: DraftSession | n
     continuousMode: draft.continuousMode ?? null,
     initialPromptVariant: meetingType === 'initial' ? normalizeInitialPromptVariant(draft.initialPromptVariant) : null,
     hasFinalizedInitial: meetingType === 'initial' ? draft.hasFinalizedInitial === true : false,
-    karte: applyDemographicsToKarte(draft.karte, draft.karte?.demographics),
+    karte: applyDemographicsToKarte(draft.karte, mergeDemographics(baseDemographics, draft.karte?.demographics)),
     updatedAt: draft.updatedAt ?? '',
   };
 };
 
 const normalizeState = (value: Partial<DemoUserState> | null | undefined): DemoUserState => {
   const empty = createEmptyDemoUserState();
-  const tenants = Array.isArray(value?.tenants) && value!.tenants.length > 0 ? value!.tenants : empty.tenants;
+  const activeAccount = findActiveDemoAccount();
+  const tenants = empty.tenants;
   const tenantId =
-    typeof value?.tenantId === 'string' && tenants.some((tenant) => tenant.id === value.tenantId)
-      ? value.tenantId
+    activeAccount?.tenantId && tenants.some((tenant) => tenant.id === activeAccount.tenantId)
+      ? activeAccount.tenantId
       : DEFAULT_TENANT_ID;
-  const featureFlags = Array.isArray(value?.featureFlags) && value!.featureFlags.length > 0 ? value!.featureFlags : empty.featureFlags;
-  const conditionRecords = Array.isArray(value?.conditionRecords) ? value!.conditionRecords : [];
-  const latestKarte = value?.latestKarte ? applyDemographicsToKarte(value.latestKarte, value.latestKarte.demographics) : null;
-  const companyEmployees = normalizeCompanyEmployees(value?.companyEmployees);
-  const demographicsSavedAt = typeof value?.demographicsSavedAt === 'string' ? value.demographicsSavedAt : null;
-  const demographicsSkipped = value?.demographicsSkipped === true && !demographicsSavedAt && !hasConfiguredDemographics(value?.demographics);
-  const demographics = demographicsSavedAt || hasConfiguredDemographics(value?.demographics)
-    ? mergeDemographics(empty.demographics, value?.demographics)
-    : latestKarte?.demographics
-      ? mergeDemographics(empty.demographics, latestKarte.demographics)
-      : empty.demographics;
+  const baseDemographics = createDemographicsFromActiveSession();
+  const demographics = mergeDemographics(baseDemographics, value?.demographics);
+  const latestKarte = value?.latestKarte
+    ? applyDemographicsToKarte(value.latestKarte, mergeDemographics(demographics, value.latestKarte.demographics))
+    : null;
+  const karteRecords = Array.isArray(value?.karteRecords)
+    ? value!.karteRecords.slice(0, 1).map((record) => ({
+        ...record,
+        data: applyDemographicsToKarte(record.data, mergeDemographics(demographics, record.data.demographics)),
+      }))
+    : [];
 
   return {
     tenantId,
     tenants,
-    featureFlags,
-    conditionRecords,
-    demographicsSkipped,
+    featureFlags: empty.featureFlags,
+    conditionRecords: [],
+    demographicsSkipped: false,
     demographics,
-    demographicsSavedAt,
+    demographicsSavedAt: hasConfiguredDemographics(demographics) ? new Date().toISOString() : null,
     latestKarte,
-    karteRecords: Array.isArray(value?.karteRecords)
-      ? value!.karteRecords.map((record) => ({
-          ...record,
-          data: applyDemographicsToKarte(record.data, record.data.demographics),
-        }))
-      : [],
-    companyEmployees,
+    karteRecords,
+    companyEmployees: createDefaultCompanyEmployees(),
     draftSessions: {
-      initial: normalizeDraftSession('initial', value?.draftSessions?.initial),
-      continuous: normalizeDraftSession('continuous', value?.draftSessions?.continuous),
+      initial: normalizeDraftSession('initial', value?.draftSessions?.initial, demographics),
+      continuous: normalizeDraftSession('continuous', value?.draftSessions?.continuous, demographics),
     },
   };
 };
+
+const createPersistedDemoUserState = (state: DemoUserState): Partial<DemoUserState> => ({
+  demographics: sanitizeDemographicsForLocalPersistence(state.demographics),
+  latestKarte: sanitizeKarteForLocalPersistence(state.latestKarte),
+  karteRecords: state.karteRecords.slice(0, 1).map((record) => ({
+    ...record,
+    data: sanitizeKarteForLocalPersistence(record.data) ?? createEmptyKarte(),
+    conversationLog: record.conversationLog,
+  })),
+  draftSessions: {
+    initial: state.draftSessions.initial
+      ? {
+          ...state.draftSessions.initial,
+          karte: sanitizeKarteForLocalPersistence(state.draftSessions.initial.karte) ?? createEmptyKarte(),
+        }
+      : null,
+    continuous: state.draftSessions.continuous
+      ? {
+          ...state.draftSessions.continuous,
+          karte: sanitizeKarteForLocalPersistence(state.draftSessions.continuous.karte) ?? createEmptyKarte(),
+        }
+      : null,
+  },
+});
 
 export const loadDemoUserState = (): DemoUserState => {
   if (typeof window === 'undefined') {
@@ -738,17 +823,9 @@ export const loadDemoUserState = (): DemoUserState => {
 
   const nextState = normalizeState(parsedState);
 
-  if (!nextState.latestKarte) {
-    const legacyStored = window.localStorage.getItem(LEGACY_LOCAL_STORAGE_KARTE_KEY);
-    if (legacyStored) {
-      try {
-        const legacyKarte = JSON.parse(legacyStored) as KarteData;
-        nextState.latestKarte = applyDemographicsToKarte(legacyKarte, legacyKarte.demographics);
-        nextState.demographics = mergeDemographics(nextState.demographics, legacyKarte.demographics);
-      } catch {
-        // Ignore invalid legacy payloads.
-      }
-    }
+  window.localStorage.removeItem('cca-karte');
+  if (stored) {
+    window.localStorage.setItem(LOCAL_STORAGE_DEMO_USER_KEY, JSON.stringify(createPersistedDemoUserState(nextState)));
   }
 
   return nextState;
@@ -757,5 +834,5 @@ export const loadDemoUserState = (): DemoUserState => {
 export const saveDemoUserState = (state: DemoUserState) => {
   if (typeof window === 'undefined') return;
   const normalized = normalizeState(state);
-  window.localStorage.setItem(LOCAL_STORAGE_DEMO_USER_KEY, JSON.stringify(normalized));
+  window.localStorage.setItem(LOCAL_STORAGE_DEMO_USER_KEY, JSON.stringify(createPersistedDemoUserState(normalized)));
 };

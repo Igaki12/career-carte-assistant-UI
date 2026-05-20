@@ -86,7 +86,7 @@ function ConditionCheck() {
                   {stressEnabled ? '契約オプション有効' : '契約オプション未有効'}
                 </Badge>
                 <Text fontSize="sm" color="gray.600">
-                  顔画像・動画は保存しません。現時点では実測せず、ダミースコアのみ localStorage に保存します。
+                  顔画像・動画は保存しません。現時点では実測せず、ダミースコアは画面確認用の一時状態として扱います。
                 </Text>
                 <Text fontSize="sm" color="gray.500">
                   直近の測定: {latestCondition ? `${latestCondition.score} / 100 (${latestCondition.level})` : '未測定'}

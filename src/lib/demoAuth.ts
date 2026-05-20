@@ -16,7 +16,6 @@ export type DemoAuthLoginInput = {
   remember: boolean;
 };
 
-const LOCAL_STORAGE_AUTH_KEY = 'cca-demo-auth-session';
 const SESSION_STORAGE_AUTH_KEY = 'cca-demo-auth-session';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -55,27 +54,20 @@ const readStorage = (storage: Storage, key: string) => {
 
 export const loadDemoAuthSession = (): DemoAuthSession | null => {
   if (typeof window === 'undefined') return null;
-  return (
-    readStorage(window.localStorage, LOCAL_STORAGE_AUTH_KEY) ??
-    readStorage(window.sessionStorage, SESSION_STORAGE_AUTH_KEY)
-  );
+  window.localStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
+  return readStorage(window.sessionStorage, SESSION_STORAGE_AUTH_KEY);
 };
 
 export const saveDemoAuthSession = (session: DemoAuthSession) => {
   if (typeof window === 'undefined') return;
   const serialized = JSON.stringify(session);
-  if (session.remember) {
-    window.localStorage.setItem(LOCAL_STORAGE_AUTH_KEY, serialized);
-    window.sessionStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
-    return;
-  }
   window.sessionStorage.setItem(SESSION_STORAGE_AUTH_KEY, serialized);
-  window.localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY);
+  window.localStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
 };
 
 export const clearDemoAuthSession = () => {
   if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(LOCAL_STORAGE_AUTH_KEY);
+  window.localStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
   window.sessionStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
 };
 

@@ -12,7 +12,7 @@
 - Hosting (Future): VPS (Ubuntu 26.04 LTS) + Node.js (Express) + Apache2 (Reverse Proxy) + DB (PostgreSQL) + BrowserRouter
 
 ### 2.2 役割別ページ構成とルーティング
-- Login (`/login`): 一般ユーザー・企業管理者・運用管理者・キャリアコンサルタント共通のダミーログイン画面。入力されたメールアドレスを `demo-accounts.json` の `email` と完全一致照合し、該当アカウントのロールで認証する。通常ログイン画面ではアカウントID入力、ロール選択、利用条件モーダル、利用条件同意チェック、システム管理者リンク、デモ説明文は表示しない。企業管理者も一般ユーザーと同じ入口を使い、ログイン後は `/user` に遷移する。運用管理者は `/operations-admin` に遷移する。常にログインした状態にしておくチェックを持つ。
+- Login (`/login`): 一般ユーザー・企業管理者・運用管理者・キャリアコンサルタント共通のダミーログイン画面。入力されたメールアドレスを `demo-accounts.json` の `email` と完全一致照合し、該当アカウントのロールで認証する。通常ログイン画面ではアカウントID入力、ロール選択、利用条件モーダル、利用条件同意チェック、システム管理者リンク、デモ説明文、ログイン維持チェックは表示しない。企業管理者も一般ユーザーと同じ入口を使い、ログイン後は `/user` に遷移する。運用管理者は `/operations-admin` に遷移する。
 - AdminLogin (`/admin/login`): システム管理者専用の別ログイン画面。通常ログイン画面とは入口を分け、画面上で「管理者ログイン」であることを明示する。任意の管理者ID/パスワードで認証を通し、`/admin` へ遷移する。管理者利用条件の同意チェックや確認モーダルは表示しない。
 - Root (`/`): 独立したホーム画面は持たず、ログイン状態に応じてロール別の既定ページへ即時リダイレクトする。未ログイン時は `/login`、一般ユーザーと企業管理者は `/user`、運用管理者は `/operations-admin`、キャリアコンサルタントは `/consultant`、システム管理者は `/admin` へ遷移する。旧 `Home.tsx` は廃止済みで、プロフィール設定・初回面談・継続面談の導線は `UserHome` に集約する。
 - DemographicsSetup (`/user/demographics`): プロフィール初期設定・編集。未設定時の導線兼、UserHomeからの編集画面。ユーザーIDは内部管理用の自動生成IDであり、ユーザー本人向け画面には表示しない。`姓`, `名`, `フリガナ（姓）`, `フリガナ（名）`, `メール`, `会社名` の順で表示し、これらは編集不可にする。白背景ではなく固定項目と分かる暗色の読取専用スタイルで表示する。`権限` は表示しない。入力欄の placeholder は例示として `例: ...` を付ける。生年月日はブラウザ標準の `type="date"` で入力し、保存値は `YYYY-MM-DD` に正規化する。勤務地(都道府県)は北海道から沖縄県までの47都道府県セレクトにする。職種は `src/lib/jobTitles.ts` の候補（営業職、事務/管理職、販売/サービススタッフ職、クリエイティブ職、医療/福祉職、専門/資格（弁護士等）職、IT/エンジニア職、製造/技術職、物流/軽作業職、公務/教育職、その他）から選択する。転職歴、勤続年数、末子年齢などの数値欄は数字のみ入力可能にする。マネージャー経験項目（過去にマネージャー経験があるか、現在マネージャーか）を持つ。婚姻関係、子供人数、末子年齢、マネージャー経験系の選択肢には回答しない選択肢を用意する。デモ検証用に「デモ用にスキップして進む」を持つ。
@@ -34,7 +34,7 @@
 - AuthNavigation のページリンクは権限内かつ初期版で利用可能なページのみ表示する。`user` は `/user`, `/user/demographics?returnTo=%2Fuser`, `/app/initial`、`company-admin` は `/user`, `/user/demographics?returnTo=%2Fuser`, `/app/initial`, `/company-admin`、`operations-admin` は `/operations-admin`、`consultant` は `/consultant`、`admin` は `/admin` を表示対象とする。旧 `Home.tsx` は廃止済みのため `/` へのリンクは追加しない。継続面談、ユーザーアンケート、面談前コンディションチェックは初期版ではナビリンクに出さない。
 - AuthNavigation の展開/縮小には `framer-motion` を使う。ただし `prefers-reduced-motion` が有効な場合は自動展開プレビューや大きな動きを抑制する。
 - 通常ログイン画面は一般ユーザー・企業管理者・運用管理者・キャリアコンサルタント共通入口とし、管理者ログイン画面は別入口にする。企業管理者は一般ユーザーと同じ入口を使う。
-- 「常にログインした状態にしておく」がONの場合は `localStorage`、OFFの場合は `sessionStorage` に `cca-demo-auth-session` を保存する。ログアウト時は両方を削除する。
+- ダミー認証セッションは `sessionStorage` の `cca-demo-auth-session` にだけ保存する。`localStorage` には認証セッションを残さない。ログアウト時は両方を削除する。
 - GitHub Pagesデモ版では任意のパスワードでログインできる状態を維持し、自己再設定や一時パスワード発行はUI確認用として扱う。再設定結果はログイン時の照合には反映しない。
 - 一般ユーザー・キャリアコンサルタント本人のパスワード再設定は、アプリ内で現在パスワード確認、新パスワード、確認入力を行う。現在パスワードは空欄不可の確認用入力とし、デモ版では実照合しない。
 - 管理者・企業管理者による一時パスワード発行はアプリ内で行い、通知文一覧からコピーして既存の業務メーラーで通知する。アプリからの自動送信機能は持たない。
@@ -52,24 +52,17 @@
 - PrimaryButton は黒系グラデーションを標準とし、disabled または「準備中」状態では波打つアニメーションを止め、押せない状態が分かる静的な見た目にする。
 - MeetingRoom の下部操作行は2列構成とし、左に左矢印アイコン付きの「中断して戻る」、右に「カルテを確認」を配置する。
 
-### 2.3 フロント保存方針（GitHub Pages デモ版）
-- GitHub Pages デモ版ではバックエンドの代わりに `localStorage` を正とする。
-- 現在の共通保存キーは `cca-demo-user-state`。
-- 保存対象:
-  - `demographics`: プロフィール情報
-  - `latestKarte`: 最新カルテ
-  - `karteRecords`: 保存済みカルテ履歴
-  - `draftSessions.initial` / `draftSessions.continuous`: 未完了面談の下書き
-  - `demographicsSkipped`: デモ用プロフィールスキップ状態
-  - `tenantId`: 現在ユーザーのデモ用テナントID
-  - `tenants`: 企業テナント一覧
-  - `featureFlags`: 企業別機能フラグ
-  - `conditionRecords`: 面談前コンディションチェックの保存済み測定結果
-  - `companyEmployees`: 企業管理者画面のデモ用従業員カルテ一覧
-- ダミー認証セッションの保存キーは `cca-demo-auth-session`。ログイン維持ON時は `localStorage`、OFF時は `sessionStorage` に保存する。
-- ダミーアカウント定義は `demo-accounts.json` に置く。運用管理者は `role: "operations-admin"` と `managedTenantIds` を持ち、複数企業横断の表示対象を決める。
-- 旧 `cca-karte` は読み込み互換のみ残す。
-- 例外: デモ版の企業API使用枠・会話ターン制限は `src/lib/demoUsageQuota.ts` のテナント別メモリ状態を正とし、`localStorage` へ保存しない。システム管理者画面 `/admin` の企業別オプション管理から企業単位で変更し、SPA内の画面遷移では同期し、ページリフレッシュ時はデフォルト値へ戻す。
+### 2.3 フロント保存方針（本番移行前デモ版）
+- 本番実装へ移しやすいように、`localStorage` は疑似DBとして使わない。アカウント、権限、企業、テナント、従業員一覧、管理系業務データは `demo-accounts.json` とコード上の初期定義から毎回組み立てる。
+- `localStorage` の `cca-demo-user-state` は、動作確認に必要なユーザー生成データだけを最小保存する。
+  - `demographics`: 生年月日、勤務地、転職歴、勤続年数、性別、婚姻、子供、マネージャー経験などの詳細項目のみ。氏名、フリガナ、メール、会社名、部署、職種、権限、ID は `demo-accounts.json` 由来を正とし保存しない。
+  - `latestKarte`: 直近の保存済みカルテ1件。demographics 内のアカウント基本情報は保存せず、読み込み時に `demo-accounts.json` から補完する。
+  - `karteRecords`: 直近の保存済みカルテ1件分だけ。履歴DBとしては使わない。
+  - `draftSessions.initial` / `draftSessions.continuous`: 未完了面談の下書き、会話履歴、途中カルテ、進行状態。
+- `localStorage` に残すAPIキーは、動作確認用の `cca-openai-api-key` と `cca-gemini-api-key` のみとする。
+- 旧 `cca-api-key` と旧 `cca-karte` の互換読み込みは行わず、検出時に削除する。
+- ダミー認証セッションは `sessionStorage` の `cca-demo-auth-session` にだけ保存する。`localStorage` には残さない。
+- デモ版の企業API使用枠・会話ターン制限は `src/lib/demoUsageQuota.ts` のテナント別メモリ状態を正とし、`localStorage` へ保存しない。システム管理者画面 `/admin` の企業別オプション管理から企業単位で変更し、SPA内の画面遷移では同期し、ページリフレッシュ時はデフォルト値へ戻す。
 - デモ用クォータ初期値:
   - 企業API総回数: 1000回
   - 企業API使用済み回数: 0回
