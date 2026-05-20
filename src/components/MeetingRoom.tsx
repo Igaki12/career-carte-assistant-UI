@@ -279,8 +279,9 @@ const buildDemographicPromptContext = (karte: KarteData) => {
   const demographicPairs = [
     // 面談内容の推論に直接使いにくい識別・連絡・権限情報は、AI応答プロンプトには含めない。
     // ['ID', karte.demographics.accountId],
-    // ['メール', karte.demographics.email],
     // ['氏名', karte.demographics.name],
+    // ['フリガナ', karte.demographics.nameKana],
+    // ['メール', karte.demographics.email],
     ['会社名', karte.demographics.company],
     ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],

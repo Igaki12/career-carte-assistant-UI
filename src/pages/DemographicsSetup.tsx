@@ -169,11 +169,11 @@ const PREFECTURE_OPTIONS = [
 ];
 
 const FIELD_LABELS: FieldDefinition[] = [
-  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com', isReadOnly: true },
   { key: 'lastName', label: '姓', placeholder: '山田', isReadOnly: true },
   { key: 'firstName', label: '名', placeholder: '花子', isReadOnly: true },
   { key: 'lastNameKana', label: 'フリガナ（姓）', placeholder: 'ヤマダ', isReadOnly: true },
   { key: 'firstNameKana', label: 'フリガナ（名）', placeholder: 'ハナコ', isReadOnly: true },
+  { key: 'email', label: 'メール', placeholder: 'hanako.yamada@example.com', isReadOnly: true },
   { key: 'company', label: '会社名', placeholder: 'Career Carte Inc.', isReadOnly: true },
   { key: 'department', label: '部署', placeholder: 'Product Division' },
   { key: 'jobTitle', label: '職種', kind: 'select', options: JOB_TITLE_OPTIONS },

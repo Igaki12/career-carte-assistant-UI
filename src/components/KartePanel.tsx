@@ -136,12 +136,6 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
               <TabPanel px={0}>
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                   <Box>
-                    <Text {...labelTextProps}>メール</Text>
-                    <Text {...valueTextProps}>
-                      {data.demographics.email ?? '未入力'}
-                    </Text>
-                  </Box>
-                  <Box>
                     <Text {...labelTextProps}>氏名</Text>
                     <Text {...valueTextProps}>
                       {data.demographics.name ?? '未入力'}
@@ -151,6 +145,12 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                     <Text {...labelTextProps}>フリガナ</Text>
                     <Text {...valueTextProps}>
                       {data.demographics.nameKana ?? '未入力'}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text {...labelTextProps}>メール</Text>
+                    <Text {...valueTextProps}>
+                      {data.demographics.email ?? '未入力'}
                     </Text>
                   </Box>
                   <Box>

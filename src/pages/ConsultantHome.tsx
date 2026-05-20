@@ -45,6 +45,7 @@ import type { KarteData, SurveyFactorKey } from '../types';
 type ConsultantProfile = {
   id: string;
   name: string;
+  nameKana: string;
   company: string;
   department: string;
   title: string;
@@ -202,6 +203,7 @@ function ConsultantHome() {
     () => ({
       id: 'CNS-401',
       name: '佐藤 陽介',
+      nameKana: 'サトウ ヨウスケ',
       company: 'Career Carte Inc.',
       department: 'Career Consulting',
       title: '専門/資格（弁護士等）職',
@@ -601,8 +603,9 @@ function ConsultantHome() {
                     コンサルタント概要
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                    <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {profile.nameKana}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.title}</Text>
@@ -698,12 +701,16 @@ function ConsultantHome() {
                   <Box pt={4}>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
-                        <Text fontWeight="semibold">{profile.email}</Text>
-                      </Stack>
-                      <Stack spacing={0.5}>
                         <Text fontSize="sm" color="whiteAlpha.700">氏名</Text>
                         <Text fontWeight="semibold">{profile.name}</Text>
+                      </Stack>
+                      <Stack spacing={0.5}>
+                        <Text fontSize="sm" color="whiteAlpha.700">フリガナ</Text>
+                        <Text fontWeight="semibold">{profile.nameKana}</Text>
+                      </Stack>
+                      <Stack spacing={0.5}>
+                        <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
+                        <Text fontWeight="semibold">{profile.email}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
                         <Text fontSize="sm" color="whiteAlpha.700">会社 / 役職</Text>
@@ -786,8 +793,9 @@ function ConsultantHome() {
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
                     <Text fontSize="sm" color="whiteAlpha.900">ID: {selectedRecord.data.demographics.accountId ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">メール: {selectedRecord.data.demographics.email ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {selectedRecord.data.demographics.nameKana ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="whiteAlpha.900">メール: {selectedRecord.data.demographics.email ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">会社名: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">部署: {selectedRecord.data.demographics.department ?? '未入力'}</Text>
                     <Text fontSize="sm" color="whiteAlpha.900">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>

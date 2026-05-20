@@ -187,9 +187,9 @@ const buildCsvRows = ({ karte, meta }: KarteExportPayload): CsvRow[] => {
   ];
 
   const demographicsRows: Array<[string, string | null]> = [
-    ['メール', karte.demographics.email],
     ['氏名', karte.demographics.name],
     ['フリガナ', karte.demographics.nameKana],
+    ['メール', karte.demographics.email],
     ['会社名', karte.demographics.company],
     ['部署', karte.demographics.department],
     ['職種', karte.demographics.jobTitle],
@@ -489,9 +489,9 @@ const drawProfileSection = (page: CanvasPage, payload: KarteBatchExportPayload) 
   context.fillText('基 本 情 報', rightX, y + 104);
 
   const leftRows: Array<[string, string]> = [
-    ['メール', formatPlainValue(demographics.email)],
     ['氏名', formatPlainValue(demographics.name)],
     ['フリガナ', formatPlainValue(demographics.nameKana)],
+    ['メール', formatPlainValue(demographics.email)],
     ['会社名', formatPlainValue(demographics.company)],
     ['部署', formatPlainValue(demographics.department)],
     ['職種', formatPlainValue(demographics.jobTitle)],

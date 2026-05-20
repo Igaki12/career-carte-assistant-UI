@@ -268,13 +268,13 @@ function OperationsAdminHome() {
             <Stack spacing={4}>
               <Heading size="lg">横断ユーザー管理</Heading>
               <Text color="whiteAlpha.800">
-                ユーザーが所属している企業名を確認し、企業名・氏名・フリガナ・メール・職種で検索できます。
+                ユーザーが所属している企業名を確認し、氏名・フリガナ・メール・企業名・職種で検索できます。
               </Text>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="ID / 会社名 / 氏名 / フリガナ / メール / 部署 / 職種 で検索"
+                  placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 で検索"
                   bg="whiteAlpha.900"
                   color="gray.900"
                   _placeholder={{ color: 'gray.500' }}
@@ -297,11 +297,11 @@ function OperationsAdminHome() {
                 <Table variant="simple" size="md" minW="1120px">
                   <Thead bg="whiteAlpha.080">
                     <Tr>
-                      <Th><SortButton label="会社名" column="company" onSort={handleSort} /></Th>
                       <Th><SortButton label="ID" column="id" onSort={handleSort} /></Th>
                       <Th><SortButton label="氏名" column="name" onSort={handleSort} /></Th>
                       <Th><SortButton label="フリガナ" column="nameKana" onSort={handleSort} /></Th>
                       <Th><SortButton label="メール" column="email" onSort={handleSort} /></Th>
+                      <Th><SortButton label="会社名" column="company" onSort={handleSort} /></Th>
                       <Th><SortButton label="部署" column="department" onSort={handleSort} /></Th>
                       <Th><SortButton label="職種" column="jobTitle" onSort={handleSort} /></Th>
                       <Th><SortButton label="ステータス" column="status" onSort={handleSort} /></Th>
@@ -314,11 +314,11 @@ function OperationsAdminHome() {
                       const hasKarte = Boolean(employee.latestKarte);
                       return (
                         <Tr key={`${employee.tenantId}-${employee.id}`}>
-                          <Td fontWeight="semibold">{employee.company}</Td>
                           <Td>{employee.id}</Td>
                           <Td>{employee.name}</Td>
                           <Td>{employee.nameKana || '-'}</Td>
                           <Td>{employee.email}</Td>
+                          <Td fontWeight="semibold">{employee.company}</Td>
                           <Td>{employee.department || '-'}</Td>
                           <Td>{employee.jobTitle || '-'}</Td>
                           <Td>
