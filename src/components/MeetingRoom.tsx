@@ -15,8 +15,6 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Radio,
-  RadioGroup,
   SimpleGrid,
   Stack,
   Text,
@@ -56,7 +54,7 @@ import {
   SHIRP_DETAIL_PROMPT_HINTS,
   SHIRP_LABELS,
 } from '../lib/shirp';
-import { INITIAL_PROMPT_VARIANTS, SHIRP_KEYS } from '../types';
+import { SHIRP_KEYS } from '../types';
 import type {
   ContinuousMode,
   ConversationMessage,
@@ -258,13 +256,10 @@ const INITIAL_PROMPT_VARIANT_OPTIONS: readonly InitialPromptVariantOption[] = Ob
   },
 ]);
 
+const DEFAULT_INITIAL_PROMPT_VARIANT: InitialPromptVariant = 'front_light';
+
 const getInitialPromptVariantOption = (variant: InitialPromptVariant) =>
   INITIAL_PROMPT_VARIANT_OPTIONS.find((option) => option.value === variant) ?? INITIAL_PROMPT_VARIANT_OPTIONS[0];
-
-const normalizeInitialPromptVariant = (value: unknown): InitialPromptVariant =>
-  typeof value === 'string' && INITIAL_PROMPT_VARIANTS.includes(value as InitialPromptVariant)
-    ? (value as InitialPromptVariant)
-    : 'current';
 
 const formatDraftTimestamp = () =>
   new Date().toLocaleString('ja-JP', {
@@ -774,7 +769,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   const [hasPassedStartGate, setHasPassedStartGate] = useState(() =>
     getMeetingQuotaSummary(getDemoUsageQuota(resolveTenantId(loadDemoUserState())), meetingType).canStartMeeting,
   );
-  const [initialPromptVariant, setInitialPromptVariant] = useState<InitialPromptVariant>('current');
+  const [initialPromptVariant, setInitialPromptVariant] = useState<InitialPromptVariant>(DEFAULT_INITIAL_PROMPT_VARIANT);
   const [hasFinalizedInitial, setHasFinalizedInitial] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState<StageModelId>('sample');
   const [speechMotion, setSpeechMotion] = useState<SpeechMotionFrame>(createSilentSpeechMotion);
@@ -837,8 +832,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   );
   const initialProgressCountLabel = `${initialProgressCount} / ${INITIAL_REQUIRED_SHIRP_DETAIL_STEPS.length} 項目完了`;
   const canSubmitKarte = !isInitialMeeting || initialProgress >= 50;
-  const selectedInitialPromptVariantOption = getInitialPromptVariantOption(initialPromptVariant);
-
   const saveUserState = useCallback((nextState: DemoUserState) => {
     setUserState(nextState);
     saveDemoUserState(nextState);
@@ -1128,9 +1121,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setApiUsageCount(0);
       setConversationStarted(currentDraft.conversationStarted);
       setSessionStarted(true);
-      setInitialPromptVariant(
-        meetingType === 'initial' ? normalizeInitialPromptVariant(currentDraft.initialPromptVariant) : 'current',
-      );
+      setInitialPromptVariant(meetingType === 'initial' ? DEFAULT_INITIAL_PROMPT_VARIANT : 'current');
       setHasFinalizedInitial(meetingType === 'initial' ? currentDraft.hasFinalizedInitial === true : false);
       setFeedbackText(currentDraft.feedbackText);
     } else {
@@ -1149,7 +1140,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       setConversationStarted(false);
       setApiUsageCount(0);
       setSessionStarted(true);
-      setInitialPromptVariant('current');
+      setInitialPromptVariant(meetingType === 'initial' ? DEFAULT_INITIAL_PROMPT_VARIANT : 'current');
       setHasFinalizedInitial(false);
       setFeedbackText('');
     }
@@ -1898,13 +1889,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
     toast,
   ]);
 
-  const apiStatusLabel = openAiApiKey
-    ? geminiApiKey
-      ? 'OpenAI/Gemini Key: 設定済'
-      : 'OpenAI Key: 設定済 / Gemini Key: 未設定'
-    : 'OpenAI Key: 未設定';
-  const apiStatusColor = openAiApiKey ? 'green' : 'gray';
-
   useEffect(() => {
     if (hasPassedStartGate) {
       hasShownQuotaBlockToastRef.current = false;
@@ -1990,14 +1974,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Box>
                 </HStack>
                 <Flex align={{ base: 'flex-start', md: 'center' }} gap={3} wrap="wrap">
-                  <Badge colorScheme={apiStatusColor}>{apiStatusLabel}</Badge>
                   {!isInitialMeeting && (
                     <Badge colorScheme={continuousMode === 'turn' ? 'purple' : 'blue'}>
                       {continuousMode === 'turn' ? 'ターンテイキングモード (Realtime API・未実装)' : '通常モード'}
                     </Badge>
-                  )}
-                  {isInitialMeeting && hasUsedApi && (
-                    <Badge colorScheme="purple">プロンプト: {selectedInitialPromptVariantOption.label}</Badge>
                   )}
                   <Button size="sm" variant="outline" onClick={() => setApiModalOpen(true)} display="none">
                     API設定
@@ -2011,41 +1991,6 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Box>
                 )}
               </Flex>
-              {isInitialMeeting && !hasUsedApi && (
-                <Box w="full" mt={5} display="none">
-                  <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>
-                    初回面談プロンプト
-                  </Text>
-                  <RadioGroup
-                    value={initialPromptVariant}
-                    onChange={(value) => setInitialPromptVariant(normalizeInitialPromptVariant(value))}
-                  >
-                    <Stack spacing={2}>
-                      {INITIAL_PROMPT_VARIANT_OPTIONS.map((option) => (
-                        <Box
-                          key={option.value}
-                          cursor="pointer"
-                          borderWidth="1px"
-                          borderColor={initialPromptVariant === option.value ? 'purple.300' : 'gray.200'}
-                          bg={initialPromptVariant === option.value ? 'purple.50' : 'white'}
-                          px={3}
-                          py={2}
-                          onClick={() => setInitialPromptVariant(option.value)}
-                        >
-                          <Radio value={option.value} colorScheme="purple">
-                            <Text as="span" fontSize="sm" fontWeight="bold">
-                              {option.label}
-                            </Text>
-                          </Radio>
-                          <Text fontSize="xs" color="gray.600" mt={1} pl={6}>
-                            {option.description}
-                          </Text>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </RadioGroup>
-                </Box>
-              )}
               <Button mt={6} colorScheme="blue" size="md" w="full" onClick={() => setSessionStarted(true)} isDisabled={hasUsedApi} display="none">
                 {isInitialMeeting ? '初回面談を開始する' : '継続面談を開始する'}
               </Button>

@@ -34,6 +34,8 @@ const createEmptyShirp = (): KarteData['shirp'] => ({
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const getStringValue = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+
 const normalizeInitialPromptVariant = (value: unknown): InitialPromptVariant =>
   typeof value === 'string' && INITIAL_PROMPT_VARIANTS.includes(value as (typeof INITIAL_PROMPT_VARIANTS)[number])
     ? (value as InitialPromptVariant)
@@ -459,26 +461,67 @@ export const normalizeCompanyEmployees = (value: unknown): CompanyEmployeeRecord
                 : [],
             }))
         : [];
+      const id = getStringValue(employee.id) || `employee-${Date.now()}`;
+      const email = getStringValue(employee.email);
+      const demoAccount = demoAccounts.find((account) => account.id === id || account.email === email) ?? null;
+      const latestDemographics = latestKarte?.demographics ?? null;
+      const lastName = getStringValue(employee.lastName) || latestDemographics?.lastName || demoAccount?.lastName || '';
+      const firstName = getStringValue(employee.firstName) || latestDemographics?.firstName || demoAccount?.firstName || '';
+      const lastNameKana = getStringValue(employee.lastNameKana) || latestDemographics?.lastNameKana || demoAccount?.lastNameKana || '';
+      const firstNameKana = getStringValue(employee.firstNameKana) || latestDemographics?.firstNameKana || demoAccount?.firstNameKana || '';
+      const name = getStringValue(employee.name) || joinName(lastName, firstName) || latestDemographics?.name || demoAccount?.name || '未設定';
+      const nameKana =
+        getStringValue(employee.nameKana) ||
+        joinNameKana(lastNameKana, firstNameKana) ||
+        latestDemographics?.nameKana ||
+        demoAccount?.nameKana ||
+        '';
+      const normalizedEmail = email || latestDemographics?.email || demoAccount?.email || '';
+      const tenantId = getStringValue(employee.tenantId) || demoAccount?.tenantId || DEFAULT_TENANT_ID;
+      const company = getStringValue(employee.company) || latestDemographics?.company || demoAccount?.company || '';
+      const department = getStringValue(employee.department) || latestDemographics?.department || demoAccount?.department || '';
+      const jobTitle = getStringValue(employee.jobTitle) || latestDemographics?.jobTitle || demoAccount?.jobTitle || '';
+      const permission = getStringValue(employee.permission) || latestDemographics?.permission || demoAccount?.permission || '一般ユーザー';
+      const employeeDemographics: DemographicData = {
+        ...(latestDemographics ?? createEmptyDemographics()),
+        accountId: id,
+        name,
+        lastName,
+        firstName,
+        nameKana,
+        lastNameKana,
+        firstNameKana,
+        email: normalizedEmail,
+        company,
+        department,
+        jobTitle,
+        permission,
+      };
+      const normalizedLatestKarte = latestKarte ? applyDemographicsToKarte(latestKarte, employeeDemographics) : null;
+      const normalizedKarteRecords = karteRecords.map((record) => ({
+        ...record,
+        data: applyDemographicsToKarte(record.data, employeeDemographics),
+      }));
 
       return {
-        id: typeof employee.id === 'string' ? employee.id : `employee-${Date.now()}`,
-        tenantId: typeof employee.tenantId === 'string' ? employee.tenantId : DEFAULT_TENANT_ID,
-        name: typeof employee.name === 'string' ? employee.name : latestKarte?.demographics.name ?? '未設定',
-        lastName: typeof employee.lastName === 'string' ? employee.lastName : '',
-        firstName: typeof employee.firstName === 'string' ? employee.firstName : '',
-        nameKana: typeof employee.nameKana === 'string' ? employee.nameKana : '',
-        lastNameKana: typeof employee.lastNameKana === 'string' ? employee.lastNameKana : '',
-        firstNameKana: typeof employee.firstNameKana === 'string' ? employee.firstNameKana : '',
-        email: typeof employee.email === 'string' ? employee.email : '',
-        company: typeof employee.company === 'string' ? employee.company : latestKarte?.demographics.company ?? '',
-        department: typeof employee.department === 'string' ? employee.department : '',
-        jobTitle: typeof employee.jobTitle === 'string' ? employee.jobTitle : latestKarte?.demographics.jobTitle ?? '',
-        permission: typeof employee.permission === 'string' ? employee.permission : '一般ユーザー',
-        status: typeof employee.status === 'string' ? employee.status : latestKarte ? '完了' : '未作成',
-        latestKarte,
-        karteRecords,
-        createdAt: typeof employee.createdAt === 'string' ? employee.createdAt : '',
-        updatedAt: typeof employee.updatedAt === 'string' ? employee.updatedAt : '',
+        id,
+        tenantId,
+        name,
+        lastName,
+        firstName,
+        nameKana,
+        lastNameKana,
+        firstNameKana,
+        email: normalizedEmail,
+        company,
+        department,
+        jobTitle,
+        permission,
+        status: getStringValue(employee.status) || (normalizedLatestKarte ? '完了' : '未作成'),
+        latestKarte: normalizedLatestKarte,
+        karteRecords: normalizedKarteRecords,
+        createdAt: getStringValue(employee.createdAt),
+        updatedAt: getStringValue(employee.updatedAt),
       };
     });
 };
