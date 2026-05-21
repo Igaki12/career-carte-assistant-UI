@@ -7,7 +7,7 @@
 GitHub Pages デモ版を、以下の本番MVP構成へ移行する。
 
 - Hosting: XServer VPS
-- OS: Ubuntu 25.10 Questing Quokka
+- OS: Ubuntu 26.04 LTS
 - Frontend: React + Vite + Chakra UI + Three.js + @pixiv/three-vrm
 - Routing: React Router DOM + BrowserRouter
 - Backend: Node.js 24.x Active LTS + Express
@@ -21,15 +21,15 @@ GitHub Pages デモ版を、以下の本番MVP構成へ移行する。
 
 ## 2. 重要な前提
 
-### 2.1 Ubuntu 25.10 の扱い
+### 2.1 Ubuntu 26.04 LTS の扱い
 
-本番MVPはユーザー指定どおり Ubuntu 25.10 Questing Quokka で構築する。ただし Ubuntu 25.10 は非LTSであり、Ubuntu公式のリリース一覧では 2026年7月 EOL とされている。
+本番MVPは Ubuntu 26.04 LTS で構築する。Ubuntu公式のリリース一覧では、Ubuntu 26.04 LTS は 2026年4月23日リリース、標準サポートは 2031年5月まで、Legacy support は 2041年4月までとされている。
 
 運用ルール:
 
-- 2026年6月末までに Ubuntu 26.04 LTS への移行計画、検証、バックアップ、切替日を確定する。
-- 2026年7月 EOL 前に Ubuntu 26.04 LTS へ移行する。
-- 本ファイルのコマンドやリポジトリ指定は Ubuntu 25.10 用で固定する。26.04 LTS 移行時は OS 名、PGDG codename、依存パッケージを見直す。
+- 本ファイルのコマンドやリポジトリ指定は Ubuntu 26.04 LTS 用で固定する。
+- OS のマイナー更新、セキュリティ更新、Apache2 / Node.js / PostgreSQL の更新は、XServer VPS のイメージ保存と `pg_dump` を取得してから適用する。
+- 次期LTSやOS更新へ移行する場合は、OS 名、PGDG codename、依存パッケージ、systemd、Apache2 設定を見直す。
 
 参照:
 
@@ -95,12 +95,12 @@ VPS 本番MVPでは以下を置き換える。
 
 ### 3.3 OS / Middleware 導入方針
 
-Ubuntu 25.10 上で以下を標準にする。
+Ubuntu 26.04 LTS 上で以下を標準にする。
 
 - Node.js: 24.x Active LTS
 - PostgreSQL: 18.x
-- PostgreSQL apt repository: `questing-pgdg`
-- Apache2: Ubuntu 25.10 標準パッケージ
+- PostgreSQL apt repository: `resolute-pgdg`
+- Apache2: Ubuntu 26.04 LTS 標準パッケージ
 
 導入例:
 
@@ -111,7 +111,7 @@ curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt install -y nodejs
 sudo install -d /usr/share/postgresql-common/pgdg
 sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
-sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt questing-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt resolute-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 sudo apt update
 sudo apt install -y postgresql-18 postgresql-client-18
 ```
@@ -984,4 +984,4 @@ psql "$DATABASE_URL" -c "select 1;"
 - 企業API枠はテナント単位の `totalLimit`, `used`, `perMeetingTurnLimit` を正とする。
 - テナント境界とロール制御は必ずサーバー側で保証する。
 - 変更前バックアップは XServer VPS のイメージ保存と `pg_dump` を優先する。
-- Ubuntu 25.10 の EOL 前に Ubuntu 26.04 LTS へ移行する。
+- Ubuntu 26.04 LTS を前提にし、OS更新時は PGDG codename と依存パッケージを必ず見直す。
