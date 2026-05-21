@@ -16,7 +16,7 @@ export type DemoAuthLoginInput = {
   remember: boolean;
 };
 
-const SESSION_STORAGE_AUTH_KEY = 'cca-demo-auth-session';
+const DEMO_AUTH_SESSION_KEY = 'cca-demo-auth-session';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -54,21 +54,25 @@ const readStorage = (storage: Storage, key: string) => {
 
 export const loadDemoAuthSession = (): DemoAuthSession | null => {
   if (typeof window === 'undefined') return null;
-  window.localStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
-  return readStorage(window.sessionStorage, SESSION_STORAGE_AUTH_KEY);
+  return readStorage(window.sessionStorage, DEMO_AUTH_SESSION_KEY) ?? readStorage(window.localStorage, DEMO_AUTH_SESSION_KEY);
 };
 
 export const saveDemoAuthSession = (session: DemoAuthSession) => {
   if (typeof window === 'undefined') return;
   const serialized = JSON.stringify(session);
-  window.sessionStorage.setItem(SESSION_STORAGE_AUTH_KEY, serialized);
-  window.localStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
+  if (session.remember) {
+    window.localStorage.setItem(DEMO_AUTH_SESSION_KEY, serialized);
+    window.sessionStorage.removeItem(DEMO_AUTH_SESSION_KEY);
+    return;
+  }
+  window.sessionStorage.setItem(DEMO_AUTH_SESSION_KEY, serialized);
+  window.localStorage.removeItem(DEMO_AUTH_SESSION_KEY);
 };
 
 export const clearDemoAuthSession = () => {
   if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
-  window.sessionStorage.removeItem(SESSION_STORAGE_AUTH_KEY);
+  window.localStorage.removeItem(DEMO_AUTH_SESSION_KEY);
+  window.sessionStorage.removeItem(DEMO_AUTH_SESSION_KEY);
 };
 
 export const createDemoAuthSession = ({ accountId, role = 'user', tenantId, remember }: DemoAuthLoginInput): DemoAuthSession => ({

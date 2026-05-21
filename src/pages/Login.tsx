@@ -1,5 +1,6 @@
 import {
   Box,
+  Checkbox,
   Container,
   Flex,
   FormControl,
@@ -43,6 +44,7 @@ function Login({ session, onLogin }: LoginProps) {
   const toast = useToast();
   const [accountId, setAccountId] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
 
   useEffect(() => {
     if (!session) return;
@@ -78,7 +80,7 @@ function Login({ session, onLogin }: LoginProps) {
       password,
       role,
       tenantId,
-      remember: false,
+      remember,
     });
     saveDemoAuthSession(nextSession);
     const nextUserState = createEmptyDemoUserState();
@@ -200,6 +202,13 @@ function Login({ session, onLogin }: LoginProps) {
                     _placeholder={{ color: 'gray.500' }}
                   />
                 </FormControl>
+                <Checkbox
+                  isChecked={remember}
+                  onChange={(event) => setRemember(event.target.checked)}
+                  colorScheme="blue"
+                >
+                  常にログインした状態にしておく
+                </Checkbox>
                 <PrimaryButton type="submit" size="lg">
                   ログイン
                 </PrimaryButton>
