@@ -32,7 +32,7 @@ npm run build
   - 一般ユーザー、企業管理者、運用管理者、キャリアコンサルタント共通
   - メールアドレスでログイン
   - 利用条件モーダル、同意チェック、権限選択、システム管理者リンクは非表示
-  - ログイン維持チェックあり
+  - ログイン維持チェックは非表示
 - 管理者ログイン: `/#/admin/login`
   - システム管理者専用の別入口
   - 管理者画面であることを画面上に明示
@@ -56,12 +56,11 @@ npm run build
 
 ## Demo Storage
 
-GitHub Pagesデモ版ではバックエンドの代わりにブラウザ保存を使います。
+GitHub Pagesデモ版では本番DBを未接続のため一部だけブラウザ保存を使います。アカウント、権限、企業、テナント、従業員一覧などの疑似DBは `demo-accounts.json` とコード上の初期定義から組み立てます。
 
-- `cca-demo-user-state`: プロフィール、カルテ、下書き、テナント、企業管理者用従業員データなど
-- `cca-demo-auth-session`: ダミー認証セッション
-  - 「常にログインした状態にしておく」ON: `localStorage`
-  - OFF: `sessionStorage`
+- `cca-demo-user-state`: 詳細プロフィール、最新カルテ1件、未完了面談の下書きなど、動作確認に必要なユーザー生成データだけを最小保存
+- `cca-demo-auth-session`: ダミー認証セッション。`sessionStorage` にだけ保存し、`localStorage` には残さない
+- `cca-openai-api-key` / `cca-gemini-api-key`: 動作確認用APIキー。旧 `cca-api-key` は互換対象外
 
 企業API使用枠・会話ターン制限は `src/lib/demoUsageQuota.ts` のテナント別メモリ状態を正とし、システム管理者画面で企業単位に変更します。リロード時はデフォルト値へ戻ります。
 

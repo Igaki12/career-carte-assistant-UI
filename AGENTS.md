@@ -74,7 +74,7 @@
 ### 3.1 初回面談ページ（`/app/initial`）
 - 目的: SHIRPベースのカルテを作成。
 - 表示: 画面タイトルは `面談ルーム`、説明文は `キャリアに関連したヒアリングを実施し、カルテを作成します。※所要想定時間10〜30分程度` とする。
-- 初期版ではAPIキー設定、API状態、プロンプト選択、開始ボタンなど開発者向けUIは表示しない。面談プロンプトは全カルテを埋める初回面談用のものを通常導線の正とする。
+- 初期版ではAPIキー設定、API状態、プロンプト選択、開始ボタンなど開発者向けUIは表示しない。面談プロンプトは `front_light`（前半軽量）を通常導線の正とし、S/Hを詰めすぎずI/Rまで同じ粒度で記録しやすい進行を標準にする。他のプロンプト定義は将来比較・再利用用に保持するが、現時点の通常UIでは切り替えさせない。
 - 事前条件: プロフィール未設定かつ `demographicsSkipped` が false の場合は `/user/demographics?returnTo=/app/initial` へ誘導する。デモ用スキップ済みの場合は初回面談へ進める。
 - 制御: 大分類は `S -> H -> I -> R` の順を維持するが、実際の進行単位は二段目の詳細要約ごとの固定順とする。初回の必須ステップは `S.externalConditions -> S.jobContent -> S.relationshipsAndOrgFit -> S.selfEvaluationAndAcceptance -> H.treatmentPreferences -> H.workPreferences -> H.workStylePreferences -> H.selfRealizationPreferences -> I.capabilityExperienceIssues -> I.healthLifeConstraints -> I.psychologicalIssues -> I.organizationalEnvironmentalConstraints -> R.capabilityResources -> R.interpersonalResources -> R.psychologicalResources -> R.environmentalResources -> R.fitResources` とする。三段目の具体項目は会話から自然に抽出できる場合だけ補記し、未入力でも完了条件には含めない。`#` は引き続き自由記述として扱う。
 - 通信: MediaRecorder -> Whisper(STT) -> GPT-4o -> TTS-1。
@@ -240,7 +240,7 @@
 5. 面談時コンディション
 - 初期版ではUserHome上のチェック開始ボタンとAuthNavigationの導線を出さない。企業管理者画面でもコンディション測定件数と緊張度スコア表示は非表示にする。システム管理者画面の企業別設定は将来接続用の管理項目として維持する。
 - 現時点では顔分析アプリ本体は未統合とし、`/user/condition-check` でダミーの緊張度スコアを保存する。
-- 保存データは `conditionRecords` に履歴として保持し、最新値を `latestKarte.conditionSummary` に反映する。
+- デモ版では `conditionRecords` を localStorage 上の業務データベースとして永続化しない。画面確認用の一時状態として扱い、カルテが存在する場合のみ最新値を `latestKarte.conditionSummary` に反映する。
 - `conditionSummary` は `score`, `level`, `measuredAt`, `source: 'demo'`, `consentVersion` を持つ。
 - 生の顔画像・動画は保存しない。
 - 表示は企業別 `featureFlags.stressAnalysisEnabled` が true の場合だけ行う。
@@ -311,62 +311,32 @@ const AI_RESPONSE_GUIDELINES = `
 `;
 ```
 
-### 6.3 初回面談プロンプト（buildInitialPrompt 実文字列）
+### 6.3 初回面談プロンプト（variant方式）
+
+初回面談プロンプトは `src/components/MeetingRoom.tsx` の variant 定義で保持する。現時点の通常導線では `front_light`（前半軽量）だけを使い、その他の variant は将来比較・再利用用に残す。
 
 ```ts
-const buildInitialPrompt = (karte: KarteData, nextStep: InitialDetailStep | null) => {
-  const currentCategory = nextStep?.category ?? 'S';
-  const currentField = nextStep?.field;
-  const followingStep = getFollowingInitialDetailStep(nextStep);
-  const currentStepLabel = currentField
-    ? getInitialDetailStepLabel(currentCategory, currentField)
-    : 'P. 計画生成と全体整理';
-  const currentPromptHint = currentField
-    ? (SHIRP_DETAIL_PROMPT_HINTS[currentCategory] as Record<string, string>)[currentField]
-    : '全体要約と計画生成';
-  const followingStepLabel =
-    followingStep ? getInitialDetailStepLabel(followingStep.category, followingStep.field) : 'P. 計画生成と全体整理';
-  return `
-あなたは経験豊富なキャリアメンターです。初回面談ではSHIRP形式のうち、S→H→I→Rの順で詳細項目を1つずつ埋めます。
+const DEFAULT_INITIAL_PROMPT_VARIANT: InitialPromptVariant = 'front_light';
 
-# SHIRPガイド
-${SHIRP_GUIDE}
-
-${buildDemographicPromptContext(karte)}
-
-# 現在のカルテ(SHIRP)
-${JSON.stringify(karte.shirp, null, 2)}
-
-# 現在のカルテ(SHIRP詳細)
-${JSON.stringify(karte.shirpDetails, null, 2)}
-
-# 今回フォーカスする詳細項目
-- 項目: ${currentStepLabel}
-- 確認したい内容: ${currentPromptHint}
-
-# この項目が十分に埋まった場合に次に聞く候補
-- ${followingStepLabel}
-
-${AI_RESPONSE_GUIDELINES}
-
-# 指示
-1. ユーザーの発話から情報を抽出し、updated_shirp でトップレベル要約を、updated_shirp_details で二段目要約と分かる範囲の三段目項目を更新してください。
-2. 以前のテンポの良い面談のように、reply は「短い受け止め + すぐ次の1問」で構成してください。冗長なまとめ、前置き、励まし、次回予告は不要です。
-3. 今回の「${currentStepLabel}」が今回の発話で十分に埋まる場合は、reply の最後で次の候補「${followingStepLabel}」について自然に1問だけ聞いてください。
-4. 今回の「${currentStepLabel}」がまだ不十分な場合だけ、同じ項目を追加で1問深掘りしてください。
-5. is_complete は、必須詳細項目17件の二段目要約がすべて埋まり、P(計画)を生成した時だけ true にしてください。それまでは false にしてください。
-6. 必須詳細項目がすべて埋まった場合は、P(計画)のトップレベル要約と詳細計画を生成し、面談のまとめを返してください。
-7. 6の完了時は、カルテ確認と保存完了まで案内してください。具体的には「カルテ内容を確認し、問題なければ『このカルテを保存』を押して初回面談を終了してください。保存後はユーザホームに戻ります。」という趣旨を reply に含めてください。
-8. トップレベルの S/H/I/R は、詳細項目を踏まえた短い要約文にしてください。
-9. 三段目項目は会話から自然に読み取れるものだけ埋め、判断できないものは null のままにしてください。S〜Pに当てはまらない内容は#に記録してください。
-10. reply は原則2文以内、かつ最後は必ず1つの質問文で終えてください。完了時の保存案内だけはこの制約の例外です。
-11. 「次回の面談で」「後ほど」「この調子で」「引き続きよろしくお願いします」など、流れを止める定型文は使わないでください。
-12. response_format の JSON Schema に厳密に従って出力してください。reply にはユーザーに見せる自然な返答だけを書いてください。
-13. reply に JSON 断片、キー名(updated_shirp / updated_shirp_details / is_complete / feedback)、補足説明は含めないでください。
-14. デモグラフィックは既知情報として理解しつつ、断定や過剰な言及は避けてください。既知のプロフィール情報と矛盾しない前提で応答し、不足分は自然に確認してください。
-`.trim();
-};
+const INITIAL_PROMPT_VARIANT_OPTIONS: Array<{
+  value: InitialPromptVariant;
+  label: string;
+  description: string;
+  buildInstructions: InitialPromptInstructionBuilder;
+}> = [
+  {
+    value: 'front_light',
+    label: '前半軽量',
+    description: 'S/Hを詰めすぎず、I/Rまで同じ粒度で記録しやすくします。',
+    buildInstructions: buildFrontLightInitialPromptInstructions,
+  },
+  // current / late_focus / coverage_first は将来用に保持するが、初期版UIでは選択させない。
+];
 ```
+
+- `front_light` は `buildFrontLightInitialPromptInstructions` を使い、S/Hで過度に深掘りしすぎず、I/Rまで会話を進めやすい粒度にする。
+- 画面上には APIキー状態バッジ、プロンプト名バッジ、プロンプト選択UIを表示しない。
+- 応答生成は引き続き Structured Outputs の JSON Schema に厳密に従わせ、`reply` にはユーザーに見せる自然文だけを返す。
 
 ### 6.4 継続面談プロンプト（buildContinuousPrompt 実文字列）
 
@@ -440,13 +410,13 @@ ${AI_RESPONSE_GUIDELINES}
 - デモ版クォータ管理: 現時点ではDBを使わず、`src/lib/demoUsageQuota.ts` のテナント別メモリ状態を正とする。システム管理者画面 `/admin` からのみ更新でき、CompanyAdminHome、UserHome、MeetingRoomへ同一SPAセッション内で同期する。ページリフレッシュ時はデフォルト値（企業API総回数1000回、使用済み0回、面談1回あたり最大100ターン）へ戻る。
 - 面談回数消費: 実際に面談画面で最初のテキスト送信または音声送信を行った時点で、該当面談種別の使用済み回数を1増やす。誤クリックや面談画面を開いただけでは消費しない。同一面談セッション内で2通目以降を送っても追加消費しない。
 - 残数0回時のブロック: 残り0回の場合は、UserHomeの開始操作とMeetingRoom直アクセスの両方で開始不可とし、必ず原因が分かる toast を表示する。
-- テナント管理: デモ版では企業を `tenants` として扱い、現在ユーザーは `tenantId` で所属企業に紐づく。既存データに `tenantId` がない場合はデフォルトテナントへ正規化する。
-- 企業別機能フラグ: `featureFlags` で `stressAnalysisEnabled`, `turnTakingEnabled`, `lightThemeEnabled` を保持する。現時点でUI切替対象は `stressAnalysisEnabled`。
+- テナント管理: デモ版では企業・テナント情報を `demo-accounts.json` とコード上の初期定義から組み立て、現在ユーザーは `tenantId` で所属企業に紐づく。`tenants` は localStorage の正データとして保存しない。
+- 企業別機能フラグ: `stressAnalysisEnabled`, `turnTakingEnabled`, `lightThemeEnabled` などの企業別機能フラグはコード上の初期定義または本番DB由来の情報として扱う。現時点でUI切替対象は `stressAnalysisEnabled` だが、localStorage の `featureFlags` を正データとして保存しない。
 - 管理者画面: `/admin` では企業別オプション管理から、各テナントの企業API総回数、企業API使用済み回数、面談1回あたり最大ターン数、`stressAnalysisEnabled` を切り替えられる。
 - システム管理者のユーザー管理: 氏名・フリガナは分割項目で追加/編集し、一覧では結合した `氏名` と `フリガナ` を表示・検索・ソート対象にする。CSV一括追加の想定ヘッダーは `ID, LastName, FirstName, LastNameKana, FirstNameKana, Email, Company, Permission` を基本とする。職種を扱う場合は `JobTitle` を追加し、`src/lib/jobTitles.ts` の候補から選択・正規化する。
 - システム管理者の企業管理: 企業テナントごとに企業ID、企業名、残面談可能数、キャリアカルテ総作成数、ステータス、企業API総回数、企業API使用済み回数、面談1回あたり最大ターン数を確認・管理する。企業作成・削除、Inactive企業のログイン不可制御は本番DB接続時の拡張対象とする。
 - 企業管理者画面: `/company-admin` では自社テナントの企業API使用状況、残り面談回数、面談1回あたり最大ターン数を確認できるが、企業API項目と企業別オプションは変更できない。加えて、自社テナントの従業員カルテを検索・並び替え・一括選択し、個別/一括PDF出力と個別/一括印刷を行える。初期版では個人別の顔分析・緊張度詳細、コンディション測定件数、緊張度スコア表示、パスワード通知文一覧、社員登録画面を表示しない。
-- 企業管理者用従業員データ: デモ版では `companyEmployees` に保存し、`getCompanyAdminEmployees(state, tenantId)` で現在テナントの従業員のみ取得する。現在のデモユーザー `DEFAULT_DEMO_USER_ID` は `latestKarte` / `karteRecords` から動的に従業員一覧へ反映し、重複保存しない。
+- 企業管理者用従業員データ: デモ版では `demo-accounts.json` と初期定義から従業員一覧を再生成し、`getCompanyAdminEmployees(state, tenantId)` で現在テナントの従業員のみ取得する。`companyEmployees` は localStorage の正データとして保存しない。現在ユーザーの最新カルテや下書きは必要な範囲だけ動的に一覧へ反映し、重複保存しない。
 - カルテ出力: 一般ユーザーのCSV/PDFは最新カルテ1件を対象とし、ユーザーIDは出力しない。企業管理者画面では選択した従業員カルテを1つの結合PDFとして一括出力でき、印刷時も選択カルテを印刷用ページにまとめる。カルテ未作成ユーザーは出力対象からスキップし、toastで件数を通知する。
 - ログイン認証: 通常ログインはメールアドレスとパスワードによる標準ログインへ移行する方針。現時点では `/login` と `/admin/login` のダミー認証を使い、通常ログインは `demo-accounts.json` の `email` 完全一致を優先し、任意のパスワードで認証を通す。管理者ログインは別入口で管理者ID入力を残す。デモ版の再設定・一時パスワード発行は画面確認用で、VPS/本番ではDB・サーバー側セッション・ロール/テナント制御・パスワード検証に置き換える。
 - コンサルタント向けシミュレータ: 一般ユーザー向け機能の後続で追加開発予定。
