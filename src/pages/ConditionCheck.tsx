@@ -69,26 +69,26 @@ function ConditionCheck() {
   };
 
   return (
-    <Box minH="100dvh" bgGradient="linear(to-br, gray.50, orange.50, gray.100)" py={{ base: 8, md: 12 }}>
+    <Box minH="100dvh" bgGradient="linear(to-br, rgba(232, 243, 248, 0.84), orange.50, rgba(22, 94, 131, 0.08))" py={{ base: 8, md: 12 }}>
       <Container maxW="3xl">
         <Stack spacing={6}>
           <Stack spacing={2}>
             <Heading size="lg">面談前コンディションチェック</Heading>
-            <Text color="gray.600">
+            <Text color="#3f6678">
               この機能は表情から面談前後の緊張傾向を参考値として表示する想定のデモです。医療・心理診断ではありません。
             </Text>
           </Stack>
 
-          <Box bg="white" borderRadius="xl" borderWidth="1px" borderColor="orange.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
+          <Box bg="#fbfdfe" borderRadius="xl" borderWidth="1px" borderColor="orange.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
             <Stack spacing={5}>
               <Stack spacing={2}>
-                <Badge alignSelf="flex-start" colorScheme={stressEnabled ? 'orange' : 'gray'}>
+                <Badge alignSelf="flex-start" colorScheme={stressEnabled ? 'orange' : 'cyan'}>
                   {stressEnabled ? '契約オプション有効' : '契約オプション未有効'}
                 </Badge>
-                <Text fontSize="sm" color="gray.600">
+                <Text fontSize="sm" color="#3f6678">
                   顔画像・動画は保存しません。現時点では実測せず、ダミースコアは画面確認用の一時状態として扱います。
                 </Text>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color="#66889a">
                   直近の測定: {latestCondition ? `${latestCondition.score} / 100 (${latestCondition.level})` : '未測定'}
                   {' / '}
                   {formatMeasuredAt(latestCondition?.measuredAt)}
@@ -96,8 +96,8 @@ function ConditionCheck() {
               </Stack>
 
               {!stressEnabled ? (
-                <Box borderWidth="1px" borderRadius="lg" bg="gray.50" borderColor="gray.200" p={4}>
-                  <Text fontSize="sm" color="gray.600">
+                <Box borderWidth="1px" borderRadius="lg" bg="rgba(232, 243, 248, 0.84)" borderColor="rgba(22, 94, 131, 0.18)" p={4}>
+                  <Text fontSize="sm" color="#3f6678">
                     現在の企業では面談前コンディションチェックが無効です。管理画面または企業管理者画面で有効化できます。
                   </Text>
                 </Box>

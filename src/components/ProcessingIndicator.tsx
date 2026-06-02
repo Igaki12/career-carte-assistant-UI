@@ -24,13 +24,13 @@ type Props = {
 const ProcessingIndicator = ({ message }: Props) => {
   if (!message) return null;
   return (
-    <HStack spacing={3} py={2} px={4} bg="gray.50" borderTopWidth="1px" borderColor="gray.100">
+    <HStack spacing={3} py={2} px={4} bg="rgba(232, 243, 248, 0.84)" borderTopWidth="1px" borderColor="rgba(22, 94, 131, 0.08)">
       <HStack spacing={1}>
         <Dot delay={0} />
         <Dot delay={0.2} />
         <Dot delay={0.4} />
       </HStack>
-      <Text fontSize="sm" color="gray.600">
+      <Text fontSize="sm" color="#3f6678">
         {message}
       </Text>
     </HStack>

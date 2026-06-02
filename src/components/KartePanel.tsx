@@ -88,7 +88,7 @@ const valueBoxProps = (hasValue: boolean) => ({
   fontStyle: hasValue ? 'normal' : 'italic',
   minH: '56px',
   whiteSpace: 'pre-wrap' as const,
-  boxShadow: hasValue ? 'inset 3px 0 0 rgba(100, 116, 139, 0.34)' : 'none',
+  boxShadow: hasValue ? 'inset 3px 0 0 rgba(61, 121, 150, 0.34)' : 'none',
 });
 
 const KartePanel = ({ data, showCondition = false }: Props) => {
@@ -98,7 +98,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
 
   return (
     <Box
-      bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 46%, rgba(226, 232, 240, 0.92) 100%)"
+      bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 248, 0.96) 46%, rgba(214, 230, 238, 0.92) 100%)"
       color={lightText}
       borderRadius="0"
       borderWidth="1px"
@@ -115,7 +115,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
         position: 'absolute',
         inset: 0,
         pointerEvents: 'none',
-        bg: 'radial-gradient(circle at 84% 10%, rgba(148, 163, 184, 0.18), transparent 30%)',
+        bg: 'radial-gradient(circle at 84% 10%, rgba(22, 94, 131, 0.18), transparent 30%)',
         opacity: 0.85,
       }}
     >
@@ -273,7 +273,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                   {isShirpDetailCategoryKey(key) && (
                     <Accordion allowToggle mt={2}>
                       <AccordionItem borderWidth="1px" borderColor={lightBorder} borderRadius="0" bg={lightPanelSubtleBg}>
-                        <AccordionButton px={3} py={2} _hover={{ bg: 'gray.100' }}>
+                        <AccordionButton px={3} py={2} _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}>
                           <Box flex="1" textAlign="left">
                             <Text fontSize="xs" fontWeight="bold" color={lightMutedText}>
                               詳細を確認
@@ -384,8 +384,8 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                 <SurveyRadar
                   labels={Object.values(SURVEY_LABELS)}
                   values={surveyScores}
-                  labelColor="#334155"
-                  labelStroke="#ffffff"
+                  labelColor="#2c7798"
+                  labelStroke="#fbfdfe"
                 />
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                   {Object.entries(SURVEY_LABELS).map(([key, label]) => (

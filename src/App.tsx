@@ -61,7 +61,7 @@ function App() {
   };
 
   return (
-    <Box minH="100vh" bg="gray.50">
+    <Box minH="100vh" bg="rgba(232, 243, 248, 0.84)">
       <Routes>
         <Route path="/login" element={<Login session={session} onLogin={setSession} />} />
         <Route path="/admin/login" element={<AdminLogin session={session} onLogin={setSession} />} />

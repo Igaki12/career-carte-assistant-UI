@@ -90,20 +90,20 @@ const formFieldSurfaceProps = {
 
 const readOnlyFieldSurfaceProps = {
   bg: lightPanelSubtleBg,
-  color: 'gray.700',
-  borderColor: 'rgba(148, 163, 184, 0.46)',
+  color: '#315f76',
+  borderColor: 'rgba(22, 94, 131, 0.46)',
   cursor: 'default',
   opacity: 1,
-  _placeholder: { color: 'gray.400' },
+  _placeholder: { color: '#8aa7b5' },
   _readOnly: {
     bg: lightPanelSubtleBg,
-    color: 'gray.700',
-    borderColor: 'rgba(148, 163, 184, 0.46)',
+    color: '#315f76',
+    borderColor: 'rgba(22, 94, 131, 0.46)',
   },
-  _hover: { borderColor: 'rgba(100, 116, 139, 0.50)' },
+  _hover: { borderColor: 'rgba(61, 121, 150, 0.50)' },
   _focus: {
     bg: lightPanelSubtleBg,
-    borderColor: 'rgba(100, 116, 139, 0.50)',
+    borderColor: 'rgba(61, 121, 150, 0.50)',
     boxShadow: 'none',
   },
 } as const;
@@ -345,13 +345,13 @@ function DemographicsSetup() {
         alignItems="center"
         justifyContent="center"
         overflow="hidden"
-        bg="gray.50"
+        bg="rgba(232, 243, 248, 0.84)"
       >
         <Box
           position="absolute"
           w={{ base: '180vw', md: '120vw' }}
           h={{ base: '180vw', md: '120vw' }}
-          bgGradient="linear(45deg, #ffffff, #f1f5f9, #e2e8f0, #f8fafc)"
+          bgGradient="linear(45deg, #fbfdfe, #e7f1f6, #d6e6ee, #e8f3f8)"
           opacity={0.9}
           animation={`${waveDeform1} 6s linear infinite`}
           filter="blur(60px)"
@@ -360,7 +360,7 @@ function DemographicsSetup() {
           position="absolute"
           w={{ base: '160vw', md: '100vw' }}
           h={{ base: '160vw', md: '100vw' }}
-          bgGradient="linear(-45deg, #ffffff, #e5e7eb, #f8fafc, #cbd5e1)"
+          bgGradient="linear(-45deg, #fbfdfe, #d6e6ee, #e8f3f8, #74a4bb)"
           opacity={0.72}
           animation={`${waveDeform2} 8s linear infinite`}
           filter="blur(70px)"
@@ -369,7 +369,7 @@ function DemographicsSetup() {
           position="absolute"
           w="100vw"
           h="100vh"
-          bg="rgba(255,255,255,0.34)"
+          bg="rgba(247,251,253,0.34)"
           sx={{ backdropFilter: 'blur(30px)' }}
         />
       </Box>
@@ -388,12 +388,12 @@ function DemographicsSetup() {
             <Stack spacing={3}>
               <Heading
                 size="lg"
-                bgGradient="linear(110deg, #111827, #475569, #0f172a, #64748b)"
+                bgGradient="linear(110deg, #0f3f5a, #165e83, #0f3f5a, #5d9bb5)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(15, 23, 42, 0.12)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
                   animation: 'demographicsTitleGradient 12s ease-in-out infinite',
                   '@keyframes demographicsTitleGradient': {
                     '0%': { backgroundPosition: '0% 50%' },
@@ -468,10 +468,10 @@ function DemographicsSetup() {
                 </SimpleGrid>
 
                 <Stack direction={{ base: 'column', sm: 'row' }} justify="flex-end" spacing={3}>
-                  <Button variant="outline" color={lightText} borderColor="gray.300" _hover={{ bg: 'gray.100' }} onClick={() => navigate(returnTo)}>
+                  <Button variant="outline" color={lightText} borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={() => navigate(returnTo)}>
                     キャンセル
                   </Button>
-                  <Button variant="ghost" color={lightText} _hover={{ bg: 'gray.100' }} onClick={handleSkipForDemo}>
+                  <Button variant="ghost" color={lightText} _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={handleSkipForDemo}>
                     デモ用にスキップして進む
                   </Button>
                   <PrimaryButton onClick={handleSave}>

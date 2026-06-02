@@ -1901,13 +1901,13 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
   if (!hasPassedStartGate) {
     return (
-      <Box bg="gray.100" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-        <Box maxW="640px" mx="auto" bg="white" borderRadius="2xl" borderWidth="1px" borderColor="gray.200" boxShadow="sm" p={{ base: 6, md: 8 }}>
+      <Box bg="rgba(22, 94, 131, 0.08)" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
+        <Box maxW="640px" mx="auto" bg="#fbfdfe" borderRadius="2xl" borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" boxShadow="sm" p={{ base: 6, md: 8 }}>
           <Stack spacing={4}>
             <Heading size="md">
               企業のAPI残枠が不足しています
             </Heading>
-            <Text color="gray.600">
+            <Text color="#3f6678">
               面談開始には企業API残枠が{meetingQuota.perMeetingTurnLimit}回以上必要です。現在の使用状況は
               {meetingQuota.usageLabel}、残枠は{meetingQuota.remaining}回です。
             </Text>
@@ -1921,7 +1921,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }
 
   return (
-    <Box bg="gray.100" minH="100dvh" h="100dvh" py={{ base: 4, md: 6 }} px={{ base: 3, md: 6 }} overflow="hidden">
+    <Box bg="rgba(22, 94, 131, 0.08)" minH="100dvh" h="100dvh" py={{ base: 4, md: 6 }} px={{ base: 3, md: 6 }} overflow="hidden">
       <ApiKeyModal
         isOpen={isApiModalOpen}
         openAiApiKey={openAiApiKey}
@@ -1946,10 +1946,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             gap={4}
           >
             <Box
-              bg="white"
+              bg="#fbfdfe"
               borderRadius="2xl"
               borderWidth="1px"
-              borderColor="gray.200"
+              borderColor="rgba(22, 94, 131, 0.18)"
               boxShadow="sm"
               p={{ base: 4, md: 6 }}
               display={!hasUsedApi ? 'block' : { base: 'none', md: 'block' }}
@@ -1962,7 +1962,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                     <Text fontWeight="bold" fontSize="lg">
                       面談ルーム
                     </Text>
-                    <Text fontSize="sm" color="gray.500">
+                    <Text fontSize="sm" color="#66889a">
                       キャリアに関連したヒアリングを実施し、カルテを作成します。※所要想定時間10〜30分程度
                     </Text>
                   </Box>
@@ -2010,10 +2010,10 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             display={hasUsedApi ? 'flex' : { base: 'none', md: 'flex' }}
           >
             <Box
-              bg="white"
+              bg="#fbfdfe"
               borderRadius="2xl"
               borderWidth="1px"
-              borderColor="gray.200"
+              borderColor="rgba(22, 94, 131, 0.18)"
               boxShadow="lg"
               display="flex"
               flexDirection="column"
@@ -2022,7 +2022,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               overflow="hidden"
             >
               {isTurnTakingMode ? (
-                <Box flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="gray.50">
+                <Box flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="rgba(232, 243, 248, 0.84)">
                   <Stack spacing={3}>
                     <Box bg="purple.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="purple.200">
                       <Text fontSize="xs" color="purple.700">
@@ -2033,14 +2033,14 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Stack>
                 </Box>
               ) : (
-                <Box ref={chatContainerRef} flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="gray.50">
+                <Box ref={chatContainerRef} flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="rgba(232, 243, 248, 0.84)">
                   {messages.map((message, index) => {
                     const isUser = message.role === 'user';
                     return (
                       <Flex key={`${message.role}-${index}-${message.content.slice(0, 8)}`} justify={isUser ? 'flex-end' : 'flex-start'} mb={3}>
                         <Box
                           bg={isUser ? 'blue.600' : 'white'}
-                          color={isUser ? 'white' : 'gray.800'}
+                          color={isUser ? 'white' : '#1f4f68'}
                           borderRadius="2xl"
                           borderTopRightRadius={isUser ? '0' : '2xl'}
                           borderTopLeftRadius={isUser ? '2xl' : '0'}
@@ -2059,7 +2059,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                 </Box>
               )}
               <ProcessingIndicator message={processingText} />
-              <Box borderTopWidth="1px" borderColor="gray.100" p={4}>
+              <Box borderTopWidth="1px" borderColor="rgba(22, 94, 131, 0.08)" p={4}>
                 <Stack spacing={3}>
                   {isTurnTakingMode ? (
                     <Flex gap={3} align="center" justify="center">
@@ -2073,7 +2073,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                         minW="56px"
                         h="56px"
                       />
-                      <Text fontSize="sm" color="gray.600">
+                      <Text fontSize="sm" color="#3f6678">
                         マイクで話すと自動で送信されます（残り{remainingMessages}回）
                       </Text>
                     </Flex>
@@ -2096,8 +2096,8 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                           onChange={(e) => setTextValue(e.target.value)}
                           placeholder={textareaPlaceholder}
                           borderRadius="xl"
-                          bg="white"
-                          borderColor="gray.200"
+                          bg="#fbfdfe"
+                          borderColor="rgba(22, 94, 131, 0.18)"
                           resize="none"
                           rows={isTextareaExpanded ? 6 : 2}
                           flex="1"
@@ -2115,7 +2115,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                           icon={<FaUpDown />}
                           onClick={toggleTextareaExpanded}
                           variant="solid"
-                          colorScheme="gray"
+                          colorScheme="cyan"
                           opacity={0.6}
                           _hover={{ opacity: 0.9 }}
                           size="sm"
@@ -2164,7 +2164,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       </Flex>
 
       <Modal isOpen={isKarteModalOpen} onClose={handleCloseKarteModal} size="xl" scrollBehavior="inside" isCentered>
-        <ModalOverlay bg="gray.300" backdropFilter="blur(4px)" />
+        <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(4px)" />
         <ModalContent borderRadius="2xl" mx={{ base: 3, md: 0 }} maxH="90dvh" display="flex" flexDirection="column">
           <ModalHeader>
             <Flex align="center" justify="left" gap={3} wrap="wrap">
@@ -2177,7 +2177,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                 </Badge>
               )}
             </Flex>
-            <Text fontSize="sm" color="gray.500" mt={1}>
+            <Text fontSize="sm" color="#66889a" mt={1}>
               作成されたカルテをスクロールしながら確認してください
             </Text>
           </ModalHeader>
@@ -2213,7 +2213,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
           </ModalFooter>
           {isInitialMeeting && !canSubmitKarte && (
             <Box px={6} pb={4}>
-              <Text fontSize="xs" color="gray.500">
+              <Text fontSize="xs" color="#66889a">
                 初回カルテの正式保存には50%以上の完成が必要です。現在は{initialProgress}%のため、一時保存して中断してください。
               </Text>
             </Box>

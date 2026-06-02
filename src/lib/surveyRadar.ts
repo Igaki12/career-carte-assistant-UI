@@ -3,7 +3,7 @@ export const SURVEY_RADAR_COLORS = {
   fillStart: '#7dd3fc',
   fillEnd: '#38bdf8',
   stroke: '#0ea5e9',
-  label: '#475569',
+  label: '#165e83',
 } as const;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);

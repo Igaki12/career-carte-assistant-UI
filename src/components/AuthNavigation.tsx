@@ -156,7 +156,7 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                     size="sm"
                     variant="ghost"
                     color={lightText}
-                    _hover={{ bg: 'gray.100' }}
+                    _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}
                     onClick={() => setIsOpen(false)}
                   />
                 </Flex>
@@ -184,11 +184,11 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                         justifyContent="flex-start"
                         leftIcon={item.icon}
                         variant={isActive ? 'solid' : 'ghost'}
-                        bg={isActive ? 'gray.200' : 'transparent'}
+                        bg={isActive ? 'rgba(22, 94, 131, 0.18)' : 'transparent'}
                         color={lightText}
                         borderWidth="1px"
                         borderColor={isActive ? lightBorderStrong : 'transparent'}
-                        _hover={{ bg: 'gray.100', borderColor: lightBorder }}
+                        _hover={{ bg: 'rgba(22, 94, 131, 0.08)', borderColor: lightBorder }}
                         onClick={() => handleNavigate(item.to)}
                       >
                         {item.label}
@@ -229,17 +229,17 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 borderWidth="1px"
                 borderColor={lightBorderStrong}
                 borderRadius="2px"
-                boxShadow="0 14px 34px rgba(15, 23, 42, 0.14), 0 0 0 5px rgba(148, 163, 184, 0.10)"
+                boxShadow="0 14px 34px rgba(22, 94, 131, 0.14), 0 0 0 5px rgba(22, 94, 131, 0.10)"
                 backdropFilter="blur(14px)"
-                _hover={{ bg: 'white', transform: 'translateY(-1px)' }}
+                _hover={{ bg: '#fbfdfe', transform: 'translateY(-1px)' }}
                 sx={
                   shouldReduceMotion
                     ? undefined
                     : {
                         animation: 'navPulse 2.8s ease-in-out infinite',
                         '@keyframes navPulse': {
-                          '0%, 100%': { boxShadow: '0 14px 34px rgba(15, 23, 42, 0.14), 0 0 0 4px rgba(148, 163, 184, 0.08)' },
-                          '50%': { boxShadow: '0 18px 42px rgba(15, 23, 42, 0.18), 0 0 0 7px rgba(148, 163, 184, 0.15)' },
+                          '0%, 100%': { boxShadow: '0 14px 34px rgba(22, 94, 131, 0.14), 0 0 0 4px rgba(22, 94, 131, 0.08)' },
+                          '50%': { boxShadow: '0 18px 42px rgba(22, 94, 131, 0.18), 0 0 0 7px rgba(22, 94, 131, 0.15)' },
                         },
                       }
                 }

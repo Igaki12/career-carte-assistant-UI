@@ -11,7 +11,7 @@ type Props = {
   labelStroke?: string;
 };
 
-const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#475569', labelStroke = 'transparent' }: Props) => {
+const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#165e83', labelStroke = 'transparent' }: Props) => {
   const gradientId = useId();
   const { canvasSize, center, points, gridPolygons, axisLines, labels: positionedLabels } = createSurveyRadarModel(
     labels,

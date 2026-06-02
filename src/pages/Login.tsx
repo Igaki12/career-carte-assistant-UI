@@ -122,12 +122,12 @@ function Login({ session, onLogin }: LoginProps) {
               <Heading
                 size="2xl"
                 lineHeight="short"
-                bgGradient="linear(110deg, #111827, #475569, #0f172a, #64748b)"
+                bgGradient="linear(110deg, #0f3f5a, #165e83, #0f3f5a, #5d9bb5)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(15, 23, 42, 0.12)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
                   animation: 'loginTitleGradient 12s ease-in-out infinite',
                   '@keyframes loginTitleGradient': {
                     '0%': { backgroundPosition: '0% 50%' },
@@ -173,7 +173,7 @@ function Login({ session, onLogin }: LoginProps) {
               height: { base: '5px', md: '7px' },
               bgGradient: lightBottomLine,
             }}
-            boxShadow="0 28px 80px rgba(15, 23, 42, 0.12)"
+            boxShadow="0 28px 80px rgba(22, 94, 131, 0.12)"
             backdropFilter="blur(14px)"
           >
             <form onSubmit={handleSubmit}>

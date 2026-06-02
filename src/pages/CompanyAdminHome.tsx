@@ -83,19 +83,19 @@ const formatDateTime = (value: string | null | undefined) => {
 
 const getStatusColor = (status: string) => {
   if (status === '完了') return 'green';
-  if (status === '未作成' || status === '未設定') return 'gray';
+  if (status === '未作成' || status === '未設定') return 'cyan';
   return 'purple';
 };
 
-const adminPageBg = 'linear(135deg, #ffffff 0%, #f8fafc 52%, #e5e7eb 100%)';
+const adminPageBg = 'linear(135deg, #f7fbfd 0%, #e7f1f6 52%, #d6e6ee 100%)';
 
 const linePanelProps = {
   bg: 'transparent',
-  color: 'gray.900',
+  color: '#12384d',
   borderRadius: '0',
   borderWidth: '0',
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.12)',
+  boxShadow: '0 28px 80px rgba(22, 94, 131, 0.12)',
   backdropFilter: 'blur(14px)',
   _before: {
     content: '""',
@@ -104,40 +104,40 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(203, 213, 225, 0.88), transparent)',
+    bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(116, 164, 187, 0.88), transparent)',
   },
   sx: {
-    '& th': { color: 'rgba(51, 65, 85, 0.78)', borderColor: 'rgba(148, 163, 184, 0.28)' },
-    '& td': { color: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(148, 163, 184, 0.22)' },
-    '& .chakra-form__label': { color: 'rgba(15, 23, 42, 0.9)' },
+    '& th': { color: 'rgba(31, 79, 104, 0.78)', borderColor: 'rgba(22, 94, 131, 0.28)' },
+    '& td': { color: 'rgba(22, 94, 131, 0.9)', borderColor: 'rgba(22, 94, 131, 0.22)' },
+    '& .chakra-form__label': { color: 'rgba(22, 94, 131, 0.9)' },
   },
 } as const;
 
 const translucentPanelProps = {
-  bg: 'gray.50',
-  color: 'gray.900',
+  bg: 'rgba(232, 243, 248, 0.84)',
+  color: '#12384d',
   borderRadius: '0',
   borderWidth: '1px',
-  borderColor: 'gray.200',
-  boxShadow: '0 18px 46px rgba(15, 23, 42, 0.10)',
+  borderColor: 'rgba(22, 94, 131, 0.18)',
+  boxShadow: '0 18px 46px rgba(22, 94, 131, 0.10)',
   backdropFilter: 'blur(12px)',
 } as const;
 
 const formControlProps = {
-  bg: 'white',
-  color: 'gray.900',
-  borderColor: 'gray.300',
-  _placeholder: { color: 'gray.500' },
+  bg: '#fbfdfe',
+  color: '#12384d',
+  borderColor: 'rgba(22, 94, 131, 0.30)',
+  _placeholder: { color: '#66889a' },
 } as const;
 
 const tableActionButtonProps = {
   variant: 'outline',
-  color: 'gray.800',
-  borderColor: 'gray.400',
-  _hover: { bg: 'gray.100', color: 'gray.900', borderColor: 'gray.600' },
+  color: '#1f4f68',
+  borderColor: '#8aa7b5',
+  _hover: { bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d', borderColor: '#3f6678' },
   _disabled: {
-    color: 'gray.300',
-    borderColor: 'gray.200',
+    color: 'rgba(22, 94, 131, 0.30)',
+    borderColor: 'rgba(22, 94, 131, 0.18)',
     opacity: 0.55,
   },
 } as const;
@@ -156,8 +156,8 @@ const SortButton = ({
   <Button
     size="xs"
     variant="ghost"
-    color="gray.800"
-    _hover={{ bg: 'gray.200' }}
+    color="#1f4f68"
+    _hover={{ bg: 'rgba(22, 94, 131, 0.18)' }}
     rightIcon={<ChevronDownIcon transform={sort.column === column && sort.direction === 'asc' ? 'rotate(180deg)' : undefined} />}
     onClick={() => onSort(column)}
   >
@@ -433,7 +433,7 @@ function CompanyAdminHome() {
   };
 
   return (
-    <Box bgGradient={adminPageBg} color="gray.900" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
+    <Box bgGradient={adminPageBg} color="#12384d" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
       <Container maxW="7xl">
         <Stack spacing={8}>
           <Box {...linePanelProps} p={{ base: 5, md: 8 }}>
@@ -441,29 +441,29 @@ function CompanyAdminHome() {
               <Stack spacing={2}>
                 <Heading
                   size="lg"
-                  bgGradient="linear(110deg, #111827, #475569, #0f172a, #64748b)"
+                  bgGradient="linear(110deg, #0f3f5a, #165e83, #0f3f5a, #5d9bb5)"
                   bgClip="text"
                   sx={{
                     WebkitTextFillColor: 'transparent',
-                    textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(15, 23, 42, 0.12)',
+                    textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
                   }}
                 >
                   企業管理者ホーム
                 </Heading>
-                <Text color="gray.600">
+                <Text color="#3f6678">
                   {tenant?.name ?? 'デモ企業'} の従業員カルテ、利用状況、契約オプションを管理します。
                 </Text>
                 <Flex gap={2} wrap="wrap">
                   <Badge colorScheme="pink">tenantId: {tenantId}</Badge>
-                  <Badge colorScheme={tenant?.status === 'active' ? 'green' : 'gray'}>{tenant?.status ?? 'active'}</Badge>
+                  <Badge colorScheme={tenant?.status === 'active' ? 'green' : 'cyan'}>{tenant?.status ?? 'active'}</Badge>
                   <Badge colorScheme="purple">一般ユーザーと同一ログイン入口想定</Badge>
                 </Flex>
               </Stack>
               <Button
                 variant="outline"
-                color="gray.900"
-                borderColor="gray.300"
-                _hover={{ bg: 'gray.100' }}
+                color="#12384d"
+                borderColor="rgba(22, 94, 131, 0.30)"
+                _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}
                 onClick={() => navigate('/user')}
               >
                 マイページへ戻る
@@ -474,37 +474,37 @@ function CompanyAdminHome() {
           <SimpleGrid columns={{ base: 2, md: 2 }} spacing={5}>
             <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel color="gray.500">社員アカウント</StatLabel>
+                <StatLabel color="#66889a">社員アカウント</StatLabel>
                 <StatNumber>{employees.length}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="#66889a">
                 カルテ保存済み: {employeesWithKarte}件
               </Text>
             </Box>
             <Box {...translucentPanelProps} p={5}>
               <Stat>
-                <StatLabel color="gray.500">残り面談回数</StatLabel>
+                <StatLabel color="#66889a">残り面談回数</StatLabel>
                 <StatNumber>{apiUsage.remaining}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="#66889a">
                 使用状況: {apiUsage.usageLabel}
               </Text>
             </Box>
             <Box {...translucentPanelProps} p={5} display="none">
               <Stat>
-                <StatLabel color="gray.500">コンディション測定件数</StatLabel>
+                <StatLabel color="#66889a">コンディション測定件数</StatLabel>
                 <StatNumber>{tenantConditionRecords.length}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="#66889a">
                 直近: {latestMeasuredAt}
               </Text>
             </Box>
             <Box {...translucentPanelProps} p={5} display="none">
               <Stat>
-                <StatLabel color="gray.500">緊張度スコア表示</StatLabel>
+                <StatLabel color="#66889a">緊張度スコア表示</StatLabel>
                 <StatNumber>{flags.stressAnalysisEnabled ? 'ON' : 'OFF'}</StatNumber>
               </Stat>
-              <Text mt={2} fontSize="xs" color="gray.500">
+              <Text mt={2} fontSize="xs" color="#66889a">
                 面談1回あたり最大{apiUsage.perMeetingTurnLimit}ターン
               </Text>
             </Box>
@@ -515,22 +515,22 @@ function CompanyAdminHome() {
               <Flex justify="space-between" gap={3} align={{ base: 'stretch', md: 'center' }} direction={{ base: 'column', md: 'row' }}>
                 <Stack spacing={1}>
                   <Heading size="md">パスワード通知文一覧</Heading>
-                  <Text color="gray.600" fontSize="sm">
+                  <Text color="#3f6678" fontSize="sm">
                     自社従業員向けに発行した一時パスワードの通知文です。コピーして既存の業務メーラーで通知してください。
                   </Text>
                 </Stack>
-                <Badge alignSelf={{ base: 'flex-start', md: 'center' }} colorScheme={passwordNotifications.length > 0 ? 'blue' : 'gray'}>
+                <Badge alignSelf={{ base: 'flex-start', md: 'center' }} colorScheme={passwordNotifications.length > 0 ? 'blue' : 'cyan'}>
                   {passwordNotifications.length}件
                 </Badge>
               </Flex>
               {passwordNotifications.length === 0 ? (
-                <Text color="gray.500" fontSize="sm">
+                <Text color="#66889a" fontSize="sm">
                   まだ通知文はありません。従業員一覧の再発行から作成できます。
                 </Text>
               ) : (
-                <Box borderWidth="1px" borderColor="gray.200" borderRadius="0" overflowX="auto" bg="gray.50">
+                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
                   <Table size="sm">
-                    <Thead bg="gray.100">
+                    <Thead bg="rgba(22, 94, 131, 0.08)">
                       <Tr>
                         <Th>発行日時</Th>
                         <Th>ID</Th>
@@ -570,7 +570,7 @@ function CompanyAdminHome() {
               <Checkbox isChecked={flags.stressAnalysisEnabled} onChange={(event) => handleStressToggle(event.target.checked)}>
                 面談前コンディションチェックと緊張度スコア表示を有効にする
               </Checkbox>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="sm" color="#66889a">
                 個人別の顔分析結果は企業管理者画面には表示せず、測定件数などの集計のみ扱います。
               </Text>
             </Stack>
@@ -581,18 +581,18 @@ function CompanyAdminHome() {
               <Flex justify="space-between" align={{ base: 'stretch', lg: 'center' }} gap={4} direction={{ base: 'column', lg: 'row' }}>
                 <Stack spacing={1}>
                   <Heading size="md">自社従業員カルテ</Heading>
-                  <Text fontSize="sm" color="gray.500">
+                  <Text fontSize="sm" color="#66889a">
                     表示中 {filteredEmployees.length}件 / 全{employees.length}件、選択中 {selectedEmployeeIds.length}件
                   </Text>
                 </Stack>
                 <Flex gap={2} wrap="wrap">
-                  <Button size="sm" variant="outline" color="gray.900" borderColor="gray.300" _hover={{ bg: 'gray.100' }} onClick={handleSelectAll}>
+                  <Button size="sm" variant="outline" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={handleSelectAll}>
                     {allFilteredSelected ? '表示中の選択解除' : '表示中を一括選択'}
                   </Button>
                   <PrimaryButton size="sm" onClick={handleBatchCsv} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテCSV
                   </PrimaryButton>
-                  <Button size="sm" variant="outline" color="gray.900" borderColor="gray.300" _hover={{ bg: 'gray.100' }} onClick={handleBatchPrint} isDisabled={selectedEmployeeIds.length === 0}>
+                  <Button size="sm" variant="outline" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={handleBatchPrint} isDisabled={selectedEmployeeIds.length === 0}>
                     選択カルテ印刷
                   </Button>
                 </Flex>
@@ -615,9 +615,9 @@ function CompanyAdminHome() {
                 </Select>
               </Flex>
 
-              <Box borderWidth="1px" borderColor="gray.200" borderRadius="0" overflowX="auto" bg="gray.50">
+              <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
                 <Table size="sm">
-                  <Thead bg="gray.100">
+                  <Thead bg="rgba(22, 94, 131, 0.08)">
                     <Tr>
                       <Th>選択</Th>
                       <Th><SortButton label="ID" column="id" sort={sort} onSort={handleSort} /></Th>
@@ -640,8 +640,8 @@ function CompanyAdminHome() {
                       return (
                         <Tr
                           key={employee.id}
-                          bg={selectedEmployeeIds.includes(employee.id) ? 'gray.200' : 'transparent'}
-                          _hover={{ bg: 'gray.100' }}
+                          bg={selectedEmployeeIds.includes(employee.id) ? 'rgba(22, 94, 131, 0.18)' : 'transparent'}
+                          _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}
                         >
                           <Td>
                             <Checkbox
@@ -653,7 +653,7 @@ function CompanyAdminHome() {
                           <Td fontWeight="medium">{employee.id}</Td>
                           <Td>{employee.name}</Td>
                           <Td>{employee.nameKana || '未設定'}</Td>
-                          <Td color="gray.600">{employee.email || '未設定'}</Td>
+                          <Td color="#3f6678">{employee.email || '未設定'}</Td>
                           <Td>{employee.company || tenant?.name || '未設定'}</Td>
                           <Td>{employee.department || '未設定'}</Td>
                           <Td>{employee.jobTitle || '未設定'}</Td>
@@ -663,7 +663,7 @@ function CompanyAdminHome() {
                           </Td>
                           <Td>{formatDateTime(employee.updatedAt)}</Td>
                           <Td>
-                            <Badge colorScheme={hasKarte ? 'green' : 'gray'}>{hasKarte ? '保存済み' : '未作成'}</Badge>
+                            <Badge colorScheme={hasKarte ? 'green' : 'cyan'}>{hasKarte ? '保存済み' : '未作成'}</Badge>
                           </Td>
                           <Td>
                             <Stack direction="row" spacing={2}>
@@ -679,8 +679,8 @@ function CompanyAdminHome() {
                               <Button
                                 size="xs"
                                 {...tableActionButtonProps}
-                                borderColor={hasKarte ? 'pink.400' : 'gray.200'}
-                                _hover={hasKarte ? { bg: 'pink.500', color: 'gray.900', borderColor: 'pink.300' } : tableActionButtonProps._hover}
+                                borderColor={hasKarte ? 'pink.400' : 'rgba(22, 94, 131, 0.18)'}
+                                _hover={hasKarte ? { bg: 'pink.500', color: '#12384d', borderColor: 'pink.300' } : tableActionButtonProps._hover}
                                 onClick={() => handleEmployeeCsv(employee)}
                                 isDisabled={!hasKarte}
                               >
@@ -700,14 +700,14 @@ function CompanyAdminHome() {
       </Container>
 
       <Modal isOpen={Boolean(viewingEmployee)} onClose={() => setViewingEmployee(null)} size="full" scrollBehavior="inside">
-        <ModalOverlay bg="gray.300" backdropFilter="blur(7px)" />
+        <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
         <ModalContent
           bg="rgba(255, 255, 255, 0.98)"
-          color="gray.900"
+          color="#12384d"
           borderRadius="0"
           borderWidth="1px"
-          borderColor="gray.200"
-          boxShadow="0 34px 110px rgba(15, 23, 42, 0.18)"
+          borderColor="rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
@@ -720,27 +720,27 @@ function CompanyAdminHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.74), rgba(241, 245, 249, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
             zIndex: 1,
           }}
         >
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
+            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
             borderBottomWidth="1px"
-            borderColor="gray.200"
+            borderColor="rgba(22, 94, 131, 0.18)"
           >
             <Stack spacing={1}>
               <Text>{viewingEmployee?.name ?? '従業員'} のキャリアカルテ</Text>
-              <Text fontSize="sm" color="gray.500" fontWeight="normal">
+              <Text fontSize="sm" color="#66889a" fontWeight="normal">
                 {viewingEmployee?.department || '部署未設定'} / {viewingEmployee?.email || 'メール未設定'}
               </Text>
             </Stack>
           </ModalHeader>
-          <ModalCloseButton color="gray.700" top={5} _hover={{ bg: 'gray.100', color: 'gray.900' }} />
+          <ModalCloseButton color="#315f76" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
           <ModalBody
-            bg="rgba(248, 250, 252, 0.90)"
+            bg="rgba(232, 243, 248, 0.90)"
             px={0}
             py={0}
             position="relative"
@@ -749,15 +749,15 @@ function CompanyAdminHome() {
           </ModalBody>
           <ModalFooter
             gap={2}
-            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
+            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
             borderTopWidth="1px"
-            borderColor="gray.200"
+            borderColor="rgba(22, 94, 131, 0.18)"
           >
             <Button
               variant="outline"
-              color="gray.800"
-              borderColor="gray.300"
-              _hover={{ bg: 'gray.100', color: 'gray.900', borderColor: 'gray.600' }}
+              color="#1f4f68"
+              borderColor="rgba(22, 94, 131, 0.30)"
+              _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d', borderColor: '#3f6678' }}
               onClick={() => viewingEmployee && handleEmployeePrint(viewingEmployee)}
               isDisabled={!viewingEmployee?.latestKarte}
             >
@@ -766,7 +766,7 @@ function CompanyAdminHome() {
             <PrimaryButton onClick={() => viewingEmployee && handleEmployeeCsv(viewingEmployee)} isDisabled={!viewingEmployee?.latestKarte}>
               CSVとして保存
             </PrimaryButton>
-            <Button variant="ghost" color="gray.800" _hover={{ bg: 'gray.100', color: 'gray.900' }} onClick={() => setViewingEmployee(null)}>
+            <Button variant="ghost" color="#1f4f68" _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} onClick={() => setViewingEmployee(null)}>
               閉じる
             </Button>
           </ModalFooter>
