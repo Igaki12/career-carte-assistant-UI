@@ -16,6 +16,17 @@ import {
 } from '@chakra-ui/react';
 import SurveyRadar from './SurveyRadar';
 import {
+  lightBorder,
+  lightBorderStrong,
+  lightMutedText,
+  lightPanelBg,
+  lightPanelStrongBg,
+  lightPanelSubtleBg,
+  lightShadow,
+  lightSubtleText,
+  lightText,
+} from '../lib/lightThemeTokens';
+import {
   getShirpDetailFieldEntries,
   getShirpDetailItemEntries,
   isShirpDetailCategoryKey,
@@ -40,44 +51,44 @@ type Props = {
 
 const sectionPanelProps = {
   borderWidth: '1px',
-  borderColor: 'rgba(255, 255, 255, 0.18)',
+  borderColor: lightBorder,
   borderRadius: '0',
   p: { base: 4, md: 5 },
-  bg: 'rgba(15, 23, 42, 0.38)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+  bg: lightPanelSubtleBg,
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.72)',
 } as const;
 
 const sectionTitleProps = {
   fontSize: 'sm',
   fontWeight: 'bold',
-  color: 'rgba(255, 255, 255, 0.92)',
+  color: lightText,
   letterSpacing: '0',
   mb: 3,
 } as const;
 
 const labelTextProps = {
   fontSize: 'xs',
-  color: 'rgba(255, 255, 255, 0.65)',
+  color: lightMutedText,
 } as const;
 
 const valueTextProps = {
   fontWeight: 'semibold',
   fontSize: 'sm',
-  color: 'rgba(255, 255, 255, 0.92)',
+  color: lightText,
 } as const;
 
 const valueBoxProps = (hasValue: boolean) => ({
   borderWidth: '1px',
-  borderColor: hasValue ? 'rgba(255, 255, 255, 0.24)' : 'rgba(255, 255, 255, 0.16)',
+  borderColor: hasValue ? lightBorderStrong : lightBorder,
   borderRadius: '0',
   p: 3,
-  bg: hasValue ? 'rgba(15, 23, 42, 0.72)' : 'rgba(15, 23, 42, 0.38)',
-  color: hasValue ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.52)',
+  bg: hasValue ? lightPanelStrongBg : lightPanelSubtleBg,
+  color: hasValue ? lightText : lightSubtleText,
   fontSize: 'sm',
   fontStyle: hasValue ? 'normal' : 'italic',
   minH: '56px',
   whiteSpace: 'pre-wrap' as const,
-  boxShadow: hasValue ? 'inset 3px 0 0 rgba(203, 213, 225, 0.42)' : 'none',
+  boxShadow: hasValue ? 'inset 3px 0 0 rgba(100, 116, 139, 0.34)' : 'none',
 });
 
 const KartePanel = ({ data, showCondition = false }: Props) => {
@@ -87,24 +98,24 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
 
   return (
     <Box
-      bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.96) 46%, rgba(51, 65, 85, 0.92) 100%)"
-      color="white"
+      bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 46%, rgba(226, 232, 240, 0.92) 100%)"
+      color={lightText}
       borderRadius="0"
       borderWidth="1px"
-      borderColor="rgba(255, 255, 255, 0.18)"
+      borderColor={lightBorder}
       pt={7}
       pb={6}
       px={{ base: 4, md: 6 }}
       w="full"
       position="relative"
       overflow="hidden"
-      boxShadow="0 26px 80px rgba(2, 6, 23, 0.36)"
+      boxShadow={lightShadow}
       _after={{
         content: '""',
         position: 'absolute',
         inset: 0,
         pointerEvents: 'none',
-        bg: 'radial-gradient(circle at 84% 10%, rgba(148, 163, 184, 0.14), transparent 30%)',
+        bg: 'radial-gradient(circle at 84% 10%, rgba(148, 163, 184, 0.18), transparent 30%)',
         opacity: 0.85,
       }}
     >
@@ -114,20 +125,20 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
             プロフィール (個人情報)
           </Text>
           <Tabs variant="line">
-            <TabList mb={3} borderColor="rgba(255, 255, 255, 0.22)">
+            <TabList mb={3} borderColor={lightBorder}>
               <Tab
                 fontSize="sm"
-                color="rgba(255, 255, 255, 0.7)"
-                _selected={{ color: 'white', borderColor: 'rgba(255, 255, 255, 0.9)' }}
-                _hover={{ color: 'white' }}
+                color={lightMutedText}
+                _selected={{ color: lightText, borderColor: lightBorderStrong }}
+                _hover={{ color: lightText }}
               >
                 基本情報
               </Tab>
               <Tab
                 fontSize="sm"
-                color="rgba(255, 255, 255, 0.7)"
-                _selected={{ color: 'white', borderColor: 'rgba(255, 255, 255, 0.9)' }}
-                _hover={{ color: 'white' }}
+                color={lightMutedText}
+                _selected={{ color: lightText, borderColor: lightBorderStrong }}
+                _hover={{ color: lightText }}
               >
                 個人情報詳細
               </Tab>
@@ -250,10 +261,10 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
               const value = data.shirp[key];
               return (
                 <Box key={key}>
-                  <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.8)" mb={1}>
+                  <Text fontSize="xs" fontWeight="bold" color={lightText} mb={1}>
                     {SHIRP_LABELS[key]}
                   </Text>
-                  <Text fontSize="xs" color="rgba(255, 255, 255, 0.56)" mb={1}>
+                  <Text fontSize="xs" color={lightSubtleText} mb={1}>
                     {SHIRP_HINTS[key]}
                   </Text>
                   <Box {...valueBoxProps(Boolean(value))}>
@@ -261,10 +272,10 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                   </Box>
                   {isShirpDetailCategoryKey(key) && (
                     <Accordion allowToggle mt={2}>
-                      <AccordionItem borderWidth="1px" borderColor="rgba(255, 255, 255, 0.18)" borderRadius="0" bg="rgba(15, 23, 42, 0.28)">
-                        <AccordionButton px={3} py={2} _hover={{ bg: 'rgba(255, 255, 255, 0.12)' }}>
+                      <AccordionItem borderWidth="1px" borderColor={lightBorder} borderRadius="0" bg={lightPanelSubtleBg}>
+                        <AccordionButton px={3} py={2} _hover={{ bg: 'gray.100' }}>
                           <Box flex="1" textAlign="left">
-                            <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.76)">
+                            <Text fontSize="xs" fontWeight="bold" color={lightMutedText}>
                               詳細を確認
                             </Text>
                           </Box>
@@ -278,12 +289,12 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                                 <Box
                                   key={`${key}-${field}`}
                                   borderWidth="1px"
-                                  borderColor="rgba(255, 255, 255, 0.16)"
+                                  borderColor={lightBorder}
                                   borderRadius="0"
                                   p={3}
-                                  bg="rgba(15, 23, 42, 0.36)"
+                                  bg={lightPanelBg}
                                 >
-                                  <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={1}>
+                                  <Text fontSize="xs" fontWeight="bold" color={lightText} mb={1}>
                                     {definition.label}
                                   </Text>
                                   <Box {...valueBoxProps(Boolean(detailValue?.summary))}>
@@ -316,7 +327,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
               );
             })}
           </Stack>
-          <Text fontSize="xs" color="rgba(255, 255, 255, 0.56)" textAlign="center" mt={4}>
+          <Text fontSize="xs" color={lightSubtleText} textAlign="center" mt={4}>
             会話から自動で抽出・更新されます
           </Text>
         </Box>
@@ -328,10 +339,10 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
             </Text>
             <Box
               borderWidth="1px"
-              borderColor={conditionSummary ? 'orange.300' : 'rgba(255, 255, 255, 0.18)'}
+              borderColor={conditionSummary ? 'orange.300' : lightBorder}
               borderRadius="0"
               p={4}
-              bg={conditionSummary ? 'rgba(124, 45, 18, 0.28)' : 'rgba(15, 23, 42, 0.38)'}
+              bg={conditionSummary ? 'orange.50' : lightPanelSubtleBg}
             >
               {conditionSummary ? (
                 <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={3}>
@@ -355,7 +366,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                   </Box>
                 </SimpleGrid>
               ) : (
-                <Text fontSize="sm" color="rgba(255, 255, 255, 0.65)">
+                <Text fontSize="sm" color={lightMutedText}>
                   面談前コンディションチェックは未測定です。
                 </Text>
               )}
@@ -367,14 +378,14 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
           <Text {...sectionTitleProps}>
             ユーザーアンケート結果
           </Text>
-          <Box borderWidth="1px" borderColor="rgba(255, 255, 255, 0.18)" borderRadius="0" p={4} bg="rgba(15, 23, 42, 0.38)">
+          <Box borderWidth="1px" borderColor={lightBorder} borderRadius="0" p={4} bg={lightPanelSubtleBg}>
             {hasSurvey ? (
               <Stack spacing={4}>
                 <SurveyRadar
                   labels={Object.values(SURVEY_LABELS)}
                   values={surveyScores}
-                  labelColor="#f8fafc"
-                  labelStroke="#0f172a"
+                  labelColor="#334155"
+                  labelStroke="#ffffff"
                 />
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                   {Object.entries(SURVEY_LABELS).map(([key, label]) => (
@@ -388,12 +399,12 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                     </Box>
                   ))}
                 </SimpleGrid>
-                <Text fontSize="xs" color="rgba(255, 255, 255, 0.56)">
+                <Text fontSize="xs" color={lightSubtleText}>
                   最終更新: {data.survey.lastUpdated ?? '未回答'}
                 </Text>
               </Stack>
             ) : (
-              <Text fontSize="sm" color="rgba(255, 255, 255, 0.65)">
+              <Text fontSize="sm" color={lightMutedText}>
                 アンケートは未回答です。回答するとレーダーチャートが表示されます。
               </Text>
             )}

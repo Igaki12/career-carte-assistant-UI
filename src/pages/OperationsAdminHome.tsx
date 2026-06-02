@@ -42,15 +42,15 @@ type SortState = {
   direction: 'asc' | 'desc';
 };
 
-const adminPageBg = 'linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)';
+const adminPageBg = 'linear(135deg, #ffffff 0%, #f8fafc 52%, #e5e7eb 100%)';
 const panelProps = {
   bg: 'transparent',
-  color: 'white',
+  color: 'gray.900',
   borderRadius: '0',
   borderWidth: '0',
   p: 6,
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.28)',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.12)',
   _before: {
     content: '""',
     position: 'absolute',
@@ -62,10 +62,10 @@ const panelProps = {
   },
 } as const;
 const outlineButtonProps = {
-  color: 'white',
-  borderColor: 'whiteAlpha.500',
+  color: 'gray.900',
+  borderColor: 'gray.300',
   variant: 'outline',
-  _hover: { bg: 'whiteAlpha.160' },
+  _hover: { bg: 'gray.100' },
 } as const;
 
 const getKarteStatus = (employee: CompanyEmployeeRecord) => (employee.latestKarte ? '保存済み' : '未作成');
@@ -101,8 +101,8 @@ const SortButton = ({
   <Button
     size="sm"
     variant="ghost"
-    color="whiteAlpha.900"
-    _hover={{ bg: 'whiteAlpha.200' }}
+    color="gray.800"
+    _hover={{ bg: 'gray.200' }}
     rightIcon={<ChevronDownIcon fontSize="1rem" />}
     onClick={() => onSort(column)}
   >
@@ -126,7 +126,7 @@ function OperationsAdminHome() {
       account?.managedTenantIds?.length
         ? account.managedTenantIds
         : state.tenants.map((tenant) => tenant.id),
-    [account?.managedTenantIds, state.tenants],
+    [account, state.tenants],
   );
   const managedTenantSet = useMemo(() => new Set(managedTenantIds), [managedTenantIds]);
   const managedTenants = useMemo(
@@ -212,13 +212,13 @@ function OperationsAdminHome() {
   });
 
   return (
-    <Box bgGradient={adminPageBg} color="white" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
+    <Box bgGradient={adminPageBg} color="gray.900" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
       <Container maxW="7xl">
         <Stack spacing={8}>
           <Box {...panelProps}>
             <Stack spacing={3}>
               <Heading size="xl">運用管理者ホーム</Heading>
-              <Text color="whiteAlpha.850">
+              <Text color="gray.700">
                 複数企業にまたがる従業員カルテ、企業別状況、契約オプション確認を行います。
               </Text>
               <Flex gap={2} wrap="wrap">
@@ -242,23 +242,23 @@ function OperationsAdminHome() {
                   </Flex>
                   <SimpleGrid columns={2} spacing={3}>
                     <Box>
-                      <Text color="whiteAlpha.700" fontSize="sm">従業員</Text>
+                      <Text color="gray.500" fontSize="sm">従業員</Text>
                       <Text fontSize="2xl" fontWeight="bold">{employeeCount}</Text>
                     </Box>
                     <Box>
-                      <Text color="whiteAlpha.700" fontSize="sm">カルテ保存済み</Text>
+                      <Text color="gray.500" fontSize="sm">カルテ保存済み</Text>
                       <Text fontSize="2xl" fontWeight="bold">{savedCount}</Text>
                     </Box>
                     <Box>
-                      <Text color="whiteAlpha.700" fontSize="sm">残り面談回数</Text>
+                      <Text color="gray.500" fontSize="sm">残り面談回数</Text>
                       <Text fontSize="2xl" fontWeight="bold">{remaining}</Text>
                     </Box>
                     <Box>
-                      <Text color="whiteAlpha.700" fontSize="sm">最大ターン数</Text>
+                      <Text color="gray.500" fontSize="sm">最大ターン数</Text>
                       <Text fontSize="2xl" fontWeight="bold">{perMeetingTurnLimit}</Text>
                     </Box>
                   </SimpleGrid>
-                  <Text color="whiteAlpha.800" fontSize="sm">使用状況: {usageLabel}</Text>
+                  <Text color="gray.600" fontSize="sm">使用状況: {usageLabel}</Text>
                 </Stack>
               </Box>
             ))}
@@ -267,7 +267,7 @@ function OperationsAdminHome() {
           <Box {...panelProps}>
             <Stack spacing={4}>
               <Heading size="lg">横断ユーザー管理</Heading>
-              <Text color="whiteAlpha.800">
+              <Text color="gray.600">
                 ユーザーが所属している企業名を確認し、氏名・フリガナ・メール・企業名・職種で検索できます。
               </Text>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
@@ -275,14 +275,14 @@ function OperationsAdminHome() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 で検索"
-                  bg="whiteAlpha.900"
+                  bg="gray.800"
                   color="gray.900"
                   _placeholder={{ color: 'gray.500' }}
                 />
                 <Select
                   value={tenantFilter}
                   onChange={(event) => setTenantFilter(event.target.value)}
-                  bg="whiteAlpha.900"
+                  bg="gray.800"
                   color="gray.900"
                 >
                   <option value="all">すべての管理対象企業</option>
@@ -293,9 +293,9 @@ function OperationsAdminHome() {
                   ))}
                 </Select>
               </SimpleGrid>
-              <Box overflowX="auto" borderWidth="1px" borderColor="whiteAlpha.200">
+              <Box overflowX="auto" borderWidth="1px" borderColor="gray.200">
                 <Table variant="simple" size="md" minW="1120px">
-                  <Thead bg="whiteAlpha.080">
+                  <Thead bg="gray.50">
                     <Tr>
                       <Th><SortButton label="ID" column="id" onSort={handleSort} /></Th>
                       <Th><SortButton label="氏名" column="name" onSort={handleSort} /></Th>
@@ -306,7 +306,7 @@ function OperationsAdminHome() {
                       <Th><SortButton label="職種" column="jobTitle" onSort={handleSort} /></Th>
                       <Th><SortButton label="ステータス" column="status" onSort={handleSort} /></Th>
                       <Th><SortButton label="カルテ" column="karteStatus" onSort={handleSort} /></Th>
-                      <Th color="whiteAlpha.900">操作</Th>
+                      <Th color="gray.800">操作</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
@@ -352,8 +352,8 @@ function OperationsAdminHome() {
       </Container>
 
       <Modal isOpen={karteModal.isOpen} onClose={karteModal.onClose} size="full" scrollBehavior="inside">
-        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
-        <ModalContent bg="rgba(15, 23, 42, 0.98)" color="white" borderRadius="0" maxW={{ base: '100vw', xl: '1480px' }}>
+        <ModalOverlay bg="gray.300" backdropFilter="blur(7px)" />
+        <ModalContent bg="rgba(255, 255, 255, 0.98)" color="gray.900" borderRadius="0" maxW={{ base: '100vw', xl: '1480px' }}>
           <ModalHeader>{viewingEmployee?.name ?? 'カルテ'} のカルテ</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={8}>

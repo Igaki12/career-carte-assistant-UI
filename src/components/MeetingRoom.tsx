@@ -2115,7 +2115,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                           icon={<FaUpDown />}
                           onClick={toggleTextareaExpanded}
                           variant="solid"
-                          colorScheme="blackAlpha"
+                          colorScheme="gray"
                           opacity={0.6}
                           _hover={{ opacity: 0.9 }}
                           size="sm"
@@ -2164,7 +2164,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
       </Flex>
 
       <Modal isOpen={isKarteModalOpen} onClose={handleCloseKarteModal} size="xl" scrollBehavior="inside" isCentered>
-        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
+        <ModalOverlay bg="gray.300" backdropFilter="blur(4px)" />
         <ModalContent borderRadius="2xl" mx={{ base: 3, md: 0 }} maxH="90dvh" display="flex" flexDirection="column">
           <ModalHeader>
             <Flex align="center" justify="left" gap={3} wrap="wrap">

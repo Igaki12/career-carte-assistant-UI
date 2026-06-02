@@ -24,6 +24,15 @@ import {
 } from '../lib/demoUserState';
 import { joinName, joinNameKana } from '../lib/demoAccounts';
 import { JOB_TITLE_OPTIONS } from '../lib/jobTitles';
+import {
+  lightFormSurfaceProps,
+  lightMutedText,
+  lightPageBg,
+  lightPanelSubtleBg,
+  lightShadow,
+  lightText,
+  lightTopLine,
+} from '../lib/lightThemeTokens';
 import type { DemographicData } from '../types';
 
 const bgGradientAnim = keyframes`
@@ -57,12 +66,12 @@ const contentFadeIn = keyframes`
 
 const decoratedPanelProps = {
   bg: 'transparent',
-  color: 'white',
+  color: lightText,
   borderRadius: '0',
   borderWidth: '0',
   p: { base: 5, md: 8 },
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.34)',
+  boxShadow: lightShadow,
   sx: { backdropFilter: 'blur(14px)' },
   _before: {
     content: '""',
@@ -71,33 +80,30 @@ const decoratedPanelProps = {
     left: 0,
     right: 0,
     height: { base: '5px', md: '7px' },
-    bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.72), rgba(226, 232, 240, 0.88), transparent)',
+    bgGradient: lightTopLine,
   },
 } as const;
 
 const formFieldSurfaceProps = {
-  bg: 'whiteAlpha.900',
-  color: 'gray.900',
-  borderColor: 'whiteAlpha.600',
-  _placeholder: { color: 'gray.500' },
+  ...lightFormSurfaceProps,
 } as const;
 
 const readOnlyFieldSurfaceProps = {
-  bg: 'rgba(15, 23, 42, 0.64)',
-  color: 'rgba(248, 250, 252, 0.88)',
-  borderColor: 'rgba(148, 163, 184, 0.34)',
+  bg: lightPanelSubtleBg,
+  color: 'gray.700',
+  borderColor: 'rgba(148, 163, 184, 0.46)',
   cursor: 'default',
   opacity: 1,
-  _placeholder: { color: 'rgba(203, 213, 225, 0.48)' },
+  _placeholder: { color: 'gray.400' },
   _readOnly: {
-    bg: 'rgba(15, 23, 42, 0.64)',
-    color: 'rgba(248, 250, 252, 0.88)',
-    borderColor: 'rgba(148, 163, 184, 0.34)',
+    bg: lightPanelSubtleBg,
+    color: 'gray.700',
+    borderColor: 'rgba(148, 163, 184, 0.46)',
   },
-  _hover: { borderColor: 'rgba(148, 163, 184, 0.44)' },
+  _hover: { borderColor: 'rgba(100, 116, 139, 0.50)' },
   _focus: {
-    bg: 'rgba(15, 23, 42, 0.64)',
-    borderColor: 'rgba(148, 163, 184, 0.44)',
+    bg: lightPanelSubtleBg,
+    borderColor: 'rgba(100, 116, 139, 0.50)',
     boxShadow: 'none',
   },
 } as const;
@@ -339,14 +345,14 @@ function DemographicsSetup() {
         alignItems="center"
         justifyContent="center"
         overflow="hidden"
-        bg="gray.900"
+        bg="gray.50"
       >
         <Box
           position="absolute"
           w={{ base: '180vw', md: '120vw' }}
           h={{ base: '180vw', md: '120vw' }}
-          bgGradient="linear(45deg, #1C0147, #0B194E, #3b0066, #001e36)"
-          opacity={0.8}
+          bgGradient="linear(45deg, #ffffff, #f1f5f9, #e2e8f0, #f8fafc)"
+          opacity={0.9}
           animation={`${waveDeform1} 6s linear infinite`}
           filter="blur(60px)"
         />
@@ -354,8 +360,8 @@ function DemographicsSetup() {
           position="absolute"
           w={{ base: '160vw', md: '100vw' }}
           h={{ base: '160vw', md: '100vw' }}
-          bgGradient="linear(-45deg, #090029, #020C26, #2d004d, #001A33)"
-          opacity={0.7}
+          bgGradient="linear(-45deg, #ffffff, #e5e7eb, #f8fafc, #cbd5e1)"
+          opacity={0.72}
           animation={`${waveDeform2} 8s linear infinite`}
           filter="blur(70px)"
         />
@@ -363,7 +369,7 @@ function DemographicsSetup() {
           position="absolute"
           w="100vw"
           h="100vh"
-          bg="rgba(0,0,0,0.4)"
+          bg="rgba(255,255,255,0.34)"
           sx={{ backdropFilter: 'blur(30px)' }}
         />
       </Box>
@@ -372,7 +378,7 @@ function DemographicsSetup() {
         minH="100dvh"
         h="100dvh"
         overflowY="auto"
-        bgGradient="linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)"
+        bgGradient={lightPageBg}
         backgroundSize="300% 300%"
         animation={`${bgGradientAnim} 15s ease infinite`}
         py={{ base: 8, md: 12 }}
@@ -382,12 +388,12 @@ function DemographicsSetup() {
             <Stack spacing={3}>
               <Heading
                 size="lg"
-                bgGradient="linear(110deg, #f1f5f9, #cbd5e1, #f8fafc, #94a3b8)"
+                bgGradient="linear(110deg, #111827, #475569, #0f172a, #64748b)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.22), 0 -1px 0 rgba(15, 23, 42, 0.55), 0 10px 24px rgba(15, 23, 42, 0.35)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(15, 23, 42, 0.12)',
                   animation: 'demographicsTitleGradient 12s ease-in-out infinite',
                   '@keyframes demographicsTitleGradient': {
                     '0%': { backgroundPosition: '0% 50%' },
@@ -398,7 +404,7 @@ function DemographicsSetup() {
               >
                 プロフィール初期設定
               </Heading>
-              <Text color="whiteAlpha.900" fontWeight="medium" textShadow="0 1px 3px rgba(0,0,0,0.2)">
+              <Text color={lightMutedText} fontWeight="medium">
                 初回面談とユーザーホームで使う基本情報を登録します。未入力の項目があっても保存して進めます。
               </Text>
             </Stack>
@@ -408,7 +414,7 @@ function DemographicsSetup() {
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5}>
                   {FIELD_LABELS.map((field) => (
                     <FormControl key={field.key}>
-                      <FormLabel fontSize="sm" color="whiteAlpha.900" fontWeight="bold">
+                      <FormLabel fontSize="sm" color={lightText} fontWeight="bold">
                         {field.label}
                       </FormLabel>
                       {field.kind === 'select' ? (
@@ -462,10 +468,10 @@ function DemographicsSetup() {
                 </SimpleGrid>
 
                 <Stack direction={{ base: 'column', sm: 'row' }} justify="flex-end" spacing={3}>
-                  <Button variant="outline" color="white" borderColor="whiteAlpha.500" _hover={{ bg: 'whiteAlpha.160' }} onClick={() => navigate(returnTo)}>
+                  <Button variant="outline" color={lightText} borderColor="gray.300" _hover={{ bg: 'gray.100' }} onClick={() => navigate(returnTo)}>
                     キャンセル
                   </Button>
-                  <Button variant="ghost" color="white" _hover={{ bg: 'whiteAlpha.160' }} onClick={handleSkipForDemo}>
+                  <Button variant="ghost" color={lightText} _hover={{ bg: 'gray.100' }} onClick={handleSkipForDemo}>
                     デモ用にスキップして進む
                   </Button>
                   <PrimaryButton onClick={handleSave}>

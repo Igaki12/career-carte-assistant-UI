@@ -1177,10 +1177,11 @@ const VrmStage = ({
         h="48px"
         mb={0}
         variant="solid"
-        colorScheme="whiteAlpha"
-        bg="rgba(15,23,42,0.7)"
-        _hover={{ bg: 'rgba(30,41,59,0.85)' }}
-        _active={{ bg: 'rgba(15,23,42,0.95)' }}
+        colorScheme="gray"
+        color="gray.900"
+        bg="rgba(255,255,255,0.84)"
+        _hover={{ bg: 'rgba(248,250,252,0.94)' }}
+        _active={{ bg: 'rgba(226,232,240,0.94)' }}
         title={`モデル: ${currentModel.label}`}
       />
       <IconButton
@@ -1196,10 +1197,11 @@ const VrmStage = ({
         h="48px"
         mb={0}
         variant="solid"
-        colorScheme="whiteAlpha"
-        bg="rgba(15,23,42,0.7)"
-        _hover={{ bg: 'rgba(30,41,59,0.85)' }}
-        _active={{ bg: 'rgba(15,23,42,0.95)' }}
+        colorScheme="gray"
+        color="gray.900"
+        bg="rgba(255,255,255,0.84)"
+        _hover={{ bg: 'rgba(248,250,252,0.94)' }}
+        _active={{ bg: 'rgba(226,232,240,0.94)' }}
         title={`背景: ${currentBackground.label}`}
       />
       {showProgress && (
@@ -1208,13 +1210,13 @@ const VrmStage = ({
           bottom={3}
           right={3}
           zIndex={3}
-          bg="rgba(15,23,42,0.82)"
+          bg="rgba(255,255,255,0.88)"
           borderRadius="xl"
           px={4}
           py={2}
           borderWidth="1px"
-          borderColor="whiteAlpha.300"
-          color="white"
+          borderColor="gray.200"
+          color="gray.900"
           backdropFilter="blur(4px)"
           boxShadow="md"
           cursor="pointer"
@@ -1232,7 +1234,7 @@ const VrmStage = ({
         >
           <Flex align="center" justify="space-between" gap={3}>
             <Box>
-              <Text fontSize="xs" color="whiteAlpha.700" letterSpacing="0.08em" textTransform="uppercase">
+              <Text fontSize="xs" color="gray.500" letterSpacing="0.08em" textTransform="uppercase">
                 カルテ進行度
               </Text>
               <Text fontSize="lg" fontWeight="bold" lineHeight="shorter">
@@ -1242,7 +1244,7 @@ const VrmStage = ({
             <Icon
               as={FiChevronUp}
               boxSize={4}
-              color="whiteAlpha.800"
+              color="gray.600"
               transform={isProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)'}
               transition="transform 0.2s ease"
               flexShrink={0}
@@ -1251,12 +1253,12 @@ const VrmStage = ({
           <Collapse in={isProgressExpanded} animateOpacity>
             <Box mt={2}>
               {progressCountLabel ? (
-                <Text fontSize="xs" color="whiteAlpha.800">
+                <Text fontSize="xs" color="gray.600">
                   {progressCountLabel}
                 </Text>
               ) : null}
               {progressLabel ? (
-                <Text fontSize="xs" color="whiteAlpha.800" mt={1} maxW="220px">
+                <Text fontSize="xs" color="gray.600" mt={1} maxW="220px">
                   現在: {progressLabel}
                 </Text>
               ) : null}
@@ -1272,9 +1274,9 @@ const VrmStage = ({
           alignItems="center"
           justifyContent="center"
           zIndex={1}
-          bgGradient="linear(to-b, rgba(15,23,42,0.85), rgba(30,41,59,0.85))"
+          bgGradient="linear(to-b, rgba(255,255,255,0.88), rgba(241,245,249,0.88))"
         >
-          <Text color="white" fontSize="sm">
+          <Text color="gray.700" fontSize="sm">
             VRMモデルを読み込み中...
           </Text>
         </Box>

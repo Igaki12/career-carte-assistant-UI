@@ -117,15 +117,15 @@ const heroContentSlide = keyframes`
   }
 `;
 
-const consultantPageBg = 'linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)';
+const consultantPageBg = 'linear(135deg, #ffffff 0%, #f8fafc 52%, #e5e7eb 100%)';
 
 const linePanelProps = {
   bg: 'transparent',
-  color: 'white',
+  color: 'gray.900',
   borderRadius: '0',
   border: '0',
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.34)',
+  boxShadow: '0 28px 80px rgba(15, 23, 42, 0.12)',
   backdropFilter: 'blur(14px)',
   _before: {
     content: '""',
@@ -148,45 +148,45 @@ const linePanelProps = {
 } as const;
 
 const smallPanelProps = {
-  bg: 'whiteAlpha.120',
-  color: 'white',
+  bg: 'gray.50',
+  color: 'gray.900',
   borderRadius: '0',
   borderWidth: '1px',
-  borderColor: 'whiteAlpha.200',
-  boxShadow: '0 18px 46px rgba(15, 23, 42, 0.18)',
+  borderColor: 'gray.200',
+  boxShadow: '0 18px 46px rgba(15, 23, 42, 0.10)',
   backdropFilter: 'blur(12px)',
 } as const;
 
 const whiteOutlineButtonProps = {
   variant: 'outline',
-  color: 'white',
-  borderColor: 'whiteAlpha.500',
-  _hover: { bg: 'whiteAlpha.160' },
+  color: 'gray.900',
+  borderColor: 'gray.300',
+  _hover: { bg: 'gray.100' },
 } as const;
 
 const modalOutlineButtonProps = {
   variant: 'outline',
-  color: 'whiteAlpha.900',
-  borderColor: 'whiteAlpha.500',
-  _hover: { bg: 'whiteAlpha.160', color: 'white', borderColor: 'whiteAlpha.800' },
+  color: 'gray.800',
+  borderColor: 'gray.300',
+  _hover: { bg: 'gray.100', color: 'gray.900', borderColor: 'gray.600' },
 } as const;
 
 const darkTextareaProps = {
-  bg: 'rgba(15, 23, 42, 0.74)',
-  color: 'white',
-  borderColor: 'rgba(255, 255, 255, 0.22)',
-  _placeholder: { color: 'rgba(255, 255, 255, 0.42)' },
-  _hover: { borderColor: 'rgba(255, 255, 255, 0.36)' },
-  _focus: { borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' },
+  bg: 'white',
+  color: 'gray.900',
+  borderColor: 'gray.300',
+  _placeholder: { color: 'gray.400' },
+  _hover: { borderColor: 'gray.400' },
+  _focus: { borderColor: 'gray.500', boxShadow: '0 0 0 1px rgba(100, 116, 139, 0.28)' },
 } as const;
 
 const darkInputProps = {
-  bg: 'rgba(15, 23, 42, 0.74)',
-  color: 'white',
-  borderColor: 'rgba(255, 255, 255, 0.22)',
-  _placeholder: { color: 'rgba(255, 255, 255, 0.42)' },
-  _hover: { borderColor: 'rgba(255, 255, 255, 0.36)' },
-  _focus: { borderColor: 'rgba(226, 232, 240, 0.82)', boxShadow: '0 0 0 1px rgba(226, 232, 240, 0.5)' },
+  bg: 'white',
+  color: 'gray.900',
+  borderColor: 'gray.300',
+  _placeholder: { color: 'gray.400' },
+  _hover: { borderColor: 'gray.400' },
+  _focus: { borderColor: 'gray.500', boxShadow: '0 0 0 1px rgba(100, 116, 139, 0.28)' },
 } as const;
 
 function ConsultantHome() {
@@ -546,16 +546,16 @@ function ConsultantHome() {
   };
 
   return (
-    <Box bgGradient={consultantPageBg} color="white" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
+    <Box bgGradient={consultantPageBg} color="gray.900" height="100dvh" py={{ base: 6, md: 8 }} overflowY="scroll">
       <Container maxW="6xl">
         <Stack spacing={10}>
           <Box
             position="relative"
             borderRadius="0"
-            boxShadow="0 28px 80px rgba(15, 23, 42, 0.34)"
+            boxShadow="0 28px 80px rgba(15, 23, 42, 0.14)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
-            bgImage={`linear-gradient(rgba(8, 15, 26, 0.68), rgba(8, 15, 26, 0.72)), url(${heroBackground})`}
+            bgImage={`linear-gradient(rgba(255, 255, 255, 0.78), rgba(248, 250, 252, 0.82)), url(${heroBackground})`}
             bgPosition="center"
             bgRepeat="no-repeat"
             bgSize="cover"
@@ -565,7 +565,7 @@ function ConsultantHome() {
               content: '""',
               position: 'absolute',
               inset: 0,
-              bg: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 30%, rgba(8,15,26,0.12) 100%)',
+              bg: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 30%, rgba(226,232,240,0.20) 100%)',
               pointerEvents: 'none',
             }}
             _after={{
@@ -587,30 +587,30 @@ function ConsultantHome() {
               animation={`${heroContentSlide} 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both`}
             >
               <Stack spacing={1} flex="1">
-                <Heading size="lg" color="white">{profile.name} さんのコンサルタント画面</Heading>
-                <Text color="whiteAlpha.900">{profile.company} / {profile.department} / {profile.title}</Text>
+                <Heading size="lg" color="gray.900">{profile.name} さんのコンサルタント画面</Heading>
+                <Text color="gray.800">{profile.company} / {profile.department} / {profile.title}</Text>
                 <Box
                   mt={3}
                   borderWidth="1px"
-                  borderColor="whiteAlpha.300"
+                  borderColor="gray.200"
                   borderRadius="xl"
                   p={4}
-                  bg="blackAlpha.500"
+                  bg="gray.100"
                   backdropFilter="blur(10px)"
                   boxShadow="0 20px 50px rgba(0, 0, 0, 0.18)"
                 >
-                  <Text fontSize="sm" fontWeight="bold" color="whiteAlpha.900" mb={3}>
+                  <Text fontSize="sm" fontWeight="bold" color="gray.800" mb={3}>
                     コンサルタント概要
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {profile.name}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {profile.nameKana}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">メール: {profile.email}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">会社名: {profile.company}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">部署: {profile.department}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">職種: {profile.title}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">権限: {profile.permission}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">担当ユーザー数: {assignedUsers.length} 名</Text>
+                    <Text fontSize="sm" color="gray.800">氏名: {profile.name}</Text>
+                    <Text fontSize="sm" color="gray.800">フリガナ: {profile.nameKana}</Text>
+                    <Text fontSize="sm" color="gray.800">メール: {profile.email}</Text>
+                    <Text fontSize="sm" color="gray.800">会社名: {profile.company}</Text>
+                    <Text fontSize="sm" color="gray.800">部署: {profile.department}</Text>
+                    <Text fontSize="sm" color="gray.800">職種: {profile.title}</Text>
+                    <Text fontSize="sm" color="gray.800">権限: {profile.permission}</Text>
+                    <Text fontSize="sm" color="gray.800">担当ユーザー数: {assignedUsers.length} 名</Text>
                   </SimpleGrid>
                 </Box>
               </Stack>
@@ -620,7 +620,7 @@ function ConsultantHome() {
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
-                    <Badge key={tag} bg="whiteAlpha.240" color="white" borderRadius="full" variant="solid">
+                    <Badge key={tag} bg="gray.200" color="gray.800" borderRadius="full" variant="solid">
                       {tag}
                     </Badge>
                   ))}
@@ -640,14 +640,14 @@ function ConsultantHome() {
                     <Box key={user.id} {...smallPanelProps} p={4}>
                       <Stack spacing={1}>
                         <Text fontWeight="semibold">{user.name}</Text>
-                        <Text fontSize="sm" color="whiteAlpha.700">
+                        <Text fontSize="sm" color="gray.500">
                           {user.company} / {user.role}
                         </Text>
-                        <Text fontSize="xs" color="whiteAlpha.600">
+                        <Text fontSize="xs" color="gray.400">
                           最終面談: {user.lastSession}
                         </Text>
                         <Flex align="center" justify="space-between" gap={3}>
-                          <Text fontSize="sm" color="whiteAlpha.800" flex="1" minW={0}>
+                          <Text fontSize="sm" color="gray.600" flex="1" minW={0}>
                             フォーカス: {user.focus}
                           </Text>
                           <Badge colorScheme={user.status === '完了' ? 'green' : 'purple'} flexShrink={0}>
@@ -669,7 +669,7 @@ function ConsultantHome() {
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiCpu /> AI練習面談 (ロードマップ)
                 </Heading>
-                <Text color="whiteAlpha.800">クライアントAI練習面談機能は準備中です。</Text>
+                <Text color="gray.600">クライアントAI練習面談機能は準備中です。</Text>
                 <Button {...whiteOutlineButtonProps} onClick={() => toast({ title: '準備中です', status: 'info', duration: 2000 })}>
                   準備中
                 </Button>
@@ -681,7 +681,7 @@ function ConsultantHome() {
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiMail /> メール問い合わせ
                 </Heading>
-                <Text color="whiteAlpha.800">管理者または担当ユーザーへの問い合わせ内容を作成します。</Text>
+                <Text color="gray.600">管理者または担当ユーザーへの問い合わせ内容を作成します。</Text>
                 <Button {...whiteOutlineButtonProps} onClick={emailDisclosure.onOpen}>
                   メールを作成
                 </Button>
@@ -693,7 +693,7 @@ function ConsultantHome() {
                 <Heading size="md" display="flex" alignItems="center" gap={2}>
                   <FiRefreshCw /> アカウント情報確認
                 </Heading>
-                <Text color="whiteAlpha.800">登録内容とパスワードの管理が行えます。</Text>
+                <Text color="gray.600">登録内容とパスワードの管理が行えます。</Text>
                 <Button {...whiteOutlineButtonProps} onClick={profileDisclosure.onToggle}>
                   {profileDisclosure.isOpen ? '情報を閉じる' : '情報を表示'}
                 </Button>
@@ -701,23 +701,23 @@ function ConsultantHome() {
                   <Box pt={4}>
                     <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">氏名</Text>
+                        <Text fontSize="sm" color="gray.500">氏名</Text>
                         <Text fontWeight="semibold">{profile.name}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">フリガナ</Text>
+                        <Text fontSize="sm" color="gray.500">フリガナ</Text>
                         <Text fontWeight="semibold">{profile.nameKana}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">メール</Text>
+                        <Text fontSize="sm" color="gray.500">メール</Text>
                         <Text fontWeight="semibold">{profile.email}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">会社 / 役職</Text>
+                        <Text fontSize="sm" color="gray.500">会社 / 役職</Text>
                         <Text fontWeight="semibold">{profile.company} / {profile.title}</Text>
                       </Stack>
                       <Stack spacing={0.5}>
-                        <Text fontSize="sm" color="whiteAlpha.700">パスワード更新</Text>
+                        <Text fontSize="sm" color="gray.500">パスワード更新</Text>
                         <Text fontWeight="semibold">{passwordUpdatedAt ?? '未更新（デモ）'}</Text>
                       </Stack>
                     </SimpleGrid>
@@ -733,14 +733,14 @@ function ConsultantHome() {
       </Container>
 
       <Modal isOpen={karteDisclosure.isOpen} onClose={karteDisclosure.onClose} size="full" scrollBehavior="inside">
-        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalOverlay bg="gray.300" backdropFilter="blur(7px)" />
         <ModalContent
-          bg="rgba(15, 23, 42, 0.98)"
-          color="white"
+          bg="rgba(255, 255, 255, 0.98)"
+          color="gray.900"
           borderRadius="0"
           borderWidth="1px"
-          borderColor="rgba(255, 255, 255, 0.18)"
-          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          borderColor="gray.200"
+          boxShadow="0 34px 110px rgba(15, 23, 42, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
@@ -760,14 +760,14 @@ function ConsultantHome() {
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
             borderBottomWidth="1px"
-            borderColor="rgba(255, 255, 255, 0.16)"
+            borderColor="gray.200"
           >
             カルテ閲覧・編集
           </ModalHeader>
-          <ModalCloseButton color="rgba(255, 255, 255, 0.85)" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
-          <ModalBody bg="rgba(2, 6, 23, 0.82)" px={0} py={0}>
+          <ModalCloseButton color="gray.700" top={5} _hover={{ bg: 'gray.100', color: 'gray.900' }} />
+          <ModalBody bg="rgba(248, 250, 252, 0.90)" px={0} py={0}>
             {selectedRecord ? (
               <Stack spacing={5} p={{ base: 4, md: 6 }}>
                 <Flex
@@ -776,34 +776,34 @@ function ConsultantHome() {
                   wrap="wrap"
                   gap={2}
                   borderWidth="1px"
-                  borderColor="rgba(255, 255, 255, 0.16)"
+                  borderColor="gray.200"
                   borderRadius="0"
                   p={{ base: 4, md: 5 }}
-                  bg="rgba(15, 23, 42, 0.74)"
+                  bg="white"
                 >
                   <Stack spacing={1}>
-                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">作成日: {selectedRecord.atCreated}</Text>
-                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.66)">最終更新日: {selectedRecord.atUpdated}</Text>
+                    <Text fontSize="sm" color="gray.500">作成日: {selectedRecord.atCreated}</Text>
+                    <Text fontSize="sm" color="gray.500">最終更新日: {selectedRecord.atUpdated}</Text>
                   </Stack>
                   <Badge colorScheme="green">{selectedRecord.statusLabel}</Badge>
                 </Flex>
-                <Box borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(15, 23, 42, 0.48)">
-                  <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
+                <Box borderWidth="1px" borderColor="gray.200" borderRadius="0" p={{ base: 4, md: 5 }} bg="gray.50">
+                  <Text fontSize="xs" fontWeight="bold" color="gray.800" mb={2}>
                     プロフィール
                   </Text>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                    <Text fontSize="sm" color="whiteAlpha.900">ID: {selectedRecord.data.demographics.accountId ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">フリガナ: {selectedRecord.data.demographics.nameKana ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">メール: {selectedRecord.data.demographics.email ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">会社名: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">部署: {selectedRecord.data.demographics.department ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>
-                    <Text fontSize="sm" color="whiteAlpha.900">権限: {selectedRecord.data.demographics.permission ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">ID: {selectedRecord.data.demographics.accountId ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">氏名: {selectedRecord.data.demographics.name ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">フリガナ: {selectedRecord.data.demographics.nameKana ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">メール: {selectedRecord.data.demographics.email ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">会社名: {selectedRecord.data.demographics.company ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">部署: {selectedRecord.data.demographics.department ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">職種: {selectedRecord.data.demographics.jobTitle ?? '未入力'}</Text>
+                    <Text fontSize="sm" color="gray.800">権限: {selectedRecord.data.demographics.permission ?? '未入力'}</Text>
                   </SimpleGrid>
                 </Box>
-                <Box borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(15, 23, 42, 0.48)">
-                  <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
+                <Box borderWidth="1px" borderColor="gray.200" borderRadius="0" p={{ base: 4, md: 5 }} bg="gray.50">
+                  <Text fontSize="xs" fontWeight="bold" color="gray.800" mb={2}>
                     ユーザーアンケート結果
                   </Text>
                   {Object.values(selectedRecord.data.survey.factors).some((score) => (score ?? 0) > 0) ? (
@@ -813,20 +813,20 @@ function ConsultantHome() {
                         (key) => selectedRecord.data.survey.factors[key as keyof KarteData['survey']['factors']] ?? 0,
                       )}
                       size={200}
-                      labelColor="#f8fafc"
-                      labelStroke="#0f172a"
+                      labelColor="#334155"
+                      labelStroke="#ffffff"
                     />
                   ) : (
-                    <Text fontSize="sm" color="rgba(255, 255, 255, 0.65)">未回答</Text>
+                    <Text fontSize="sm" color="gray.600">未回答</Text>
                   )}
                 </Box>
                 {SHIRP_KEYS.map((key) => (
                   <Stack key={key} spacing={3}>
                     <Box>
-                      <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={1}>
+                      <Text fontSize="xs" fontWeight="bold" color="gray.800" mb={1}>
                         {SHIRP_LABELS[key]}
                       </Text>
-                      <Text fontSize="xs" color="rgba(255, 255, 255, 0.56)" mb={1}>
+                      <Text fontSize="xs" color="gray.500" mb={1}>
                         {SHIRP_HINTS[key]}
                       </Text>
                       <Textarea
@@ -846,15 +846,15 @@ function ConsultantHome() {
                     </Box>
                     {isShirpDetailCategoryKey(key) && (
                       <Box pl={{ base: 0, md: 4 }}>
-                        <Text fontSize="xs" fontWeight="bold" color="rgba(255, 255, 255, 0.78)" mb={2}>
+                        <Text fontSize="xs" fontWeight="bold" color="gray.800" mb={2}>
                           {SHIRP_LABELS[key]} の詳細
                         </Text>
                         <Stack spacing={4}>
                           {getShirpDetailFieldEntries(key).map(([field, definition]) => {
                             const fieldValue = karteDraft.shirpDetails[key]?.[field];
                             return (
-                              <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(255, 255, 255, 0.16)" borderRadius="0" p={3} bg="rgba(15, 23, 42, 0.48)">
-                                <Text fontSize="xs" color="rgba(255, 255, 255, 0.65)" mb={1}>
+                              <Box key={`${key}-${field}`} borderWidth="1px" borderColor="gray.200" borderRadius="0" p={3} bg="gray.50">
+                                <Text fontSize="xs" color="gray.600" mb={1}>
                                   {definition.label}
                                 </Text>
                                 <Textarea
@@ -883,7 +883,7 @@ function ConsultantHome() {
                                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={3}>
                                   {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => (
                                     <Box key={`${key}-${field}-${itemKey}`}>
-                                      <Text fontSize="xs" color="rgba(255, 255, 255, 0.65)" mb={1}>
+                                      <Text fontSize="xs" color="gray.600" mb={1}>
                                         {itemLabel}
                                       </Text>
                                       <Textarea
@@ -923,14 +923,14 @@ function ConsultantHome() {
                 ))}
               </Stack>
             ) : (
-              <Text fontSize="sm" color="rgba(255, 255, 255, 0.65)" p={6}>カルテが選択されていません。</Text>
+              <Text fontSize="sm" color="gray.600" p={6}>カルテが選択されていません。</Text>
             )}
           </ModalBody>
           <ModalFooter
             gap={3}
-            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
             borderTopWidth="1px"
-            borderColor="rgba(255, 255, 255, 0.16)"
+            borderColor="gray.200"
           >
             <Button {...modalOutlineButtonProps} onClick={karteDisclosure.onClose}>
               閉じる
@@ -943,14 +943,14 @@ function ConsultantHome() {
       </Modal>
 
       <Modal isOpen={emailDisclosure.isOpen} onClose={emailDisclosure.onClose} size="full">
-        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalOverlay bg="gray.300" backdropFilter="blur(7px)" />
         <ModalContent
-          bg="rgba(15, 23, 42, 0.98)"
-          color="white"
+          bg="rgba(255, 255, 255, 0.98)"
+          color="gray.900"
           borderRadius="0"
           borderWidth="1px"
-          borderColor="rgba(255, 255, 255, 0.18)"
-          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          borderColor="gray.200"
+          boxShadow="0 34px 110px rgba(15, 23, 42, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '72vw', '2xl': '1120px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
@@ -970,29 +970,29 @@ function ConsultantHome() {
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
             borderBottomWidth="1px"
-            borderColor="rgba(255, 255, 255, 0.16)"
+            borderColor="gray.200"
           >
             メール問い合わせ
           </ModalHeader>
-          <ModalCloseButton color="rgba(255, 255, 255, 0.85)" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
-          <ModalBody bg="rgba(2, 6, 23, 0.82)" px={0} py={0}>
+          <ModalCloseButton color="gray.700" top={5} _hover={{ bg: 'gray.100', color: 'gray.900' }} />
+          <ModalBody bg="rgba(248, 250, 252, 0.90)" px={0} py={0}>
             <Box as="form" id="mail-form" onSubmit={handleSendMail}>
               <Stack spacing={4} p={{ base: 4, md: 6 }}>
                 <FormControl>
-                  <FormLabel color="rgba(255, 255, 255, 0.86)">宛先</FormLabel>
+                  <FormLabel color="gray.700">宛先</FormLabel>
                   <Select defaultValue="admin" {...darkInputProps}>
                     <option value="admin">管理者</option>
                     <option value="user">担当ユーザー</option>
                   </Select>
                 </FormControl>
                 <FormControl>
-                  <FormLabel color="rgba(255, 255, 255, 0.86)">件名</FormLabel>
+                  <FormLabel color="gray.700">件名</FormLabel>
                   <Input placeholder="件名を入力" {...darkInputProps} />
                 </FormControl>
                 <FormControl>
-                  <FormLabel color="rgba(255, 255, 255, 0.86)">本文</FormLabel>
+                  <FormLabel color="gray.700">本文</FormLabel>
                   <Textarea rows={7} placeholder="問い合わせ内容を入力" {...darkTextareaProps} />
                 </FormControl>
               </Stack>
@@ -1000,9 +1000,9 @@ function ConsultantHome() {
           </ModalBody>
           <ModalFooter
             gap={3}
-            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
             borderTopWidth="1px"
-            borderColor="rgba(255, 255, 255, 0.16)"
+            borderColor="gray.200"
           >
             <Button {...modalOutlineButtonProps} onClick={emailDisclosure.onClose}>
               閉じる
@@ -1022,16 +1022,16 @@ function ConsultantHome() {
         }}
         size="lg"
       >
-        <ModalOverlay bg="blackAlpha.760" backdropFilter="blur(7px)" />
+        <ModalOverlay bg="gray.300" backdropFilter="blur(7px)" />
         <ModalContent
           as="form"
           onSubmit={handleResetPassword}
-          bg="rgba(15, 23, 42, 0.98)"
-          color="white"
+          bg="rgba(255, 255, 255, 0.98)"
+          color="gray.900"
           borderRadius="0"
           borderWidth="1px"
-          borderColor="rgba(255, 255, 255, 0.18)"
-          boxShadow="0 34px 110px rgba(0, 0, 0, 0.62)"
+          borderColor="gray.200"
+          boxShadow="0 34px 110px rgba(15, 23, 42, 0.18)"
           overflow="hidden"
           position="relative"
           _before={{
@@ -1045,10 +1045,10 @@ function ConsultantHome() {
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
-          <ModalCloseButton color="whiteAlpha.900" top={5} _hover={{ bg: 'whiteAlpha.160', color: 'white' }} />
+          <ModalCloseButton color="gray.800" top={5} _hover={{ bg: 'gray.100', color: 'gray.900' }} />
           <ModalBody>
             <Stack spacing={3}>
-              <Text fontSize="sm" color="whiteAlpha.760">
+              <Text fontSize="sm" color="gray.600">
                 現在のパスワードを確認用に入力し、新しいパスワードをアプリ内で再設定します。GitHub Pagesデモ版ではログイン時のパスワード照合には反映されません。
               </Text>
               <FormControl>
@@ -1083,9 +1083,9 @@ function ConsultantHome() {
           </ModalBody>
           <ModalFooter
             gap={3}
-            bg="linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))"
+            bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.96))"
             borderTopWidth="1px"
-            borderColor="rgba(255, 255, 255, 0.16)"
+            borderColor="gray.200"
           >
             <Button
               {...modalOutlineButtonProps}

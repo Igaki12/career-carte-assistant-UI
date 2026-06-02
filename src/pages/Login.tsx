@@ -26,6 +26,14 @@ import {
   saveDemoUserState,
 } from '../lib/demoUserState';
 import { findDemoAccount, resolveDemoLoginRole } from '../lib/demoAccounts';
+import {
+  lightBottomLine,
+  lightFormSurfaceProps,
+  lightMutedText,
+  lightPageBg,
+  lightText,
+  lightTopLine,
+} from '../lib/lightThemeTokens';
 
 type LoginProps = {
   session: DemoAuthSession | null;
@@ -104,8 +112,8 @@ function Login({ session, onLogin }: LoginProps) {
     <Box
       height="100dvh"
       overflowY="auto"
-      bgGradient="linear(135deg, #0f172a 0%, #1e293b 48%, #334155 100%)"
-      color="white"
+      bgGradient={lightPageBg}
+      color={lightText}
     >
       <Container maxW="5xl" minH="100dvh" py={{ base: 10, md: 16 }} display="flex" flexDirection="column">
         <Flex direction={{ base: 'column', lg: 'row' }} gap={10} align="stretch" flex="1">
@@ -114,12 +122,12 @@ function Login({ session, onLogin }: LoginProps) {
               <Heading
                 size="2xl"
                 lineHeight="short"
-                bgGradient="linear(110deg, #f1f5f9, #cbd5e1, #f8fafc, #94a3b8)"
+                bgGradient="linear(110deg, #111827, #475569, #0f172a, #64748b)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.32), 0 -1px 0 rgba(15, 23, 42, 0.55), 0 10px 24px rgba(15, 23, 42, 0.4)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(15, 23, 42, 0.12)',
                   animation: 'loginTitleGradient 12s ease-in-out infinite',
                   '@keyframes loginTitleGradient': {
                     '0%': { backgroundPosition: '0% 50%' },
@@ -130,7 +138,7 @@ function Login({ session, onLogin }: LoginProps) {
               >
                 Career Karte Assistant
               </Heading>
-              <Text mt={3} fontSize="xs" color="rgba(148, 163, 184, 0.72)" letterSpacing="0.02em">
+              <Text mt={3} fontSize="xs" color={lightMutedText} letterSpacing="0.02em">
                 © 2026 HRdock All rights reserved.
               </Text>
             </Box>
@@ -139,7 +147,7 @@ function Login({ session, onLogin }: LoginProps) {
           <Box
             flex="1"
             bg="transparent"
-            color="white"
+            color={lightText}
             borderRadius="0"
             borderTopWidth="0"
             borderBottomWidth="0"
@@ -154,7 +162,7 @@ function Login({ session, onLogin }: LoginProps) {
               left: 0,
               right: 0,
               height: { base: '5px', md: '7px' },
-              bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.8), rgba(203, 213, 225, 0.9), transparent)',
+              bgGradient: lightTopLine,
             }}
             _after={{
               content: '""',
@@ -163,16 +171,16 @@ function Login({ session, onLogin }: LoginProps) {
               left: 0,
               right: 0,
               height: { base: '5px', md: '7px' },
-              bgGradient: 'linear(to-r, transparent, rgba(100, 116, 139, 0.7), rgba(148, 163, 184, 0.8), transparent)',
+              bgGradient: lightBottomLine,
             }}
-            boxShadow="0 28px 80px rgba(15, 23, 42, 0.4)"
+            boxShadow="0 28px 80px rgba(15, 23, 42, 0.12)"
             backdropFilter="blur(14px)"
           >
             <form onSubmit={handleSubmit}>
               <Stack spacing={5}>
                 <Stack spacing={1}>
                   <Heading size="lg">ログイン</Heading>
-                  <Text color="whiteAlpha.800" fontSize="sm">
+                  <Text color={lightMutedText} fontSize="sm">
                     メールアドレスを入力してください。
                   </Text>
                 </Stack>
@@ -183,10 +191,7 @@ function Login({ session, onLogin }: LoginProps) {
                     value={accountId}
                     onChange={(event) => setAccountId(event.target.value)}
                     placeholder="demo@example.com"
-                    bg="whiteAlpha.900"
-                    color="gray.900"
-                    borderColor="whiteAlpha.600"
-                    _placeholder={{ color: 'gray.500' }}
+                    {...lightFormSurfaceProps}
                   />
                 </FormControl>
                 <FormControl isRequired>
@@ -196,10 +201,7 @@ function Login({ session, onLogin }: LoginProps) {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="任意の値"
-                    bg="whiteAlpha.900"
-                    color="gray.900"
-                    borderColor="whiteAlpha.600"
-                    _placeholder={{ color: 'gray.500' }}
+                    {...lightFormSurfaceProps}
                   />
                 </FormControl>
                 <Checkbox

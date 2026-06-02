@@ -23,6 +23,17 @@ import {
 } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getRoleLabel, type DemoAuthRole, type DemoAuthSession } from '../lib/demoAuth';
+import {
+  lightBottomLine,
+  lightBorder,
+  lightBorderStrong,
+  lightModalShadow,
+  lightMutedText,
+  lightPanelBg,
+  lightPanelSubtleBg,
+  lightText,
+  lightTopLine,
+} from '../lib/lightThemeTokens';
 
 type AuthNavigationProps = {
   session: DemoAuthSession;
@@ -101,12 +112,12 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
             <Box
               w={{ base: 'calc(100vw - 24px)', sm: '380px' }}
               maxW="calc(100vw - 24px)"
-              bg="rgba(2, 6, 23, 0.86)"
-              color="white"
+              bg={lightPanelBg}
+              color={lightText}
               borderWidth="1px"
-              borderColor="whiteAlpha.300"
+              borderColor={lightBorder}
               borderRadius="0"
-              boxShadow="0 26px 70px rgba(2, 6, 23, 0.56)"
+              boxShadow={lightModalShadow}
               backdropFilter="blur(16px)"
               position="relative"
               overflow="hidden"
@@ -117,7 +128,7 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 left: 0,
                 right: 0,
                 height: '4px',
-                bgGradient: 'linear(to-r, transparent, rgba(148, 163, 184, 0.78), rgba(241, 245, 249, 0.86), transparent)',
+                bgGradient: lightTopLine,
               }}
               _after={{
                 content: '""',
@@ -126,13 +137,13 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 left: 0,
                 right: 0,
                 height: '4px',
-                bgGradient: 'linear(to-r, transparent, rgba(71, 85, 105, 0.72), rgba(148, 163, 184, 0.82), transparent)',
+                bgGradient: lightBottomLine,
               }}
             >
               <Stack spacing={4} p={4} position="relative">
                 <Flex justify="space-between" align="flex-start" gap={3}>
                   <Box minW={0}>
-                    <Text fontSize="xs" color="whiteAlpha.700" fontWeight="bold">
+                    <Text fontSize="xs" color={lightMutedText} fontWeight="bold">
                       Career Karte Assistant
                     </Text>
                     <Text fontSize="lg" fontWeight="bold" lineHeight="short" noOfLines={1}>
@@ -144,16 +155,16 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                     icon={<FiX />}
                     size="sm"
                     variant="ghost"
-                    color="white"
-                    _hover={{ bg: 'whiteAlpha.160' }}
+                    color={lightText}
+                    _hover={{ bg: 'gray.100' }}
                     onClick={() => setIsOpen(false)}
                   />
                 </Flex>
 
-                <Box borderWidth="1px" borderColor="whiteAlpha.200" bg="whiteAlpha.100" p={3}>
+                <Box borderWidth="1px" borderColor={lightBorder} bg={lightPanelSubtleBg} p={3}>
                   <Flex justify="space-between" align="center" gap={3} wrap="wrap">
                     <Stack spacing={0} minW={0}>
-                      <Text fontSize="xs" color="whiteAlpha.700" fontWeight="bold">
+                      <Text fontSize="xs" color={lightMutedText} fontWeight="bold">
                         ログイン中
                       </Text>
                       <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
@@ -173,11 +184,11 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                         justifyContent="flex-start"
                         leftIcon={item.icon}
                         variant={isActive ? 'solid' : 'ghost'}
-                        bg={isActive ? 'whiteAlpha.220' : 'transparent'}
-                        color="white"
+                        bg={isActive ? 'gray.200' : 'transparent'}
+                        color={lightText}
                         borderWidth="1px"
-                        borderColor={isActive ? 'whiteAlpha.400' : 'transparent'}
-                        _hover={{ bg: 'whiteAlpha.180', borderColor: 'whiteAlpha.300' }}
+                        borderColor={isActive ? lightBorderStrong : 'transparent'}
+                        _hover={{ bg: 'gray.100', borderColor: lightBorder }}
                         onClick={() => handleNavigate(item.to)}
                       >
                         {item.label}
@@ -188,11 +199,11 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
 
                 <Button
                   leftIcon={<FiLogOut />}
-                  color="white"
-                  bg="rgba(127, 29, 29, 0.58)"
+                  color="red.700"
+                  bg="red.50"
                   borderWidth="1px"
-                  borderColor="red.300"
-                  _hover={{ bg: 'rgba(153, 27, 27, 0.72)' }}
+                  borderColor="red.200"
+                  _hover={{ bg: 'red.100' }}
                   onClick={onLogout}
                 >
                   ログアウト
@@ -213,22 +224,22 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 aria-label="ナビゲーションを開く"
                 icon={<FiSettings />}
                 size="lg"
-                color="white"
-                bg="rgba(2, 6, 23, 0.86)"
+                color={lightText}
+                bg={lightPanelBg}
                 borderWidth="1px"
-                borderColor="whiteAlpha.400"
+                borderColor={lightBorderStrong}
                 borderRadius="2px"
-                boxShadow="0 16px 42px rgba(2, 6, 23, 0.44), 0 0 0 5px rgba(148, 163, 184, 0.1)"
+                boxShadow="0 14px 34px rgba(15, 23, 42, 0.14), 0 0 0 5px rgba(148, 163, 184, 0.10)"
                 backdropFilter="blur(14px)"
-                _hover={{ bg: 'rgba(15, 23, 42, 0.94)', transform: 'translateY(-1px)' }}
+                _hover={{ bg: 'white', transform: 'translateY(-1px)' }}
                 sx={
                   shouldReduceMotion
                     ? undefined
                     : {
                         animation: 'navPulse 2.8s ease-in-out infinite',
                         '@keyframes navPulse': {
-                          '0%, 100%': { boxShadow: '0 16px 42px rgba(2, 6, 23, 0.44), 0 0 0 4px rgba(148, 163, 184, 0.08)' },
-                          '50%': { boxShadow: '0 20px 50px rgba(2, 6, 23, 0.54), 0 0 0 7px rgba(148, 163, 184, 0.15)' },
+                          '0%, 100%': { boxShadow: '0 14px 34px rgba(15, 23, 42, 0.14), 0 0 0 4px rgba(148, 163, 184, 0.08)' },
+                          '50%': { boxShadow: '0 18px 42px rgba(15, 23, 42, 0.18), 0 0 0 7px rgba(148, 163, 184, 0.15)' },
                         },
                       }
                 }
