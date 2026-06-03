@@ -393,7 +393,7 @@ function DemographicsSetup() {
                 backgroundSize="240% 240%"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(63, 63, 70, 0.12)',
                   animation: 'demographicsTitleGradient 12s ease-in-out infinite',
                   '@keyframes demographicsTitleGradient': {
                     '0%': { backgroundPosition: '0% 50%' },

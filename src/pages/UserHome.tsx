@@ -133,7 +133,7 @@ const decoratedPanelProps = {
   borderWidth: '0',
   p: 6,
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(22, 94, 131, 0.12)',
+  boxShadow: '0 28px 80px rgba(63, 63, 70, 0.12)',
   sx: { backdropFilter: 'blur(14px)' },
   _before: {
     content: '""',
@@ -713,7 +713,7 @@ function UserHome() {
           <Box
             position="relative"
             borderRadius="0"
-            boxShadow="0 28px 80px rgba(22, 94, 131, 0.14)"
+            boxShadow="0 28px 80px rgba(63, 63, 70, 0.14)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
             bgImage={`linear-gradient(rgba(252, 252, 253, 0.78), rgba(244, 244, 245, 0.82)), url(${heroBackground})`}
@@ -761,7 +761,7 @@ function UserHome() {
                   p={3}
                   bg="rgba(22, 94, 131, 0.08)"
                   backdropFilter="blur(10px)"
-                  boxShadow="0 20px 50px rgba(0, 0, 0, 0.18)"
+                  boxShadow="0 20px 50px rgba(63, 63, 70, 0.18)"
                 >
                   <Flex justify="space-between" align={{ base: 'flex-start', md: 'center' }} gap={3} mb={2} direction={{ base: 'column', md: 'row' }}>
                     <Text fontSize="sm" fontWeight="bold" color="#1f4f68">
@@ -1140,7 +1140,7 @@ function UserHome() {
           borderRadius="0"
           borderWidth="1px"
           borderColor="rgba(22, 94, 131, 0.18)"
-          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
@@ -1446,7 +1446,7 @@ function UserHome() {
           borderRadius="0"
           borderWidth="1px"
           borderColor="rgba(22, 94, 131, 0.18)"
-          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           position="relative"
           _before={{

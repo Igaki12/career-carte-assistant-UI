@@ -50,7 +50,7 @@ const panelProps = {
   borderWidth: '0',
   p: 6,
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(22, 94, 131, 0.12)',
+  boxShadow: '0 28px 80px rgba(63, 63, 70, 0.12)',
   _before: {
     content: '""',
     position: 'absolute',

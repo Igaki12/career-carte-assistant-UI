@@ -125,7 +125,7 @@ const linePanelProps = {
   borderRadius: '0',
   border: '0',
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(22, 94, 131, 0.12)',
+  boxShadow: '0 28px 80px rgba(63, 63, 70, 0.12)',
   backdropFilter: 'blur(14px)',
   _before: {
     content: '""',
@@ -153,7 +153,7 @@ const smallPanelProps = {
   borderRadius: '0',
   borderWidth: '1px',
   borderColor: 'rgba(22, 94, 131, 0.18)',
-  boxShadow: '0 18px 46px rgba(22, 94, 131, 0.10)',
+  boxShadow: '0 18px 46px rgba(63, 63, 70, 0.10)',
   backdropFilter: 'blur(12px)',
 } as const;
 
@@ -552,7 +552,7 @@ function ConsultantHome() {
           <Box
             position="relative"
             borderRadius="0"
-            boxShadow="0 28px 80px rgba(22, 94, 131, 0.14)"
+            boxShadow="0 28px 80px rgba(63, 63, 70, 0.14)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
             bgImage={`linear-gradient(rgba(252, 252, 253, 0.78), rgba(244, 244, 245, 0.82)), url(${heroBackground})`}
@@ -597,7 +597,7 @@ function ConsultantHome() {
                   p={4}
                   bg="rgba(22, 94, 131, 0.08)"
                   backdropFilter="blur(10px)"
-                  boxShadow="0 20px 50px rgba(0, 0, 0, 0.18)"
+                  boxShadow="0 20px 50px rgba(63, 63, 70, 0.18)"
                 >
                   <Text fontSize="sm" fontWeight="bold" color="#1f4f68" mb={3}>
                     コンサルタント概要
@@ -740,7 +740,7 @@ function ConsultantHome() {
           borderRadius="0"
           borderWidth="1px"
           borderColor="rgba(22, 94, 131, 0.18)"
-          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
@@ -950,7 +950,7 @@ function ConsultantHome() {
           borderRadius="0"
           borderWidth="1px"
           borderColor="rgba(22, 94, 131, 0.18)"
-          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '72vw', '2xl': '1120px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}
@@ -1031,7 +1031,7 @@ function ConsultantHome() {
           borderRadius="0"
           borderWidth="1px"
           borderColor="rgba(22, 94, 131, 0.18)"
-          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           position="relative"
           _before={{

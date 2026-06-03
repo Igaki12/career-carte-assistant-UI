@@ -95,7 +95,7 @@ const linePanelProps = {
   borderRadius: '0',
   borderWidth: '0',
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(22, 94, 131, 0.12)',
+  boxShadow: '0 28px 80px rgba(63, 63, 70, 0.12)',
   backdropFilter: 'blur(14px)',
   _before: {
     content: '""',
@@ -119,7 +119,7 @@ const translucentPanelProps = {
   borderRadius: '0',
   borderWidth: '1px',
   borderColor: 'rgba(22, 94, 131, 0.18)',
-  boxShadow: '0 18px 46px rgba(22, 94, 131, 0.10)',
+  boxShadow: '0 18px 46px rgba(63, 63, 70, 0.10)',
   backdropFilter: 'blur(12px)',
 } as const;
 
@@ -445,7 +445,7 @@ function CompanyAdminHome() {
                   bgClip="text"
                   sx={{
                     WebkitTextFillColor: 'transparent',
-                    textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
+                    textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(63, 63, 70, 0.12)',
                   }}
                 >
                   企業管理者ホーム
@@ -707,7 +707,7 @@ function CompanyAdminHome() {
           borderRadius="0"
           borderWidth="1px"
           borderColor="rgba(22, 94, 131, 0.18)"
-          boxShadow="0 34px 110px rgba(22, 94, 131, 0.18)"
+          boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
           maxH={{ base: '100dvh', md: 'calc(100dvh - 32px)' }}

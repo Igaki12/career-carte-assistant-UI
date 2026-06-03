@@ -98,7 +98,7 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
               sx={{
                 WebkitTextFillColor: 'transparent',
                 textShadow:
-                  '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
+                  '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(63, 63, 70, 0.12)',
                 animation: 'adminLoginTitleGradient 12s ease-in-out infinite',
                 '@keyframes adminLoginTitleGradient': {
                   '0%': { backgroundPosition: '0% 50%' },
@@ -119,7 +119,7 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
           borderRadius="0"
           p={{ base: 6, md: 8 }}
           position="relative"
-          boxShadow="0 28px 80px rgba(22, 94, 131, 0.12)"
+          boxShadow="0 28px 80px rgba(63, 63, 70, 0.12)"
           backdropFilter="blur(14px)"
           _before={{
             content: '""',

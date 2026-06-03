@@ -170,7 +170,7 @@ const linePanelProps = {
   borderRadius: '0',
   borderWidth: '0',
   position: 'relative',
-  boxShadow: '0 28px 80px rgba(22, 94, 131, 0.12)',
+  boxShadow: '0 28px 80px rgba(63, 63, 70, 0.12)',
   backdropFilter: 'blur(14px)',
   _before: {
     content: '""',
@@ -1091,7 +1091,7 @@ function Admin() {
                 bgClip="text"
                 sx={{
                   WebkitTextFillColor: 'transparent',
-                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(22, 94, 131, 0.12)',
+                  textShadow: '0 1px 0 rgba(255, 255, 255, 0.82), 0 12px 26px rgba(63, 63, 70, 0.12)',
                 }}
               >
                 システム管理コンソール

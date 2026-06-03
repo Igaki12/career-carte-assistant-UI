@@ -229,7 +229,7 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 borderWidth="1px"
                 borderColor={lightBorderStrong}
                 borderRadius="2px"
-                boxShadow="0 14px 34px rgba(22, 94, 131, 0.14), 0 0 0 5px rgba(22, 94, 131, 0.10)"
+                boxShadow="0 14px 34px rgba(63, 63, 70, 0.14), 0 0 0 5px rgba(63, 63, 70, 0.10)"
                 backdropFilter="blur(14px)"
                 _hover={{ bg: '#fcfcfd', transform: 'translateY(-1px)' }}
                 sx={
@@ -238,8 +238,8 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                     : {
                         animation: 'navPulse 2.8s ease-in-out infinite',
                         '@keyframes navPulse': {
-                          '0%, 100%': { boxShadow: '0 14px 34px rgba(22, 94, 131, 0.14), 0 0 0 4px rgba(22, 94, 131, 0.08)' },
-                          '50%': { boxShadow: '0 18px 42px rgba(22, 94, 131, 0.18), 0 0 0 7px rgba(22, 94, 131, 0.15)' },
+                          '0%, 100%': { boxShadow: '0 14px 34px rgba(63, 63, 70, 0.14), 0 0 0 4px rgba(63, 63, 70, 0.08)' },
+                          '50%': { boxShadow: '0 18px 42px rgba(63, 63, 70, 0.18), 0 0 0 7px rgba(63, 63, 70, 0.15)' },
                         },
                       }
                 }

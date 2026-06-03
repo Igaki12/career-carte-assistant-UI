@@ -9,8 +9,8 @@ export const lightBorder = 'rgba(22, 94, 131, 0.30)';
 export const lightBorderStrong = 'rgba(22, 94, 131, 0.46)';
 export const lightTopLine = 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.74), transparent)';
 export const lightBottomLine = 'linear(to-r, transparent, rgba(156, 163, 175, 0.52), rgba(75, 85, 99, 0.46), transparent)';
-export const lightShadow = '0 24px 70px rgba(22, 94, 131, 0.14)';
-export const lightModalShadow = '0 32px 96px rgba(22, 94, 131, 0.20)';
+export const lightShadow = '0 24px 70px rgba(63, 63, 70, 0.14)';
+export const lightModalShadow = '0 32px 96px rgba(39, 39, 42, 0.20)';
 export const lightModalChromeBg = 'linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))';
 
 export const lightFormSurfaceProps = {
