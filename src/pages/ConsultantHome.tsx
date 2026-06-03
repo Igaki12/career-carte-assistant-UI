@@ -134,7 +134,7 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(116, 164, 187, 0.88), transparent)',
+    bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.62), rgba(31, 41, 55, 0.76), transparent)',
   },
   _after: {
     content: '""',
@@ -143,7 +143,7 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(to-r, transparent, rgba(61, 121, 150, 0.66), rgba(22, 94, 131, 0.8), transparent)',
+    bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.72), transparent)',
   },
 } as const;
 
@@ -575,7 +575,7 @@ function ConsultantHome() {
               right: 0,
               bottom: 0,
               height: { base: '4px', md: '6px' },
-              bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.78), rgba(116, 164, 187, 0.88), transparent)',
+              bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.62), rgba(31, 41, 55, 0.76), transparent)',
             }}
           >
             <Flex
@@ -753,7 +753,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.68), transparent)',
             zIndex: 1,
           }}
         >
@@ -963,7 +963,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.68), transparent)',
             zIndex: 1,
           }}
         >
@@ -1041,7 +1041,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.68), transparent)',
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>

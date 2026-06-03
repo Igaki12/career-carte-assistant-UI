@@ -58,7 +58,7 @@ const panelProps = {
     left: 0,
     right: 0,
     height: '5px',
-    bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(214, 230, 238, 0.88), transparent)',
+    bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.70), transparent)',
   },
 } as const;
 const outlineButtonProps = {

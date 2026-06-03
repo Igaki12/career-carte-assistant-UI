@@ -104,7 +104,7 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(116, 164, 187, 0.88), transparent)',
+    bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.62), rgba(31, 41, 55, 0.76), transparent)',
   },
   sx: {
     '& th': { color: 'rgba(31, 79, 104, 0.78)', borderColor: 'rgba(22, 94, 131, 0.28)' },
@@ -720,7 +720,7 @@ function CompanyAdminHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(75, 85, 99, 0.58), rgba(31, 41, 55, 0.68), transparent)',
             zIndex: 1,
           }}
         >
