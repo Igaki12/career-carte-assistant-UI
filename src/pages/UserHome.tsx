@@ -142,7 +142,7 @@ const decoratedPanelProps = {
     left: 0,
     right: 0,
     height: '6px',
-    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.10) 10%, rgba(31, 41, 55, 0.70) 18%, transparent 24%, rgba(156, 163, 175, 0.26) 34%, rgba(75, 85, 99, 0.58) 45%, rgba(31, 41, 55, 0.70) 60%, transparent 66%, rgba(75, 85, 99, 0.38) 83%, transparent 100%)',
+    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.10) 10%, rgba(31, 41, 55, 0.70) 18%, rgba(156, 163, 175, 0.26) 34%, rgba(75, 85, 99, 0.58) 45%, rgba(31, 41, 55, 0.70) 60%, rgba(75, 85, 99, 0.38) 83%, transparent 100%)',
   },
 } as const;
 
@@ -736,7 +736,7 @@ function UserHome() {
               left: 0,
               right: 0,
               height: '6px',
-              bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.10) 10%, rgba(31, 41, 55, 0.70) 18%, transparent 24%, rgba(156, 163, 175, 0.26) 34%, rgba(75, 85, 99, 0.58) 45%, rgba(31, 41, 55, 0.70) 60%, transparent 66%, rgba(75, 85, 99, 0.38) 83%, transparent 100%)',
+              bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.10) 10%, rgba(31, 41, 55, 0.70) 18%, rgba(156, 163, 175, 0.26) 34%, rgba(75, 85, 99, 0.58) 45%, rgba(31, 41, 55, 0.70) 60%, rgba(75, 85, 99, 0.38) 83%, transparent 100%)',
               zIndex: 1,
             }}
           >
@@ -1153,7 +1153,7 @@ function UserHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, transparent 27%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, transparent 58%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
+            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
             zIndex: 1,
           }}
         >
@@ -1456,7 +1456,7 @@ function UserHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, transparent 27%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, transparent 58%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
+            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
