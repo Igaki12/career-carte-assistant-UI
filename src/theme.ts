@@ -12,6 +12,13 @@ const theme = extendTheme({
     heading: `'Noto Sans JP', 'Inter', 'Hiragino Sans', 'Yu Gothic', sans-serif`,
     body: `'Noto Sans JP', 'Inter', 'Hiragino Sans', 'Yu Gothic', sans-serif`,
   },
+  components: {
+    Heading: {
+      baseStyle: {
+        color: '#18181b',
+      },
+    },
+  },
   styles: {
     global: {
       body: {

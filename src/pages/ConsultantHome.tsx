@@ -587,7 +587,7 @@ function ConsultantHome() {
               animation={`${heroContentSlide} 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both`}
             >
               <Stack spacing={1} flex="1">
-                <Heading size="lg" color="#27272a">{profile.name} さんのコンサルタント画面</Heading>
+                <Heading size="lg" color="#18181b">{profile.name} さんのコンサルタント画面</Heading>
                 <Text color="#3f3f46">{profile.company} / {profile.department} / {profile.title}</Text>
                 <Box
                   mt={3}

@@ -441,7 +441,7 @@ function CompanyAdminHome() {
               <Stack spacing={2}>
                 <Heading
                   size="lg"
-                  bgGradient="linear(110deg, #27272a, #3f3f46, #27272a, #71717a)"
+                  bgGradient="linear(110deg, #18181b, #27272a, #18181b, #3f3f46)"
                   bgClip="text"
                   sx={{
                     WebkitTextFillColor: 'transparent',

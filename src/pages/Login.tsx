@@ -122,7 +122,7 @@ function Login({ session, onLogin }: LoginProps) {
               <Heading
                 size="2xl"
                 lineHeight="short"
-                bgGradient="linear(110deg, #27272a, #3f3f46, #27272a, #71717a)"
+                bgGradient="linear(110deg, #18181b, #27272a, #18181b, #3f3f46)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{

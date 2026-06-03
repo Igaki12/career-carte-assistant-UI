@@ -749,7 +749,7 @@ function UserHome() {
               animation={`${heroContentSlide} 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both`}
             >
               <Stack spacing={1} flex="1">
-                <Heading size="lg" color="#27272a">
+                <Heading size="lg" color="#18181b">
                   {profile.name} さんのマイページ
                 </Heading>
                 <Text color="#3f3f46">{profile.company} / {profile.department} / {profile.jobTitle}</Text>
