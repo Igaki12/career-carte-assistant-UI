@@ -702,7 +702,7 @@ function UserHome() {
 
   return (
     <Box
-      bgGradient="linear(135deg, #f7fbfd 0%, #e7f1f6 52%, #d6e6ee 100%)"
+      bgGradient="linear(135deg, #ffffff 0%, #f7f7f8 52%, #eeeeef 100%)"
       height="100dvh"
       py={{ base: 6, md: 8 }}
       overflowY="scroll"

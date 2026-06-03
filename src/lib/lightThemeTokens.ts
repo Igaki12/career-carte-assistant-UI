@@ -1,4 +1,4 @@
-export const lightPageBg = 'linear(135deg, #f7fbfd 0%, #e7f1f6 52%, #d6e6ee 100%)';
+export const lightPageBg = 'linear(135deg, #ffffff 0%, #f7f7f8 52%, #eeeeef 100%)';
 export const lightPanelBg = 'rgba(247, 251, 253, 0.76)';
 export const lightPanelStrongBg = 'rgba(251, 253, 254, 0.94)';
 export const lightPanelSubtleBg = 'rgba(232, 243, 248, 0.84)';

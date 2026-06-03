@@ -351,7 +351,7 @@ function DemographicsSetup() {
           position="absolute"
           w={{ base: '180vw', md: '120vw' }}
           h={{ base: '180vw', md: '120vw' }}
-          bgGradient="linear(45deg, #fbfdfe, #e7f1f6, #d6e6ee, #e8f3f8)"
+          bgGradient="linear(45deg, #ffffff, #f7f7f8, #eeeeef, #f4f4f5)"
           opacity={0.9}
           animation={`${waveDeform1} 6s linear infinite`}
           filter="blur(60px)"

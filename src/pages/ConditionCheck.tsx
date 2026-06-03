@@ -69,7 +69,7 @@ function ConditionCheck() {
   };
 
   return (
-    <Box minH="100dvh" bgGradient="linear(to-br, rgba(232, 243, 248, 0.84), orange.50, rgba(22, 94, 131, 0.08))" py={{ base: 8, md: 12 }}>
+    <Box minH="100dvh" bgGradient="linear(to-br, #ffffff, #f7f7f8, #eeeeef)" py={{ base: 8, md: 12 }}>
       <Container maxW="3xl">
         <Stack spacing={6}>
           <Stack spacing={2}>

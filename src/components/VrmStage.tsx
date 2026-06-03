@@ -1150,7 +1150,7 @@ const VrmStage = ({
 
   return (
     <Box
-      bg="#e7f1f6"
+      bg="#f7f7f8"
       bgImage={`url(${currentBackground.image})`}
       bgSize="cover"
       bgRepeat="no-repeat"

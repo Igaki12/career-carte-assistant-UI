@@ -87,7 +87,7 @@ const getStatusColor = (status: string) => {
   return 'purple';
 };
 
-const adminPageBg = 'linear(135deg, #f7fbfd 0%, #e7f1f6 52%, #d6e6ee 100%)';
+const adminPageBg = 'linear(135deg, #ffffff 0%, #f7f7f8 52%, #eeeeef 100%)';
 
 const linePanelProps = {
   bg: 'transparent',

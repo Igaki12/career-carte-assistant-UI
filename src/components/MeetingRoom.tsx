@@ -1901,7 +1901,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
 
   if (!hasPassedStartGate) {
     return (
-      <Box bg="rgba(22, 94, 131, 0.08)" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
+      <Box bg="#f7f7f8" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
         <Box maxW="640px" mx="auto" bg="#fbfdfe" borderRadius="2xl" borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" boxShadow="sm" p={{ base: 6, md: 8 }}>
           <Stack spacing={4}>
             <Heading size="md">
@@ -1921,7 +1921,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   }
 
   return (
-    <Box bg="rgba(22, 94, 131, 0.08)" minH="100dvh" h="100dvh" py={{ base: 4, md: 6 }} px={{ base: 3, md: 6 }} overflow="hidden">
+    <Box bg="#f7f7f8" minH="100dvh" h="100dvh" py={{ base: 4, md: 6 }} px={{ base: 3, md: 6 }} overflow="hidden">
       <ApiKeyModal
         isOpen={isApiModalOpen}
         openAiApiKey={openAiApiKey}
