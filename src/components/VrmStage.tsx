@@ -1179,9 +1179,9 @@ const VrmStage = ({
         variant="solid"
         colorScheme="cyan"
         color="#12384d"
-        bg="rgba(247,251,253,0.84)"
-        _hover={{ bg: 'rgba(232,243,248,0.94)' }}
-        _active={{ bg: 'rgba(214,230,238,0.94)' }}
+        bg="rgba(252,252,253,0.84)"
+        _hover={{ bg: 'rgba(244,244,245,0.94)' }}
+        _active={{ bg: 'rgba(238,238,239,0.94)' }}
         title={`モデル: ${currentModel.label}`}
       />
       <IconButton
@@ -1199,9 +1199,9 @@ const VrmStage = ({
         variant="solid"
         colorScheme="cyan"
         color="#12384d"
-        bg="rgba(247,251,253,0.84)"
-        _hover={{ bg: 'rgba(232,243,248,0.94)' }}
-        _active={{ bg: 'rgba(214,230,238,0.94)' }}
+        bg="rgba(252,252,253,0.84)"
+        _hover={{ bg: 'rgba(244,244,245,0.94)' }}
+        _active={{ bg: 'rgba(238,238,239,0.94)' }}
         title={`背景: ${currentBackground.label}`}
       />
       {showProgress && (
@@ -1210,7 +1210,7 @@ const VrmStage = ({
           bottom={3}
           right={3}
           zIndex={3}
-          bg="rgba(247,251,253,0.88)"
+          bg="rgba(252,252,253,0.84)"
           borderRadius="xl"
           px={4}
           py={2}
@@ -1274,7 +1274,7 @@ const VrmStage = ({
           alignItems="center"
           justifyContent="center"
           zIndex={1}
-          bgGradient="linear(to-b, rgba(247,251,253,0.88), rgba(225,240,247,0.88))"
+          bgGradient="linear(to-b, rgba(252,252,253,0.84), rgba(244,244,245,0.94))"
         >
           <Text color="#315f76" fontSize="sm">
             VRMモデルを読み込み中...

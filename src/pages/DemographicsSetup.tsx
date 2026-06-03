@@ -345,7 +345,7 @@ function DemographicsSetup() {
         alignItems="center"
         justifyContent="center"
         overflow="hidden"
-        bg="rgba(232, 243, 248, 0.84)"
+        bg="rgba(244, 244, 245, 0.86)"
       >
         <Box
           position="absolute"
@@ -360,7 +360,7 @@ function DemographicsSetup() {
           position="absolute"
           w={{ base: '160vw', md: '100vw' }}
           h={{ base: '160vw', md: '100vw' }}
-          bgGradient="linear(-45deg, #fbfdfe, #d6e6ee, #e8f3f8, #74a4bb)"
+          bgGradient="linear(-45deg, #fcfcfd, #eeeeef, #f4f4f5, #d6d6d8)"
           opacity={0.72}
           animation={`${waveDeform2} 8s linear infinite`}
           filter="blur(70px)"
@@ -369,7 +369,7 @@ function DemographicsSetup() {
           position="absolute"
           w="100vw"
           h="100vh"
-          bg="rgba(247,251,253,0.34)"
+          bg="rgba(252,252,253,0.84)"
           sx={{ backdropFilter: 'blur(30px)' }}
         />
       </Box>

@@ -1902,7 +1902,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
   if (!hasPassedStartGate) {
     return (
       <Box bg="#f7f7f8" minH="100dvh" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-        <Box maxW="640px" mx="auto" bg="#fbfdfe" borderRadius="2xl" borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" boxShadow="sm" p={{ base: 6, md: 8 }}>
+        <Box maxW="640px" mx="auto" bg="#fcfcfd" borderRadius="2xl" borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" boxShadow="sm" p={{ base: 6, md: 8 }}>
           <Stack spacing={4}>
             <Heading size="md">
               企業のAPI残枠が不足しています
@@ -1946,7 +1946,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             gap={4}
           >
             <Box
-              bg="#fbfdfe"
+              bg="#fcfcfd"
               borderRadius="2xl"
               borderWidth="1px"
               borderColor="rgba(22, 94, 131, 0.18)"
@@ -2010,7 +2010,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
             display={hasUsedApi ? 'flex' : { base: 'none', md: 'flex' }}
           >
             <Box
-              bg="#fbfdfe"
+              bg="#fcfcfd"
               borderRadius="2xl"
               borderWidth="1px"
               borderColor="rgba(22, 94, 131, 0.18)"
@@ -2022,7 +2022,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
               overflow="hidden"
             >
               {isTurnTakingMode ? (
-                <Box flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="rgba(232, 243, 248, 0.84)">
+                <Box flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="rgba(244, 244, 245, 0.86)">
                   <Stack spacing={3}>
                     <Box bg="purple.50" borderRadius="lg" px={3} py={2} borderWidth="1px" borderColor="purple.200">
                       <Text fontSize="xs" color="purple.700">
@@ -2033,7 +2033,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                   </Stack>
                 </Box>
               ) : (
-                <Box ref={chatContainerRef} flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="rgba(232, 243, 248, 0.84)">
+                <Box ref={chatContainerRef} flex="1" minH={0} overflowY="auto" px={{ base: 3, md: 4 }} py={4} bg="rgba(244, 244, 245, 0.86)">
                   {messages.map((message, index) => {
                     const isUser = message.role === 'user';
                     return (
@@ -2096,7 +2096,7 @@ const MeetingRoom = ({ meetingType, continuousMode = 'normal' }: Props) => {
                           onChange={(e) => setTextValue(e.target.value)}
                           placeholder={textareaPlaceholder}
                           borderRadius="xl"
-                          bg="#fbfdfe"
+                          bg="#fcfcfd"
                           borderColor="rgba(22, 94, 131, 0.18)"
                           resize="none"
                           rows={isTextareaExpanded ? 6 : 2}

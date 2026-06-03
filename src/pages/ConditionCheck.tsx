@@ -79,7 +79,7 @@ function ConditionCheck() {
             </Text>
           </Stack>
 
-          <Box bg="#fbfdfe" borderRadius="xl" borderWidth="1px" borderColor="orange.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
+          <Box bg="#fcfcfd" borderRadius="xl" borderWidth="1px" borderColor="orange.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
             <Stack spacing={5}>
               <Stack spacing={2}>
                 <Badge alignSelf="flex-start" colorScheme={stressEnabled ? 'orange' : 'cyan'}>
@@ -96,7 +96,7 @@ function ConditionCheck() {
               </Stack>
 
               {!stressEnabled ? (
-                <Box borderWidth="1px" borderRadius="lg" bg="rgba(232, 243, 248, 0.84)" borderColor="rgba(22, 94, 131, 0.18)" p={4}>
+                <Box borderWidth="1px" borderRadius="lg" bg="rgba(244, 244, 245, 0.86)" borderColor="rgba(22, 94, 131, 0.18)" p={4}>
                   <Text fontSize="sm" color="#3f6678">
                     現在の企業では面談前コンディションチェックが無効です。管理画面または企業管理者画面で有効化できます。
                   </Text>

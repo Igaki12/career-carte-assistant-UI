@@ -114,7 +114,7 @@ const linePanelProps = {
 } as const;
 
 const translucentPanelProps = {
-  bg: 'rgba(232, 243, 248, 0.84)',
+  bg: 'rgba(244, 244, 245, 0.86)',
   color: '#12384d',
   borderRadius: '0',
   borderWidth: '1px',
@@ -124,7 +124,7 @@ const translucentPanelProps = {
 } as const;
 
 const formControlProps = {
-  bg: '#fbfdfe',
+  bg: '#fcfcfd',
   color: '#12384d',
   borderColor: 'rgba(22, 94, 131, 0.30)',
   _placeholder: { color: '#66889a' },
@@ -528,7 +528,7 @@ function CompanyAdminHome() {
                   まだ通知文はありません。従業員一覧の再発行から作成できます。
                 </Text>
               ) : (
-                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
+                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(244, 244, 245, 0.86)">
                   <Table size="sm">
                     <Thead bg="rgba(22, 94, 131, 0.08)">
                       <Tr>
@@ -615,7 +615,7 @@ function CompanyAdminHome() {
                 </Select>
               </Flex>
 
-              <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
+              <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(244, 244, 245, 0.86)">
                 <Table size="sm">
                   <Thead bg="rgba(22, 94, 131, 0.08)">
                     <Tr>
@@ -702,7 +702,7 @@ function CompanyAdminHome() {
       <Modal isOpen={Boolean(viewingEmployee)} onClose={() => setViewingEmployee(null)} size="full" scrollBehavior="inside">
         <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
         <ModalContent
-          bg="rgba(255, 255, 255, 0.98)"
+          bg="rgba(252, 252, 253, 0.98)"
           color="#12384d"
           borderRadius="0"
           borderWidth="1px"
@@ -720,14 +720,14 @@ function CompanyAdminHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
             zIndex: 1,
           }}
         >
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderBottomWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
@@ -740,7 +740,7 @@ function CompanyAdminHome() {
           </ModalHeader>
           <ModalCloseButton color="#315f76" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
           <ModalBody
-            bg="rgba(232, 243, 248, 0.90)"
+            bg="rgba(244, 244, 245, 0.86)"
             px={0}
             py={0}
             position="relative"
@@ -749,7 +749,7 @@ function CompanyAdminHome() {
           </ModalBody>
           <ModalFooter
             gap={2}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderTopWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >

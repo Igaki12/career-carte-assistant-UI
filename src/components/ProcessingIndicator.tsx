@@ -24,7 +24,7 @@ type Props = {
 const ProcessingIndicator = ({ message }: Props) => {
   if (!message) return null;
   return (
-    <HStack spacing={3} py={2} px={4} bg="rgba(232, 243, 248, 0.84)" borderTopWidth="1px" borderColor="rgba(22, 94, 131, 0.08)">
+    <HStack spacing={3} py={2} px={4} bg="rgba(244, 244, 245, 0.86)" borderTopWidth="1px" borderColor="rgba(22, 94, 131, 0.08)">
       <HStack spacing={1}>
         <Dot delay={0} />
         <Dot delay={0.2} />

@@ -53,12 +53,12 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, d
 
   return (
     <Button
-      color={isButtonDisabled ? '#e8f3f8' : 'white'}
+      color={isButtonDisabled ? '#f4f4f5' : 'white'}
       position="relative"
       overflow="hidden"
       borderRadius="md"
       borderWidth="1px"
-      borderColor={isButtonDisabled ? 'rgba(22, 94, 131, 0.20)' : 'rgba(232, 243, 248, 0.26)'}
+      borderColor={isButtonDisabled ? 'rgba(22, 94, 131, 0.20)' : 'rgba(244, 244, 245, 0.26)'}
       bgGradient={
         isButtonDisabled
           ? 'linear(115deg, rgba(22, 94, 131, 0.62), rgba(61, 121, 150, 0.56), rgba(116, 164, 187, 0.48))'
@@ -77,8 +77,8 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, d
         position: 'absolute',
         inset: '-75%',
         bg: isButtonDisabled
-          ? 'linear-gradient(135deg, rgba(232, 243, 248, 0.22), transparent 44%, rgba(22, 94, 131, 0.12))'
-          : 'radial-gradient(ellipse at 20% 50%, rgba(232, 243, 248, 0.22), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(93, 155, 181, 0.28), transparent 32%)',
+          ? 'linear-gradient(135deg, rgba(244, 244, 245, 0.22), transparent 44%, rgba(22, 94, 131, 0.12))'
+          : 'radial-gradient(ellipse at 20% 50%, rgba(244, 244, 245, 0.22), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(93, 155, 181, 0.28), transparent 32%)',
         filter: isButtonDisabled ? 'none' : 'blur(10px)',
         animation: isButtonDisabled ? 'none' : `${waveDrift} 6.8s ease-in-out infinite`,
         pointerEvents: 'none',
@@ -96,7 +96,7 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, d
       }}
       _hover={{
         transform: 'translateY(-1px)',
-        borderColor: 'rgba(232, 243, 248, 0.46)',
+        borderColor: 'rgba(244, 244, 245, 0.46)',
         boxShadow: '0 18px 38px rgba(22, 94, 131, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.28)',
         filter: 'saturate(1.04)',
         ..._hover,

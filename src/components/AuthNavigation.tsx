@@ -231,7 +231,7 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                 borderRadius="2px"
                 boxShadow="0 14px 34px rgba(22, 94, 131, 0.14), 0 0 0 5px rgba(22, 94, 131, 0.10)"
                 backdropFilter="blur(14px)"
-                _hover={{ bg: '#fbfdfe', transform: 'translateY(-1px)' }}
+                _hover={{ bg: '#fcfcfd', transform: 'translateY(-1px)' }}
                 sx={
                   shouldReduceMotion
                     ? undefined

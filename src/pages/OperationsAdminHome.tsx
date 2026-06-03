@@ -275,14 +275,14 @@ function OperationsAdminHome() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 で検索"
-                  bg="#fbfdfe"
+                  bg="#fcfcfd"
                   color="#12384d"
                   _placeholder={{ color: '#66889a' }}
                 />
                 <Select
                   value={tenantFilter}
                   onChange={(event) => setTenantFilter(event.target.value)}
-                  bg="#fbfdfe"
+                  bg="#fcfcfd"
                   color="#12384d"
                 >
                   <option value="all">すべての管理対象企業</option>
@@ -295,7 +295,7 @@ function OperationsAdminHome() {
               </SimpleGrid>
               <Box overflowX="auto" borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)">
                 <Table variant="simple" size="md" minW="1120px">
-                  <Thead bg="rgba(232, 243, 248, 0.84)">
+                  <Thead bg="rgba(244, 244, 245, 0.86)">
                     <Tr>
                       <Th><SortButton label="ID" column="id" onSort={handleSort} /></Th>
                       <Th><SortButton label="氏名" column="name" onSort={handleSort} /></Th>
@@ -353,7 +353,7 @@ function OperationsAdminHome() {
 
       <Modal isOpen={karteModal.isOpen} onClose={karteModal.onClose} size="full" scrollBehavior="inside">
         <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
-        <ModalContent bg="rgba(255, 255, 255, 0.98)" color="#12384d" borderRadius="0" maxW={{ base: '100vw', xl: '1480px' }}>
+        <ModalContent bg="rgba(252, 252, 253, 0.98)" color="#12384d" borderRadius="0" maxW={{ base: '100vw', xl: '1480px' }}>
           <ModalHeader>{viewingEmployee?.name ?? 'カルテ'} のカルテ</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={8}>

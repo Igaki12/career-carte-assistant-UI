@@ -186,7 +186,7 @@ const linePanelProps = {
     '& td': { color: 'rgba(22, 94, 131, 0.9)', borderColor: 'rgba(22, 94, 131, 0.22)' },
     '& .chakra-form__label': { color: 'rgba(22, 94, 131, 0.9)' },
     '& input, & select': {
-      background: 'rgba(255, 255, 255, 0.92)',
+      background: 'rgba(252, 252, 253, 0.92)',
       color: '#0f3f5a',
       borderColor: 'rgba(22, 94, 131, 0.34)',
     },
@@ -1155,7 +1155,7 @@ function Admin() {
                   まだ通知文はありません。アカウント追加、CSV一括追加、または一覧の再発行から作成できます。
                 </Text>
               ) : (
-                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
+                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(244, 244, 245, 0.86)">
                   <Table size="sm">
                     <Thead bg="rgba(22, 94, 131, 0.08)">
                       <Tr>
@@ -1221,7 +1221,7 @@ function Admin() {
               </Stack>
 
               {selectedUserIds.length > 0 && (
-                <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" bg="rgba(232, 243, 248, 0.84)" p={4}>
+                <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" bg="rgba(244, 244, 245, 0.86)" p={4}>
                   <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
                     <Text fontWeight="semibold">選択中: {selectedUserIds.length}件</Text>
                     <Flex gap={2} wrap="wrap">
@@ -1258,7 +1258,7 @@ function Admin() {
                 </Box>
               )}
 
-              <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
+              <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(244, 244, 245, 0.86)">
                 <Table size="sm" variant="simple">
                   <Thead bg="rgba(22, 94, 131, 0.08)">
                     <Tr>
@@ -1391,7 +1391,7 @@ function Admin() {
                     borderColor="rgba(22, 94, 131, 0.18)"
                     borderRadius="0"
                     p={6}
-                    bg="rgba(232, 243, 248, 0.84)"
+                    bg="rgba(244, 244, 245, 0.86)"
                   >
                     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
                       <Box>
@@ -1553,7 +1553,7 @@ function Admin() {
                   border="1px solid"
                   borderColor="rgba(22, 94, 131, 0.18)"
                   borderRadius="0"
-                  bg="rgba(232, 243, 248, 0.84)"
+                  bg="rgba(244, 244, 245, 0.86)"
                   p={4}
                 >
                   <Flex direction={{ base: 'column', md: 'row' }} gap={3} align="center">
@@ -1582,7 +1582,7 @@ function Admin() {
                 </Box>
               )}
 
-              <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
+              <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(244, 244, 245, 0.86)">
                 <Table size="sm" variant="simple">
                   <Thead bg="rgba(22, 94, 131, 0.08)">
                     <Tr>
@@ -1689,7 +1689,7 @@ function Admin() {
                     borderColor="rgba(22, 94, 131, 0.18)"
                     borderRadius="0"
                     p={6}
-                    bg="rgba(232, 243, 248, 0.84)"
+                    bg="rgba(244, 244, 245, 0.86)"
                   >
                     <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
                       <Box>
@@ -1824,7 +1824,7 @@ function Admin() {
                   企業テナントごとに、企業API使用枠、面談1回あたり最大ターン数、面談前コンディションチェックと緊張度スコア表示の有効/無効を管理します。
                 </Text>
               </Stack>
-              <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(232, 243, 248, 0.84)">
+              <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" overflowX="auto" bg="rgba(244, 244, 245, 0.86)">
                 <Table size="sm" variant="simple">
                   <Thead bg="rgba(22, 94, 131, 0.08)">
                     <Tr>
@@ -1951,7 +1951,7 @@ function Admin() {
               <Text fontWeight="semibold">取り込み予定レコード（ダミー）</Text>
               <Box border="1px solid" borderColor="rgba(22, 94, 131, 0.08)" borderRadius="lg" overflow="hidden">
                 <Table size="sm">
-                  <Thead bg="rgba(232, 243, 248, 0.84)">
+                  <Thead bg="rgba(244, 244, 245, 0.86)">
                     <Tr>
 	                      <Th>ID</Th>
 	                      <Th>氏名</Th>

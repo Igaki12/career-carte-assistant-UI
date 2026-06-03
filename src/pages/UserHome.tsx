@@ -149,7 +149,7 @@ const decoratedPanelProps = {
 const translucentPanelProps = {
   borderWidth: '1px',
   borderColor: 'rgba(22, 94, 131, 0.18)',
-  bg: 'rgba(232, 243, 248, 0.84)',
+  bg: 'rgba(244, 244, 245, 0.86)',
   borderRadius: 'md',
 } as const;
 
@@ -716,7 +716,7 @@ function UserHome() {
             boxShadow="0 28px 80px rgba(22, 94, 131, 0.14)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
-            bgImage={`linear-gradient(rgba(247, 251, 253, 0.78), rgba(225, 240, 247, 0.82)), url(${heroBackground})`}
+            bgImage={`linear-gradient(rgba(252, 252, 253, 0.78), rgba(244, 244, 245, 0.82)), url(${heroBackground})`}
             bgPosition="center"
             bgRepeat="no-repeat"
             bgSize="cover"
@@ -726,7 +726,7 @@ function UserHome() {
               content: '""',
               position: 'absolute',
               inset: 0,
-              bg: 'linear-gradient(135deg, rgba(247,251,253,0.22) 0%, rgba(247,251,253,0.04) 30%, rgba(214,230,238,0.20) 100%)',
+              bg: 'linear-gradient(135deg, rgba(252,252,253,0.22) 0%, rgba(252,252,253,0.04) 30%, rgba(238,238,239,0.20) 100%)',
               pointerEvents: 'none',
             }}
             _after={{
@@ -775,7 +775,7 @@ function UserHome() {
                     <TabList borderColor="rgba(22, 94, 131, 0.18)">
                       <Tab
                         color="#3f6678"
-                        bg="#fbfdfe"
+                        bg="#fcfcfd"
                         borderColor="rgba(22, 94, 131, 0.18)"
                         _selected={{
                           color: '#12384d',
@@ -788,7 +788,7 @@ function UserHome() {
                       </Tab>
                       <Tab
                         color="#3f6678"
-                        bg="#fbfdfe"
+                        bg="#fcfcfd"
                         borderColor="rgba(22, 94, 131, 0.18)"
                         _selected={{
                           color: '#12384d',
@@ -914,7 +914,7 @@ function UserHome() {
                         labels={Object.values(SURVEY_LABELS)}
                         values={surveyScores}
                         size={200}
-                        labelColor="rgba(232, 243, 248, 0.94)"
+                        labelColor="rgba(244, 244, 245, 0.86)"
                         labelStroke="rgba(22, 94, 131, 0.72)"
                       />
                     ) : (
@@ -1135,7 +1135,7 @@ function UserHome() {
       <Modal isOpen={karteModalDisclosure.isOpen} onClose={karteModalDisclosure.onClose} size="full" scrollBehavior="inside">
         <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
         <ModalContent
-          bg="rgba(255, 255, 255, 0.98)"
+          bg="rgba(252, 252, 253, 0.98)"
           color="#12384d"
           borderRadius="0"
           borderWidth="1px"
@@ -1153,28 +1153,28 @@ function UserHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
             zIndex: 1,
           }}
         >
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderBottomWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
             カルテ確認
           </ModalHeader>
           <ModalCloseButton color="#315f76" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
-          <ModalBody overflowY="auto" bg="rgba(232, 243, 248, 0.90)" px={0} py={0}>
+          <ModalBody overflowY="auto" bg="rgba(244, 244, 245, 0.90)" px={0} py={0}>
             <Stack spacing={4}>
               <Box
                 borderWidth="1px"
                 borderColor="rgba(22, 94, 131, 0.18)"
                 borderRadius="0"
                 p={{ base: 4, md: 5 }}
-                bg="#fbfdfe"
+                bg="#fcfcfd"
                 m={{ base: 3, md: 5 }}
               >
                 <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
@@ -1220,7 +1220,7 @@ function UserHome() {
                             }))
                           }
                           rows={3}
-                          bg="#fbfdfe"
+                          bg="#fcfcfd"
                           color="#12384d"
                           borderColor="rgba(22, 94, 131, 0.30)"
                           _hover={{ borderColor: '#8aa7b5' }}
@@ -1236,7 +1236,7 @@ function UserHome() {
                             {getShirpDetailFieldEntries(key).map(([field, definition]) => {
                               const fieldValue = latestDetailDraft[key]?.[field];
                               return (
-                                <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={3} bg="rgba(232, 243, 248, 0.84)">
+                                <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={3} bg="rgba(244, 244, 245, 0.86)">
                                   <Text fontSize="xs" color="#3f6678" mb={1}>
                                     {definition.label}
                                   </Text>
@@ -1257,7 +1257,7 @@ function UserHome() {
                                       }))
                                     }
                                     rows={3}
-                                    bg="#fbfdfe"
+                                    bg="#fcfcfd"
                                     color="#12384d"
                                     borderColor="rgba(22, 94, 131, 0.30)"
                                     _hover={{ borderColor: '#8aa7b5' }}
@@ -1288,7 +1288,7 @@ function UserHome() {
                                             }))
                                           }
                                           rows={2}
-                                          bg="#fbfdfe"
+                                          bg="#fcfcfd"
                                           color="#12384d"
                                           borderColor="rgba(22, 94, 131, 0.30)"
                                           _hover={{ borderColor: '#8aa7b5' }}
@@ -1315,7 +1315,7 @@ function UserHome() {
           <ModalFooter
             gap={3}
             flexWrap="wrap"
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderTopWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
@@ -1441,7 +1441,7 @@ function UserHome() {
         <ModalContent
           as="form"
           onSubmit={handleResetPassword}
-          bg="rgba(255, 255, 255, 0.98)"
+          bg="rgba(252, 252, 253, 0.98)"
           color="#12384d"
           borderRadius="0"
           borderWidth="1px"
@@ -1456,7 +1456,7 @@ function UserHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
@@ -1472,7 +1472,7 @@ function UserHome() {
                   type="password"
                   value={passwordResetForm.currentPassword}
                   onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                  bg="#fbfdfe"
+                  bg="#fcfcfd"
                   color="#12384d"
                   borderColor="rgba(22, 94, 131, 0.30)"
                 />
@@ -1484,7 +1484,7 @@ function UserHome() {
                   value={passwordResetForm.newPassword}
                   onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, newPassword: event.target.value }))}
                   placeholder="8文字以上、英字と数字を含める"
-                  bg="#fbfdfe"
+                  bg="#fcfcfd"
                   color="#12384d"
                   borderColor="rgba(22, 94, 131, 0.30)"
                   _placeholder={{ color: 'rgba(22, 94, 131, 0.30)' }}
@@ -1496,7 +1496,7 @@ function UserHome() {
                   type="password"
                   value={passwordResetForm.confirmPassword}
                   onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                  bg="#fbfdfe"
+                  bg="#fcfcfd"
                   color="#12384d"
                   borderColor="rgba(22, 94, 131, 0.30)"
                 />
@@ -1567,7 +1567,7 @@ function UserHome() {
                 前回保存した下書きが残っています。続きから再開するか、新規に開始するかを選んでください。
               </Text>
               {pendingStart && (
-                <Box borderWidth="1px" borderRadius="md" p={3} bg="rgba(232, 243, 248, 0.84)">
+                <Box borderWidth="1px" borderRadius="md" p={3} bg="rgba(244, 244, 245, 0.86)">
                   <Text fontSize="sm" fontWeight="semibold">
                     {getDraftMetaLabel(pendingStart.meetingType)}
                   </Text>

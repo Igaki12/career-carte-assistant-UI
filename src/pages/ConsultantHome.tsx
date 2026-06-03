@@ -148,7 +148,7 @@ const linePanelProps = {
 } as const;
 
 const smallPanelProps = {
-  bg: 'rgba(232, 243, 248, 0.84)',
+  bg: 'rgba(244, 244, 245, 0.86)',
   color: '#12384d',
   borderRadius: '0',
   borderWidth: '1px',
@@ -172,7 +172,7 @@ const modalOutlineButtonProps = {
 } as const;
 
 const darkTextareaProps = {
-  bg: '#fbfdfe',
+  bg: '#fcfcfd',
   color: '#12384d',
   borderColor: 'rgba(22, 94, 131, 0.30)',
   _placeholder: { color: '#8aa7b5' },
@@ -181,7 +181,7 @@ const darkTextareaProps = {
 } as const;
 
 const darkInputProps = {
-  bg: '#fbfdfe',
+  bg: '#fcfcfd',
   color: '#12384d',
   borderColor: 'rgba(22, 94, 131, 0.30)',
   _placeholder: { color: '#8aa7b5' },
@@ -555,7 +555,7 @@ function ConsultantHome() {
             boxShadow="0 28px 80px rgba(22, 94, 131, 0.14)"
             px={{ base: 6, md: 10 }}
             py={{ base: 5, md: 7 }}
-            bgImage={`linear-gradient(rgba(247, 251, 253, 0.78), rgba(225, 240, 247, 0.82)), url(${heroBackground})`}
+            bgImage={`linear-gradient(rgba(252, 252, 253, 0.78), rgba(244, 244, 245, 0.82)), url(${heroBackground})`}
             bgPosition="center"
             bgRepeat="no-repeat"
             bgSize="cover"
@@ -565,7 +565,7 @@ function ConsultantHome() {
               content: '""',
               position: 'absolute',
               inset: 0,
-              bg: 'linear-gradient(135deg, rgba(247,251,253,0.22) 0%, rgba(247,251,253,0.04) 30%, rgba(214,230,238,0.20) 100%)',
+              bg: 'linear-gradient(135deg, rgba(252,252,253,0.22) 0%, rgba(252,252,253,0.04) 30%, rgba(238,238,239,0.20) 100%)',
               pointerEvents: 'none',
             }}
             _after={{
@@ -735,7 +735,7 @@ function ConsultantHome() {
       <Modal isOpen={karteDisclosure.isOpen} onClose={karteDisclosure.onClose} size="full" scrollBehavior="inside">
         <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
         <ModalContent
-          bg="rgba(255, 255, 255, 0.98)"
+          bg="rgba(252, 252, 253, 0.98)"
           color="#12384d"
           borderRadius="0"
           borderWidth="1px"
@@ -753,21 +753,21 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
             zIndex: 1,
           }}
         >
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderBottomWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
             カルテ閲覧・編集
           </ModalHeader>
           <ModalCloseButton color="#315f76" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
-          <ModalBody bg="rgba(232, 243, 248, 0.90)" px={0} py={0}>
+          <ModalBody bg="rgba(244, 244, 245, 0.90)" px={0} py={0}>
             {selectedRecord ? (
               <Stack spacing={5} p={{ base: 4, md: 6 }}>
                 <Flex
@@ -779,7 +779,7 @@ function ConsultantHome() {
                   borderColor="rgba(22, 94, 131, 0.18)"
                   borderRadius="0"
                   p={{ base: 4, md: 5 }}
-                  bg="#fbfdfe"
+                  bg="#fcfcfd"
                 >
                   <Stack spacing={1}>
                     <Text fontSize="sm" color="#66889a">作成日: {selectedRecord.atCreated}</Text>
@@ -787,7 +787,7 @@ function ConsultantHome() {
                   </Stack>
                   <Badge colorScheme="green">{selectedRecord.statusLabel}</Badge>
                 </Flex>
-                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(232, 243, 248, 0.84)">
+                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(244, 244, 245, 0.86)">
                   <Text fontSize="xs" fontWeight="bold" color="#1f4f68" mb={2}>
                     プロフィール
                   </Text>
@@ -802,7 +802,7 @@ function ConsultantHome() {
                     <Text fontSize="sm" color="#1f4f68">権限: {selectedRecord.data.demographics.permission ?? '未入力'}</Text>
                   </SimpleGrid>
                 </Box>
-                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(232, 243, 248, 0.84)">
+                <Box borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={{ base: 4, md: 5 }} bg="rgba(244, 244, 245, 0.86)">
                   <Text fontSize="xs" fontWeight="bold" color="#1f4f68" mb={2}>
                     ユーザーアンケート結果
                   </Text>
@@ -814,7 +814,7 @@ function ConsultantHome() {
                       )}
                       size={200}
                       labelColor="#2c7798"
-                      labelStroke="#fbfdfe"
+                      labelStroke="#fcfcfd"
                     />
                   ) : (
                     <Text fontSize="sm" color="#3f6678">未回答</Text>
@@ -853,7 +853,7 @@ function ConsultantHome() {
                           {getShirpDetailFieldEntries(key).map(([field, definition]) => {
                             const fieldValue = karteDraft.shirpDetails[key]?.[field];
                             return (
-                              <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={3} bg="rgba(232, 243, 248, 0.84)">
+                              <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={3} bg="rgba(244, 244, 245, 0.86)">
                                 <Text fontSize="xs" color="#3f6678" mb={1}>
                                   {definition.label}
                                 </Text>
@@ -928,7 +928,7 @@ function ConsultantHome() {
           </ModalBody>
           <ModalFooter
             gap={3}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderTopWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
@@ -945,7 +945,7 @@ function ConsultantHome() {
       <Modal isOpen={emailDisclosure.isOpen} onClose={emailDisclosure.onClose} size="full">
         <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
         <ModalContent
-          bg="rgba(255, 255, 255, 0.98)"
+          bg="rgba(252, 252, 253, 0.98)"
           color="#12384d"
           borderRadius="0"
           borderWidth="1px"
@@ -963,21 +963,21 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
             zIndex: 1,
           }}
         >
           <ModalHeader
             pt={8}
             pb={5}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderBottomWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
             メール問い合わせ
           </ModalHeader>
           <ModalCloseButton color="#315f76" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
-          <ModalBody bg="rgba(232, 243, 248, 0.90)" px={0} py={0}>
+          <ModalBody bg="rgba(244, 244, 245, 0.90)" px={0} py={0}>
             <Box as="form" id="mail-form" onSubmit={handleSendMail}>
               <Stack spacing={4} p={{ base: 4, md: 6 }}>
                 <FormControl>
@@ -1000,7 +1000,7 @@ function ConsultantHome() {
           </ModalBody>
           <ModalFooter
             gap={3}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderTopWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >
@@ -1026,7 +1026,7 @@ function ConsultantHome() {
         <ModalContent
           as="form"
           onSubmit={handleResetPassword}
-          bg="rgba(255, 255, 255, 0.98)"
+          bg="rgba(252, 252, 253, 0.98)"
           color="#12384d"
           borderRadius="0"
           borderWidth="1px"
@@ -1041,7 +1041,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(225, 240, 247, 0.92), transparent)',
+            bgGradient: 'linear(to-r, transparent, rgba(22, 94, 131, 0.74), rgba(244, 244, 245, 0.86), transparent)',
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
@@ -1083,7 +1083,7 @@ function ConsultantHome() {
           </ModalBody>
           <ModalFooter
             gap={3}
-            bg="linear-gradient(135deg, rgba(247, 251, 253, 0.98), rgba(225, 240, 247, 0.96))"
+            bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderTopWidth="1px"
             borderColor="rgba(22, 94, 131, 0.18)"
           >

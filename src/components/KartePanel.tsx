@@ -98,7 +98,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
 
   return (
     <Box
-      bg="linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 248, 0.96) 46%, rgba(214, 230, 238, 0.92) 100%)"
+      bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98) 0%, rgba(244, 244, 245, 0.90) 46%, rgba(238, 238, 239, 0.92) 100%)"
       color={lightText}
       borderRadius="0"
       borderWidth="1px"
@@ -385,7 +385,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                   labels={Object.values(SURVEY_LABELS)}
                   values={surveyScores}
                   labelColor="#2c7798"
-                  labelStroke="#fbfdfe"
+                  labelStroke="#fcfcfd"
                 />
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
                   {Object.entries(SURVEY_LABELS).map(([key, label]) => (
