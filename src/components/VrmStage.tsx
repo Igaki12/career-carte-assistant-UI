@@ -1157,7 +1157,7 @@ const VrmStage = ({
       bgPosition="center"
       borderRadius="2xl"
       borderWidth="1px"
-      borderColor="rgba(22, 94, 131, 0.18)"
+      borderColor="rgba(82, 82, 91, 0.18)"
       boxShadow="lg"
       overflow="hidden"
       position="relative"
@@ -1177,8 +1177,8 @@ const VrmStage = ({
         h="48px"
         mb={0}
         variant="solid"
-        colorScheme="cyan"
-        color="#12384d"
+        colorScheme="gray"
+        color="#27272a"
         bg="rgba(252,252,253,0.84)"
         _hover={{ bg: 'rgba(244,244,245,0.94)' }}
         _active={{ bg: 'rgba(238,238,239,0.94)' }}
@@ -1197,8 +1197,8 @@ const VrmStage = ({
         h="48px"
         mb={0}
         variant="solid"
-        colorScheme="cyan"
-        color="#12384d"
+        colorScheme="gray"
+        color="#27272a"
         bg="rgba(252,252,253,0.84)"
         _hover={{ bg: 'rgba(244,244,245,0.94)' }}
         _active={{ bg: 'rgba(238,238,239,0.94)' }}
@@ -1215,8 +1215,8 @@ const VrmStage = ({
           px={4}
           py={2}
           borderWidth="1px"
-          borderColor="rgba(22, 94, 131, 0.18)"
-          color="#12384d"
+          borderColor="rgba(82, 82, 91, 0.18)"
+          color="#27272a"
           backdropFilter="blur(4px)"
           boxShadow="md"
           cursor="pointer"
@@ -1234,7 +1234,7 @@ const VrmStage = ({
         >
           <Flex align="center" justify="space-between" gap={3}>
             <Box>
-              <Text fontSize="xs" color="#66889a" letterSpacing="0.08em" textTransform="uppercase">
+              <Text fontSize="xs" color="#71717a" letterSpacing="0.08em" textTransform="uppercase">
                 カルテ進行度
               </Text>
               <Text fontSize="lg" fontWeight="bold" lineHeight="shorter">
@@ -1244,7 +1244,7 @@ const VrmStage = ({
             <Icon
               as={FiChevronUp}
               boxSize={4}
-              color="#3f6678"
+              color="#52525b"
               transform={isProgressExpanded ? 'rotate(180deg)' : 'rotate(0deg)'}
               transition="transform 0.2s ease"
               flexShrink={0}
@@ -1253,12 +1253,12 @@ const VrmStage = ({
           <Collapse in={isProgressExpanded} animateOpacity>
             <Box mt={2}>
               {progressCountLabel ? (
-                <Text fontSize="xs" color="#3f6678">
+                <Text fontSize="xs" color="#52525b">
                   {progressCountLabel}
                 </Text>
               ) : null}
               {progressLabel ? (
-                <Text fontSize="xs" color="#3f6678" mt={1} maxW="220px">
+                <Text fontSize="xs" color="#52525b" mt={1} maxW="220px">
                   現在: {progressLabel}
                 </Text>
               ) : null}
@@ -1276,7 +1276,7 @@ const VrmStage = ({
           zIndex={1}
           bgGradient="linear(to-b, rgba(252,252,253,0.84), rgba(244,244,245,0.94))"
         >
-          <Text color="#315f76" fontSize="sm">
+          <Text color="#52525b" fontSize="sm">
             VRMモデルを読み込み中...
           </Text>
         </Box>

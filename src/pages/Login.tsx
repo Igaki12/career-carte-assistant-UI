@@ -122,7 +122,7 @@ function Login({ session, onLogin }: LoginProps) {
               <Heading
                 size="2xl"
                 lineHeight="short"
-                bgGradient="linear(110deg, #0f3f5a, #165e83, #0f3f5a, #5d9bb5)"
+                bgGradient="linear(110deg, #27272a, #3f3f46, #27272a, #71717a)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
@@ -207,7 +207,7 @@ function Login({ session, onLogin }: LoginProps) {
                 <Checkbox
                   isChecked={remember}
                   onChange={(event) => setRemember(event.target.checked)}
-                  colorScheme="blue"
+                  colorScheme="gray"
                 >
                   常にログインした状態にしておく
                 </Checkbox>

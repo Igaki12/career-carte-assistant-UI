@@ -128,7 +128,7 @@ const heroContentSlide = keyframes`
 
 const decoratedPanelProps = {
   bg: 'transparent',
-  color: '#12384d',
+  color: '#27272a',
   borderRadius: '0',
   borderWidth: '0',
   p: 6,
@@ -148,12 +148,12 @@ const decoratedPanelProps = {
 
 const translucentPanelProps = {
   borderWidth: '1px',
-  borderColor: 'rgba(22, 94, 131, 0.18)',
+  borderColor: 'rgba(82, 82, 91, 0.18)',
   bg: 'rgba(244, 244, 245, 0.86)',
   borderRadius: 'md',
 } as const;
 
-const mutedTextColor = '#3f6678';
+const mutedTextColor = '#52525b';
 
 type SurveyQuestion = {
   id: string;
@@ -297,13 +297,13 @@ const resolveProfile = (userState: DemoUserState, usageQuota: DemoUsageQuota): P
   if (hasProfileSaved) {
     statusDetails.push({ label: 'プロフィール保存済み', colorScheme: 'orange' });
   } else if (userState.demographicsSkipped) {
-    statusDetails.push({ label: 'プロフィール未設定（デモスキップ中）', colorScheme: 'cyan' });
+    statusDetails.push({ label: 'プロフィール未設定（デモスキップ中）', colorScheme: 'gray' });
   }
   if (hasInitialCompleted) {
-    statusDetails.push({ label: '初回面談完了', colorScheme: 'blue' });
+    statusDetails.push({ label: '初回面談完了', colorScheme: 'gray' });
   }
   if (hasContinuousCompleted) {
-    statusDetails.push({ label: '継続面談完了', colorScheme: 'teal' });
+    statusDetails.push({ label: '継続面談完了', colorScheme: 'gray' });
   }
   if (hasDraft) {
     statusDetails.push({ label: '面談下書きあり', colorScheme: 'purple' });
@@ -706,7 +706,7 @@ function UserHome() {
       height="100dvh"
       py={{ base: 6, md: 8 }}
       overflowY="scroll"
-      color="#12384d"
+      color="#27272a"
     >
       <Container maxW="6xl">
         <Stack spacing={10}>
@@ -749,22 +749,22 @@ function UserHome() {
               animation={`${heroContentSlide} 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both`}
             >
               <Stack spacing={1} flex="1">
-                <Heading size="lg" color="#12384d">
+                <Heading size="lg" color="#27272a">
                   {profile.name} さんのマイページ
                 </Heading>
-                <Text color="#1f4f68">{profile.company} / {profile.department} / {profile.jobTitle}</Text>
+                <Text color="#3f3f46">{profile.company} / {profile.department} / {profile.jobTitle}</Text>
                 <Box
                   mt={3}
                   borderWidth="1px"
-                  borderColor="rgba(22, 94, 131, 0.18)"
+                  borderColor="rgba(82, 82, 91, 0.18)"
                   borderRadius="xl"
                   p={3}
-                  bg="rgba(22, 94, 131, 0.08)"
+                  bg="rgba(82, 82, 91, 0.18)"
                   backdropFilter="blur(10px)"
                   boxShadow="0 20px 50px rgba(63, 63, 70, 0.18)"
                 >
                   <Flex justify="space-between" align={{ base: 'flex-start', md: 'center' }} gap={3} mb={2} direction={{ base: 'column', md: 'row' }}>
-                    <Text fontSize="sm" fontWeight="bold" color="#1f4f68">
+                    <Text fontSize="sm" fontWeight="bold" color="#3f3f46">
                       プロフィールメモ
                     </Text>
                     <Button size="xs" colorScheme="orange" variant="outline" onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
@@ -772,30 +772,30 @@ function UserHome() {
                     </Button>
                   </Flex>
                   <Tabs variant="enclosed" size="sm">
-                    <TabList borderColor="rgba(22, 94, 131, 0.18)">
+                    <TabList borderColor="rgba(82, 82, 91, 0.18)">
                       <Tab
-                        color="#3f6678"
+                        color="#52525b"
                         bg="#fcfcfd"
-                        borderColor="rgba(22, 94, 131, 0.18)"
+                        borderColor="rgba(82, 82, 91, 0.18)"
                         _selected={{
-                          color: '#12384d',
-                          bg: 'rgba(22, 94, 131, 0.18)',
-                          borderColor: 'rgba(22, 94, 131, 0.30)',
+                          color: '#27272a',
+                          bg: 'rgba(82, 82, 91, 0.18)',
+                          borderColor: 'rgba(82, 82, 91, 0.18)',
                         }}
-                        _hover={{ color: '#12384d', borderColor: 'rgba(22, 94, 131, 0.30)' }}
+                        _hover={{ color: '#27272a', borderColor: 'rgba(82, 82, 91, 0.18)' }}
                       >
                         基本情報
                       </Tab>
                       <Tab
-                        color="#3f6678"
+                        color="#52525b"
                         bg="#fcfcfd"
-                        borderColor="rgba(22, 94, 131, 0.18)"
+                        borderColor="rgba(82, 82, 91, 0.18)"
                         _selected={{
-                          color: '#12384d',
-                          bg: 'rgba(22, 94, 131, 0.18)',
-                          borderColor: 'rgba(22, 94, 131, 0.30)',
+                          color: '#27272a',
+                          bg: 'rgba(82, 82, 91, 0.18)',
+                          borderColor: 'rgba(82, 82, 91, 0.18)',
                         }}
-                        _hover={{ color: '#12384d', borderColor: 'rgba(22, 94, 131, 0.30)' }}
+                        _hover={{ color: '#27272a', borderColor: 'rgba(82, 82, 91, 0.18)' }}
                       >
                         個人情報詳細
                       </Tab>
@@ -803,26 +803,26 @@ function UserHome() {
                     <TabPanels>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                          <Text fontSize="sm" color="#1f4f68">氏名: {profile.name}</Text>
-                          <Text fontSize="sm" color="#1f4f68">フリガナ: {profile.nameKana}</Text>
-                          <Text fontSize="sm" color="#1f4f68">メール: {profile.email}</Text>
-                          <Text fontSize="sm" color="#1f4f68">会社名: {profile.company}</Text>
-                          <Text fontSize="sm" color="#1f4f68">部署: {profile.department}</Text>
-                          <Text fontSize="sm" color="#1f4f68">職種: {profile.jobTitle}</Text>
+                          <Text fontSize="sm" color="#3f3f46">氏名: {profile.name}</Text>
+                          <Text fontSize="sm" color="#3f3f46">フリガナ: {profile.nameKana}</Text>
+                          <Text fontSize="sm" color="#3f3f46">メール: {profile.email}</Text>
+                          <Text fontSize="sm" color="#3f3f46">会社名: {profile.company}</Text>
+                          <Text fontSize="sm" color="#3f3f46">部署: {profile.department}</Text>
+                          <Text fontSize="sm" color="#3f3f46">職種: {profile.jobTitle}</Text>
                         </SimpleGrid>
                       </TabPanel>
                       <TabPanel px={0} pt={3}>
                         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2}>
-                          <Text fontSize="sm" color="#1f4f68">生年月日: {profile.birthDate}</Text>
-                          <Text fontSize="sm" color="#1f4f68">勤務地(都道府県): {profile.workLocationPrefecture}</Text>
-                          <Text fontSize="sm" color="#1f4f68">転職歴(回数): {profile.jobChangeCount}</Text>
-                          <Text fontSize="sm" color="#1f4f68">勤続年数(年): {profile.yearsOfService}</Text>
-                          <Text fontSize="sm" color="#1f4f68">性別: {profile.gender}</Text>
-                          <Text fontSize="sm" color="#1f4f68">現在の婚姻関係: {profile.maritalStatus}</Text>
-                          <Text fontSize="sm" color="#1f4f68">子供の有無(人): {profile.childrenCount}</Text>
-                          <Text fontSize="sm" color="#1f4f68">末子の年齢(歳): {profile.youngestChildAge}</Text>
-                          <Text fontSize="sm" color="#1f4f68">過去のマネージャー経験: {profile.managerExperience}</Text>
-                          <Text fontSize="sm" color="#1f4f68">現在マネージャーか: {profile.currentManager}</Text>
+                          <Text fontSize="sm" color="#3f3f46">生年月日: {profile.birthDate}</Text>
+                          <Text fontSize="sm" color="#3f3f46">勤務地(都道府県): {profile.workLocationPrefecture}</Text>
+                          <Text fontSize="sm" color="#3f3f46">転職歴(回数): {profile.jobChangeCount}</Text>
+                          <Text fontSize="sm" color="#3f3f46">勤続年数(年): {profile.yearsOfService}</Text>
+                          <Text fontSize="sm" color="#3f3f46">性別: {profile.gender}</Text>
+                          <Text fontSize="sm" color="#3f3f46">現在の婚姻関係: {profile.maritalStatus}</Text>
+                          <Text fontSize="sm" color="#3f3f46">子供の有無(人): {profile.childrenCount}</Text>
+                          <Text fontSize="sm" color="#3f3f46">末子の年齢(歳): {profile.youngestChildAge}</Text>
+                          <Text fontSize="sm" color="#3f3f46">過去のマネージャー経験: {profile.managerExperience}</Text>
+                          <Text fontSize="sm" color="#3f3f46">現在マネージャーか: {profile.currentManager}</Text>
                         </SimpleGrid>
                       </TabPanel>
                     </TabPanels>
@@ -835,7 +835,7 @@ function UserHome() {
                 </Badge>
                 <Flex wrap="wrap" gap={2}>
                   {profile.tags.map((tag) => (
-                    <Badge key={tag} bg="rgba(22, 94, 131, 0.18)" color="#1f4f68" borderRadius="full" variant="solid">
+                    <Badge key={tag} bg="rgba(82, 82, 91, 0.18)" color="#3f3f46" borderRadius="full" variant="solid">
                       {tag}
                     </Badge>
                   ))}
@@ -860,9 +860,9 @@ function UserHome() {
                   <Button
                     variant="outline"
                     size="lg"
-                    color="#12384d"
-                    borderColor="rgba(22, 94, 131, 0.30)"
-                    _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}
+                    color="#27272a"
+                    borderColor="rgba(82, 82, 91, 0.18)"
+                    _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }}
                     onClick={handleStartContinuous}
                     isDisabled
                     display="none"
@@ -873,7 +873,7 @@ function UserHome() {
                 <Stack spacing={2}>
                   {userState.draftSessions.initial && (
                     <Box {...translucentPanelProps} p={3}>
-                      <Text fontSize="sm" fontWeight="semibold" color="#12384d">
+                      <Text fontSize="sm" fontWeight="semibold" color="#27272a">
                         {getDraftMetaLabel('initial')}
                       </Text>
                       <Text fontSize="xs" color={mutedTextColor}>
@@ -883,7 +883,7 @@ function UserHome() {
                   )}
                   {userState.draftSessions.continuous && (
                     <Box {...translucentPanelProps} p={3}>
-                      <Text fontSize="sm" fontWeight="semibold" color="#12384d">
+                      <Text fontSize="sm" fontWeight="semibold" color="#27272a">
                         {getDraftMetaLabel('continuous')}
                       </Text>
                       <Text fontSize="xs" color={mutedTextColor}>
@@ -904,7 +904,7 @@ function UserHome() {
                 <PrimaryButton size="lg" isDisabled>
                   アンケートを開く（準備中）
                 </PrimaryButton>
-                <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="rgba(22, 94, 131, 0.30)">
+                <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="rgba(82, 82, 91, 0.18)">
                   <Stack spacing={4} align="center">
                     <Text fontSize="sm" color={mutedTextColor} fontWeight="bold" alignSelf="flex-start">
                       前回アンケートスコア
@@ -915,7 +915,7 @@ function UserHome() {
                         values={surveyScores}
                         size={200}
                         labelColor="rgba(244, 244, 245, 0.86)"
-                        labelStroke="rgba(22, 94, 131, 0.72)"
+                        labelStroke="rgba(82, 82, 91, 0.18)"
                       />
                     ) : (
                       <Text fontSize="sm" color={mutedTextColor} py={8}>
@@ -937,13 +937,13 @@ function UserHome() {
                     <Text color={mutedTextColor}>
                       面談前コンディションチェックは初期版では準備中です。
                     </Text>
-                    <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="rgba(22, 94, 131, 0.30)">
+                    <Box {...translucentPanelProps} p={4} borderLeft="4px solid" borderLeftColor="rgba(82, 82, 91, 0.18)">
                       {latestCondition ? (
                         <Stack spacing={1}>
                           <Text fontSize="sm" color={mutedTextColor} fontWeight="bold">
                             直近の緊張度スコア
                           </Text>
-                          <Text fontSize="xl" color="#12384d" fontWeight="bold">
+                          <Text fontSize="xl" color="#27272a" fontWeight="bold">
                             {latestCondition.score} / 100
                             <Text as="span" ml={2} fontSize="sm" color={mutedTextColor}>
                               {latestCondition.level}
@@ -968,7 +968,7 @@ function UserHome() {
                     <Text color={mutedTextColor}>
                       現在の企業では契約オプションが未有効です。企業管理者画面で有効化できます。
                     </Text>
-                    <Button variant="outline" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={() => navigate('/company-admin')}>
+                    <Button variant="outline" color="#27272a" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={() => navigate('/company-admin')}>
                       企業管理者画面へ
                     </Button>
                   </>
@@ -987,10 +987,10 @@ function UserHome() {
                     カルテを開く
                   </PrimaryButton>
                   <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>
-                    <Button variant="outline" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={() => handleDownload('csv')}>
+                    <Button variant="outline" color="#27272a" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={() => handleDownload('csv')}>
                       CSV出力
                     </Button>
-                    <Button variant="outline" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={() => handleDownload('pdf')}>
+                    <Button variant="outline" color="#27272a" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={() => handleDownload('pdf')}>
                       PDF出力
                     </Button>
                   </SimpleGrid>
@@ -1023,17 +1023,17 @@ function UserHome() {
                   <FiRefreshCw /> アカウント情報確認
                 </Heading>
                 <Text color={mutedTextColor}>登録内容とパスワードの管理が行えます。</Text>
-                <Button variant="outline" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={accountDisclosure.onToggle}>
+                <Button variant="outline" color="#27272a" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={accountDisclosure.onToggle}>
                   {accountDisclosure.isOpen ? '情報を閉じる' : '情報を表示'}
                 </Button>
                 <Collapse in={accountDisclosure.isOpen} animateOpacity>
                   <Box pt={4}>
                     <Tabs variant="enclosed" size="sm">
-                      <TabList borderColor="rgba(22, 94, 131, 0.18)">
-                        <Tab color="#3f6678" _selected={{ color: '#12384d', bg: 'rgba(22, 94, 131, 0.08)' }}>
+                      <TabList borderColor="rgba(82, 82, 91, 0.18)">
+                        <Tab color="#52525b" _selected={{ color: '#27272a', bg: 'rgba(82, 82, 91, 0.18)' }}>
                           基本情報
                         </Tab>
-                        <Tab color="#3f6678" _selected={{ color: '#12384d', bg: 'rgba(22, 94, 131, 0.08)' }}>
+                        <Tab color="#52525b" _selected={{ color: '#27272a', bg: 'rgba(82, 82, 91, 0.18)' }}>
                           個人情報詳細
                         </Tab>
                       </TabList>
@@ -1117,10 +1117,10 @@ function UserHome() {
                       </TabPanels>
                     </Tabs>
                     <Stack mt={4} spacing={3} w="full">
-                      <Button w="full" justifyContent="center" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" variant="outline" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
+                      <Button w="full" justifyContent="center" color="#27272a" borderColor="rgba(82, 82, 91, 0.18)" variant="outline" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={() => navigate('/user/demographics?returnTo=%2Fuser')}>
                         プロフィールを編集
                       </Button>
-                      <Button w="full" justifyContent="center" color="#12384d" borderColor="rgba(22, 94, 131, 0.30)" variant="outline" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={resetModalDisclosure.onOpen}>
+                      <Button w="full" justifyContent="center" color="#27272a" borderColor="rgba(82, 82, 91, 0.18)" variant="outline" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={resetModalDisclosure.onOpen}>
                         パスワードを再設定する
                       </Button>
                     </Stack>
@@ -1133,13 +1133,13 @@ function UserHome() {
       </Container>
 
       <Modal isOpen={karteModalDisclosure.isOpen} onClose={karteModalDisclosure.onClose} size="full" scrollBehavior="inside">
-        <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
+        <ModalOverlay bg="rgba(82, 82, 91, 0.18)" backdropFilter="blur(7px)" />
         <ModalContent
           bg="rgba(252, 252, 253, 0.98)"
-          color="#12384d"
+          color="#27272a"
           borderRadius="0"
           borderWidth="1px"
-          borderColor="rgba(22, 94, 131, 0.18)"
+          borderColor="rgba(82, 82, 91, 0.18)"
           boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           maxW={{ base: '100vw', lg: '94vw', '2xl': '1480px' }}
@@ -1162,16 +1162,16 @@ function UserHome() {
             pb={5}
             bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderBottomWidth="1px"
-            borderColor="rgba(22, 94, 131, 0.18)"
+            borderColor="rgba(82, 82, 91, 0.18)"
           >
             カルテ確認
           </ModalHeader>
-          <ModalCloseButton color="#315f76" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
+          <ModalCloseButton color="#52525b" top={5} _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a' }} />
           <ModalBody overflowY="auto" bg="rgba(244, 244, 245, 0.90)" px={0} py={0}>
             <Stack spacing={4}>
               <Box
                 borderWidth="1px"
-                borderColor="rgba(22, 94, 131, 0.18)"
+                borderColor="rgba(82, 82, 91, 0.18)"
                 borderRadius="0"
                 p={{ base: 4, md: 5 }}
                 bg="#fcfcfd"
@@ -1179,22 +1179,22 @@ function UserHome() {
               >
                 <Flex justify="space-between" align="center" wrap="wrap" gap={3}>
                   <Stack spacing={1}>
-                    <Text fontSize="sm" color="#66889a">作成日: {latestRecord?.atCreated ?? '未保存'}</Text>
-                    <Text fontSize="sm" color="#66889a">最終更新日: {latestRecord?.atUpdated ?? profile.updatedAt}</Text>
-                    <Text fontSize="sm" color="#66889a">面談種別: {latestRecord ? (latestRecord.meetingType === 'initial' ? '初回面談' : '継続面談') : '未開始'}</Text>
+                    <Text fontSize="sm" color="#71717a">作成日: {latestRecord?.atCreated ?? '未保存'}</Text>
+                    <Text fontSize="sm" color="#71717a">最終更新日: {latestRecord?.atUpdated ?? profile.updatedAt}</Text>
+                    <Text fontSize="sm" color="#71717a">面談種別: {latestRecord ? (latestRecord.meetingType === 'initial' ? '初回面談' : '継続面談') : '未開始'}</Text>
                   </Stack>
-                  <Badge colorScheme={latestRecord ? 'green' : 'cyan'}>
+                  <Badge colorScheme={latestRecord ? 'green' : 'gray'}>
                     {latestRecord?.statusLabel ?? '下書き'}
                   </Badge>
                 </Flex>
               </Box>
 
               {latestRecord?.feedback && (
-                <Box bg="teal.50" borderRadius="0" borderWidth="1px" borderColor="teal.200" p={4} mx={{ base: 3, md: 5 }}>
-                  <Text fontSize="sm" fontWeight="bold" color="teal.800" mb={2}>
+                <Box bg="gray.50" borderRadius="0" borderWidth="1px" borderColor="gray.200" p={4} mx={{ base: 3, md: 5 }}>
+                  <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>
                     面談フィードバック
                   </Text>
-                  <Text fontSize="sm" color="#1f4f68">
+                  <Text fontSize="sm" color="#3f3f46">
                     {latestRecord.feedback}
                   </Text>
                 </Box>
@@ -1205,10 +1205,10 @@ function UserHome() {
                   {SHIRP_KEYS.map((key) => (
                     <Stack key={key} spacing={3}>
                       <Box>
-                        <Text fontSize="xs" fontWeight="bold" color="#1f4f68" mb={1}>
+                        <Text fontSize="xs" fontWeight="bold" color="#3f3f46" mb={1}>
                           {SHIRP_LABELS[key]}
                         </Text>
-                        <Text fontSize="xs" color="#66889a" mb={1}>
+                        <Text fontSize="xs" color="#71717a" mb={1}>
                           {SHIRP_HINTS[key]}
                         </Text>
                         <Textarea
@@ -1221,23 +1221,23 @@ function UserHome() {
                           }
                           rows={3}
                           bg="#fcfcfd"
-                          color="#12384d"
-                          borderColor="rgba(22, 94, 131, 0.30)"
-                          _hover={{ borderColor: '#8aa7b5' }}
-                          _focus={{ borderColor: '#66889a', boxShadow: '0 0 0 1px rgba(61, 121, 150, 0.28)' }}
+                          color="#27272a"
+                          borderColor="rgba(82, 82, 91, 0.18)"
+                          _hover={{ borderColor: '#a1a1aa' }}
+                          _focus={{ borderColor: '#71717a', boxShadow: '0 0 0 1px rgba(113, 113, 122, 0.28)' }}
                         />
                       </Box>
                       {isShirpDetailCategoryKey(key) && (
                         <Box pl={{ base: 0, md: 4 }}>
-                          <Text fontSize="xs" fontWeight="bold" color="#1f4f68" mb={2}>
+                          <Text fontSize="xs" fontWeight="bold" color="#3f3f46" mb={2}>
                             {SHIRP_LABELS[key]} の詳細
                           </Text>
                           <Stack spacing={4}>
                             {getShirpDetailFieldEntries(key).map(([field, definition]) => {
                               const fieldValue = latestDetailDraft[key]?.[field];
                               return (
-                                <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)" borderRadius="0" p={3} bg="rgba(244, 244, 245, 0.86)">
-                                  <Text fontSize="xs" color="#3f6678" mb={1}>
+                                <Box key={`${key}-${field}`} borderWidth="1px" borderColor="rgba(82, 82, 91, 0.18)" borderRadius="0" p={3} bg="rgba(244, 244, 245, 0.86)">
+                                  <Text fontSize="xs" color="#52525b" mb={1}>
                                     {definition.label}
                                   </Text>
                                   <Textarea
@@ -1258,16 +1258,16 @@ function UserHome() {
                                     }
                                     rows={3}
                                     bg="#fcfcfd"
-                                    color="#12384d"
-                                    borderColor="rgba(22, 94, 131, 0.30)"
-                                    _hover={{ borderColor: '#8aa7b5' }}
-                                    _focus={{ borderColor: '#66889a', boxShadow: '0 0 0 1px rgba(61, 121, 150, 0.28)' }}
+                                    color="#27272a"
+                                    borderColor="rgba(82, 82, 91, 0.18)"
+                                    _hover={{ borderColor: '#a1a1aa' }}
+                                    _focus={{ borderColor: '#71717a', boxShadow: '0 0 0 1px rgba(113, 113, 122, 0.28)' }}
                                     placeholder="二段目の要約"
                                   />
                                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={3}>
                                     {getShirpDetailItemEntries(key, field).map(([itemKey, itemLabel]) => (
                                       <Box key={`${key}-${field}-${itemKey}`}>
-                                        <Text fontSize="xs" color="#3f6678" mb={1}>
+                                        <Text fontSize="xs" color="#52525b" mb={1}>
                                           {itemLabel}
                                         </Text>
                                         <Textarea
@@ -1289,10 +1289,10 @@ function UserHome() {
                                           }
                                           rows={2}
                                           bg="#fcfcfd"
-                                          color="#12384d"
-                                          borderColor="rgba(22, 94, 131, 0.30)"
-                                          _hover={{ borderColor: '#8aa7b5' }}
-                                          _focus={{ borderColor: '#66889a', boxShadow: '0 0 0 1px rgba(61, 121, 150, 0.28)' }}
+                                          color="#27272a"
+                                          borderColor="rgba(82, 82, 91, 0.18)"
+                                          _hover={{ borderColor: '#a1a1aa' }}
+                                          _focus={{ borderColor: '#71717a', boxShadow: '0 0 0 1px rgba(113, 113, 122, 0.28)' }}
                                           placeholder="三段目の具体項目"
                                         />
                                       </Box>
@@ -1317,10 +1317,10 @@ function UserHome() {
             flexWrap="wrap"
             bg="linear-gradient(135deg, rgba(252, 252, 253, 0.98), rgba(244, 244, 245, 0.96))"
             borderTopWidth="1px"
-            borderColor="rgba(22, 94, 131, 0.18)"
+            borderColor="rgba(82, 82, 91, 0.18)"
           >
             {latestRecord?.conversationLog.length ? (
-              <Button variant="outline" color="#1f4f68" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d', borderColor: '#3f6678' }} onClick={conversationLogDisclosure.onOpen}>
+              <Button variant="outline" color="#3f3f46" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a', borderColor: '#52525b' }} onClick={conversationLogDisclosure.onOpen}>
                 会話ログを見る
               </Button>
             ) : null}
@@ -1329,16 +1329,16 @@ function UserHome() {
                 <PrimaryButton onClick={handleSaveEdit}>
                   変更を保存
                 </PrimaryButton>
-                <Button variant="outline" color="#1f4f68" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d', borderColor: '#3f6678' }} onClick={handleCancelEdit}>
+                <Button variant="outline" color="#3f3f46" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a', borderColor: '#52525b' }} onClick={handleCancelEdit}>
                   編集をキャンセル
                 </Button>
               </>
             ) : (
-              <Button variant="outline" color="#1f4f68" borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d', borderColor: '#3f6678' }} onClick={handleStartEdit}>
+              <Button variant="outline" color="#3f3f46" borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a', borderColor: '#52525b' }} onClick={handleStartEdit}>
                 最新カルテを編集
               </Button>
             )}
-            <Button variant="ghost" color="#1f4f68" _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} onClick={karteModalDisclosure.onClose}>閉じる</Button>
+            <Button variant="ghost" color="#3f3f46" _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a' }} onClick={karteModalDisclosure.onClose}>閉じる</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -1360,8 +1360,8 @@ function UserHome() {
                       borderTopRightRadius={message.role === 'user' ? '0' : '2xl'}
                       px={4}
                       py={3}
-                      bg={message.role === 'user' ? 'blue.600' : 'rgba(22, 94, 131, 0.08)'}
-                      color={message.role === 'user' ? 'white' : '#1f4f68'}
+                      bg={message.role === 'user' ? '#3f3f46' : 'rgba(82, 82, 91, 0.18)'}
+                      color={message.role === 'user' ? 'white' : '#3f3f46'}
                       whiteSpace="pre-wrap"
                       fontSize="sm"
                     >
@@ -1370,7 +1370,7 @@ function UserHome() {
                   </Flex>
                 ))
               ) : (
-                <Text fontSize="sm" color="#66889a">保存済みの会話ログはまだありません。</Text>
+                <Text fontSize="sm" color="#71717a">保存済みの会話ログはまだありません。</Text>
               )}
             </Stack>
           </ModalBody>
@@ -1437,15 +1437,15 @@ function UserHome() {
         }}
         size="lg"
       >
-        <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
+        <ModalOverlay bg="rgba(82, 82, 91, 0.18)" backdropFilter="blur(7px)" />
         <ModalContent
           as="form"
           onSubmit={handleResetPassword}
           bg="rgba(252, 252, 253, 0.98)"
-          color="#12384d"
+          color="#27272a"
           borderRadius="0"
           borderWidth="1px"
-          borderColor="rgba(22, 94, 131, 0.18)"
+          borderColor="rgba(82, 82, 91, 0.18)"
           boxShadow="0 34px 110px rgba(63, 63, 70, 0.18)"
           overflow="hidden"
           position="relative"
@@ -1460,10 +1460,10 @@ function UserHome() {
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
-          <ModalCloseButton color="#1f4f68" top={5} _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }} />
+          <ModalCloseButton color="#3f3f46" top={5} _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a' }} />
           <ModalBody>
             <Stack spacing={3}>
-              <Text fontSize="sm" color="#3f6678">
+              <Text fontSize="sm" color="#52525b">
                 現在のパスワードを確認用に入力し、新しいパスワードをアプリ内で再設定します。GitHub Pagesデモ版ではログイン時のパスワード照合には反映されません。
               </Text>
               <FormControl>
@@ -1473,8 +1473,8 @@ function UserHome() {
                   value={passwordResetForm.currentPassword}
                   onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
                   bg="#fcfcfd"
-                  color="#12384d"
-                  borderColor="rgba(22, 94, 131, 0.30)"
+                  color="#27272a"
+                  borderColor="rgba(82, 82, 91, 0.18)"
                 />
               </FormControl>
               <FormControl>
@@ -1485,9 +1485,9 @@ function UserHome() {
                   onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, newPassword: event.target.value }))}
                   placeholder="8文字以上、英字と数字を含める"
                   bg="#fcfcfd"
-                  color="#12384d"
-                  borderColor="rgba(22, 94, 131, 0.30)"
-                  _placeholder={{ color: 'rgba(22, 94, 131, 0.30)' }}
+                  color="#27272a"
+                  borderColor="rgba(82, 82, 91, 0.18)"
+                  _placeholder={{ color: '#71717a' }}
                 />
               </FormControl>
               <FormControl>
@@ -1497,8 +1497,8 @@ function UserHome() {
                   value={passwordResetForm.confirmPassword}
                   onChange={(event) => setPasswordResetForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
                   bg="#fcfcfd"
-                  color="#12384d"
-                  borderColor="rgba(22, 94, 131, 0.30)"
+                  color="#27272a"
+                  borderColor="rgba(82, 82, 91, 0.18)"
                 />
               </FormControl>
             </Stack>
@@ -1510,9 +1510,9 @@ function UserHome() {
                 resetModalDisclosure.onClose();
               }}
               variant="outline"
-              color="#1f4f68"
-              borderColor="rgba(22, 94, 131, 0.30)"
-              _hover={{ bg: 'rgba(22, 94, 131, 0.08)', color: '#12384d' }}
+              color="#3f3f46"
+              borderColor="rgba(82, 82, 91, 0.18)"
+              _hover={{ bg: 'rgba(82, 82, 91, 0.18)', color: '#27272a' }}
             >
               キャンセル
             </Button>
@@ -1530,15 +1530,15 @@ function UserHome() {
           <ModalCloseButton />
           <ModalBody>
             <Stack spacing={3}>
-              <Text fontSize="sm" color="#3f6678">
+              <Text fontSize="sm" color="#52525b">
                 継続面談では通信方式を選択できます。ターンテイキングモード（Realtime API）は現在未実装です。
               </Text>
               <RadioGroup value={continuousMode} onChange={(value) => setContinuousMode(value as ContinuousMode)}>
                 <Stack spacing={3}>
-                  <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'normal' ? 'blue.300' : 'rgba(22, 94, 131, 0.18)'}>
+                  <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'normal' ? 'gray.400' : 'rgba(82, 82, 91, 0.18)'}>
                     <Radio value="normal">通常モード (Whisper + GPT-4o + TTS-1)</Radio>
                   </Box>
-                  <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'turn' ? 'purple.300' : 'rgba(22, 94, 131, 0.18)'}>
+                  <Box borderWidth="1px" borderRadius="md" p={3} borderColor={continuousMode === 'turn' ? 'purple.300' : 'rgba(82, 82, 91, 0.18)'}>
                     <Radio value="turn">ターンテイキングモード (Realtime API想定)</Radio>
                   </Box>
                 </Stack>
@@ -1563,7 +1563,7 @@ function UserHome() {
           <ModalCloseButton />
           <ModalBody>
             <Stack spacing={3}>
-              <Text fontSize="sm" color="#3f6678">
+              <Text fontSize="sm" color="#52525b">
                 前回保存した下書きが残っています。続きから再開するか、新規に開始するかを選んでください。
               </Text>
               {pendingStart && (
@@ -1571,7 +1571,7 @@ function UserHome() {
                   <Text fontSize="sm" fontWeight="semibold">
                     {getDraftMetaLabel(pendingStart.meetingType)}
                   </Text>
-                  <Text fontSize="xs" color="#66889a">
+                  <Text fontSize="xs" color="#71717a">
                     最終保存:
                     {' '}
                     {pendingStart.meetingType === 'initial'

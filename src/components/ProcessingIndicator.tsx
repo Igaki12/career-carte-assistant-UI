@@ -11,7 +11,7 @@ const Dot = ({ delay }: { delay: number }) => (
     w={2}
     h={2}
     borderRadius="full"
-    bg="blue.500"
+    bg="gray.600"
     animation={`${bounce} 1.2s ease-in-out infinite`}
     style={{ animationDelay: `${delay}s` }}
   />
@@ -24,13 +24,13 @@ type Props = {
 const ProcessingIndicator = ({ message }: Props) => {
   if (!message) return null;
   return (
-    <HStack spacing={3} py={2} px={4} bg="rgba(244, 244, 245, 0.86)" borderTopWidth="1px" borderColor="rgba(22, 94, 131, 0.08)">
+    <HStack spacing={3} py={2} px={4} bg="rgba(244, 244, 245, 0.86)" borderTopWidth="1px" borderColor="rgba(82, 82, 91, 0.18)">
       <HStack spacing={1}>
         <Dot delay={0} />
         <Dot delay={0.2} />
         <Dot delay={0.4} />
       </HStack>
-      <Text fontSize="sm" color="#3f6678">
+      <Text fontSize="sm" color="#52525b">
         {message}
       </Text>
     </HStack>

@@ -92,7 +92,7 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
             <Heading
               size="xl"
               lineHeight="short"
-              bgGradient="linear(110deg, #0f3f5a, #165e83, #0f3f5a, #5d9bb5)"
+              bgGradient="linear(110deg, #27272a, #3f3f46, #27272a, #71717a)"
               bgClip="text"
               backgroundSize="240% 240%"
               sx={{
@@ -182,14 +182,14 @@ function AdminLogin({ session, onLogin }: AdminLoginProps) {
               <PrimaryButton type="submit" size="lg">
                 管理者画面へログイン
               </PrimaryButton>
-              <Text fontSize="xs" color="#66889a">
+              <Text fontSize="xs" color="#71717a">
                 デモ版のパスワード再設定・一時パスワード発行は画面確認用で、ログイン時の照合には反映されません。本番実装ではサーバー側認証へ接続します。
               </Text>
-              <Divider borderColor="rgba(22, 94, 131, 0.18)" />
+              <Divider borderColor="rgba(82, 82, 91, 0.18)" />
               <Link
                 as={RouterLink}
                 to="/login"
-                color="blue.700"
+                color="gray.700"
                 fontWeight="semibold"
                 display="inline-flex"
                 alignItems="center"

@@ -11,7 +11,7 @@ type Props = {
   labelStroke?: string;
 };
 
-const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#165e83', labelStroke = 'transparent' }: Props) => {
+const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#3f3f46', labelStroke = 'transparent' }: Props) => {
   const gradientId = useId();
   const { canvasSize, center, points, gridPolygons, axisLines, labels: positionedLabels } = createSurveyRadarModel(
     labels,
@@ -25,8 +25,8 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#165
       <svg width={canvasSize} height={canvasSize} viewBox={`0 0 ${canvasSize} ${canvasSize}`}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.25" />
+            <stop offset="0%" stopColor="#a1a1aa" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#71717a" stopOpacity="0.25" />
           </linearGradient>
         </defs>
         {gridPolygons.map((polygon, index) => (
@@ -34,7 +34,7 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#165
             key={`grid-${index}`}
             points={polygon.map((point) => `${point.x},${point.y}`).join(' ')}
             fill="none"
-            stroke="#cbd5f5"
+            stroke="#d4d4d8"
             strokeDasharray={index === gridPolygons.length - 1 ? undefined : '2 4'}
             strokeWidth={1}
           />
@@ -46,14 +46,14 @@ const SurveyRadar = ({ labels, values, max = 100, size = 260, labelColor = '#165
             y1={center}
             x2={axis.x}
             y2={axis.y}
-            stroke="#cbd5f5"
+            stroke="#d4d4d8"
             strokeWidth={1}
           />
         ))}
         <polygon
           points={points.map((point) => `${point.x},${point.y}`).join(' ')}
           fill={`url(#${gradientId})`}
-          stroke="#0ea5e9"
+          stroke="#52525b"
           strokeWidth={2}
         />
         {positionedLabels.map((label, index) => {

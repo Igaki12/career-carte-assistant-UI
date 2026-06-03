@@ -81,7 +81,7 @@ const ApiKeyModal = ({ isOpen, openAiApiKey = '', geminiApiKey = '', onSave }: A
               </AlertDescription>
             </Alert>
             <Stack spacing={2}>
-              <Text fontSize="sm" color="#3f6678">
+              <Text fontSize="sm" color="#52525b">
                 OpenAI API Key (必須)
               </Text>
               <Input
@@ -100,7 +100,7 @@ const ApiKeyModal = ({ isOpen, openAiApiKey = '', geminiApiKey = '', onSave }: A
               )}
             </Stack>
             <Stack spacing={2}>
-              <Text fontSize="sm" color="#3f6678">
+              <Text fontSize="sm" color="#52525b">
                 Gemini API Key (任意 / TTS専用)
               </Text>
               <Input
@@ -121,7 +121,7 @@ const ApiKeyModal = ({ isOpen, openAiApiKey = '', geminiApiKey = '', onSave }: A
           </Stack>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" w="full" onClick={handleSave}>
+          <Button colorScheme="gray" w="full" onClick={handleSave}>
             保存して開始
           </Button>
         </ModalFooter>

@@ -88,7 +88,7 @@ const valueBoxProps = (hasValue: boolean) => ({
   fontStyle: hasValue ? 'normal' : 'italic',
   minH: '56px',
   whiteSpace: 'pre-wrap' as const,
-  boxShadow: hasValue ? 'inset 3px 0 0 rgba(61, 121, 150, 0.34)' : 'none',
+  boxShadow: hasValue ? 'inset 3px 0 0 rgba(113, 113, 122, 0.28)' : 'none',
 });
 
 const KartePanel = ({ data, showCondition = false }: Props) => {
@@ -115,7 +115,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
         position: 'absolute',
         inset: 0,
         pointerEvents: 'none',
-        bg: 'radial-gradient(circle at 84% 10%, rgba(22, 94, 131, 0.18), transparent 30%)',
+        bg: 'radial-gradient(circle at 84% 10%, rgba(82, 82, 91, 0.18), transparent 30%)',
         opacity: 0.85,
       }}
     >
@@ -273,7 +273,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                   {isShirpDetailCategoryKey(key) && (
                     <Accordion allowToggle mt={2}>
                       <AccordionItem borderWidth="1px" borderColor={lightBorder} borderRadius="0" bg={lightPanelSubtleBg}>
-                        <AccordionButton px={3} py={2} _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}>
+                        <AccordionButton px={3} py={2} _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }}>
                           <Box flex="1" textAlign="left">
                             <Text fontSize="xs" fontWeight="bold" color={lightMutedText}>
                               詳細を確認
@@ -384,7 +384,7 @@ const KartePanel = ({ data, showCondition = false }: Props) => {
                 <SurveyRadar
                   labels={Object.values(SURVEY_LABELS)}
                   values={surveyScores}
-                  labelColor="#2c7798"
+                  labelColor="#52525b"
                   labelStroke="#fcfcfd"
                 />
                 <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={3}>

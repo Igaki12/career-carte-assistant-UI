@@ -1,9 +1,9 @@
 export const SURVEY_RADAR_COLORS = {
-  grid: '#cbd5f5',
-  fillStart: '#7dd3fc',
-  fillEnd: '#38bdf8',
-  stroke: '#0ea5e9',
-  label: '#165e83',
+  grid: '#d4d4d8',
+  fillStart: '#a1a1aa',
+  fillEnd: '#71717a',
+  stroke: '#52525b',
+  label: '#3f3f46',
 } as const;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);

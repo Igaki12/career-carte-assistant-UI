@@ -90,20 +90,20 @@ const formFieldSurfaceProps = {
 
 const readOnlyFieldSurfaceProps = {
   bg: lightPanelSubtleBg,
-  color: '#315f76',
-  borderColor: 'rgba(22, 94, 131, 0.46)',
+  color: '#52525b',
+  borderColor: 'rgba(82, 82, 91, 0.18)',
   cursor: 'default',
   opacity: 1,
-  _placeholder: { color: '#8aa7b5' },
+  _placeholder: { color: '#a1a1aa' },
   _readOnly: {
     bg: lightPanelSubtleBg,
-    color: '#315f76',
-    borderColor: 'rgba(22, 94, 131, 0.46)',
+    color: '#52525b',
+    borderColor: 'rgba(82, 82, 91, 0.18)',
   },
-  _hover: { borderColor: 'rgba(61, 121, 150, 0.50)' },
+  _hover: { borderColor: 'rgba(113, 113, 122, 0.28)' },
   _focus: {
     bg: lightPanelSubtleBg,
-    borderColor: 'rgba(61, 121, 150, 0.50)',
+    borderColor: 'rgba(113, 113, 122, 0.28)',
     boxShadow: 'none',
   },
 } as const;
@@ -388,7 +388,7 @@ function DemographicsSetup() {
             <Stack spacing={3}>
               <Heading
                 size="lg"
-                bgGradient="linear(110deg, #0f3f5a, #165e83, #0f3f5a, #5d9bb5)"
+                bgGradient="linear(110deg, #27272a, #3f3f46, #27272a, #71717a)"
                 bgClip="text"
                 backgroundSize="240% 240%"
                 sx={{
@@ -468,10 +468,10 @@ function DemographicsSetup() {
                 </SimpleGrid>
 
                 <Stack direction={{ base: 'column', sm: 'row' }} justify="flex-end" spacing={3}>
-                  <Button variant="outline" color={lightText} borderColor="rgba(22, 94, 131, 0.30)" _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={() => navigate(returnTo)}>
+                  <Button variant="outline" color={lightText} borderColor="rgba(82, 82, 91, 0.18)" _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={() => navigate(returnTo)}>
                     キャンセル
                   </Button>
-                  <Button variant="ghost" color={lightText} _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }} onClick={handleSkipForDemo}>
+                  <Button variant="ghost" color={lightText} _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }} onClick={handleSkipForDemo}>
                     デモ用にスキップして進む
                   </Button>
                   <PrimaryButton onClick={handleSave}>

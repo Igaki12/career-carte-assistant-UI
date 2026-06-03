@@ -45,7 +45,7 @@ type SortState = {
 const adminPageBg = 'linear(135deg, #ffffff 0%, #f7f7f8 52%, #eeeeef 100%)';
 const panelProps = {
   bg: 'transparent',
-  color: '#12384d',
+  color: '#27272a',
   borderRadius: '0',
   borderWidth: '0',
   p: 6,
@@ -62,10 +62,10 @@ const panelProps = {
   },
 } as const;
 const outlineButtonProps = {
-  color: '#12384d',
-  borderColor: 'rgba(22, 94, 131, 0.30)',
+  color: '#27272a',
+  borderColor: 'rgba(82, 82, 91, 0.18)',
   variant: 'outline',
-  _hover: { bg: 'rgba(22, 94, 131, 0.08)' },
+  _hover: { bg: 'rgba(82, 82, 91, 0.18)' },
 } as const;
 
 const getKarteStatus = (employee: CompanyEmployeeRecord) => (employee.latestKarte ? '保存済み' : '未作成');
@@ -101,8 +101,8 @@ const SortButton = ({
   <Button
     size="sm"
     variant="ghost"
-    color="#1f4f68"
-    _hover={{ bg: 'rgba(22, 94, 131, 0.18)' }}
+    color="#3f3f46"
+    _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }}
     rightIcon={<ChevronDownIcon fontSize="1rem" />}
     onClick={() => onSort(column)}
   >
@@ -212,17 +212,17 @@ function OperationsAdminHome() {
   });
 
   return (
-    <Box bgGradient={adminPageBg} color="#12384d" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
+    <Box bgGradient={adminPageBg} color="#27272a" height="100dvh" overflowY="scroll" py={{ base: 8, md: 12 }}>
       <Container maxW="7xl">
         <Stack spacing={8}>
           <Box {...panelProps}>
             <Stack spacing={3}>
               <Heading size="xl">運用管理者ホーム</Heading>
-              <Text color="#315f76">
+              <Text color="#52525b">
                 複数企業にまたがる従業員カルテ、企業別状況、契約オプション確認を行います。
               </Text>
               <Flex gap={2} wrap="wrap">
-                <Badge colorScheme="cyan">運用管理者</Badge>
+                <Badge colorScheme="gray">運用管理者</Badge>
                 <Badge colorScheme="purple">管理対象企業: {managedTenants.length}社</Badge>
                 <Badge colorScheme="green">表示中ユーザー: {employees.length}件</Badge>
               </Flex>
@@ -238,27 +238,27 @@ function OperationsAdminHome() {
                   </Heading>
                   <Flex gap={2} wrap="wrap">
                     <Badge colorScheme={tenant.status === 'active' ? 'green' : 'red'}>{tenant.status.toUpperCase()}</Badge>
-                    <Badge colorScheme="blue">{tenant.id}</Badge>
+                    <Badge colorScheme="gray">{tenant.id}</Badge>
                   </Flex>
                   <SimpleGrid columns={2} spacing={3}>
                     <Box>
-                      <Text color="#66889a" fontSize="sm">従業員</Text>
+                      <Text color="#71717a" fontSize="sm">従業員</Text>
                       <Text fontSize="2xl" fontWeight="bold">{employeeCount}</Text>
                     </Box>
                     <Box>
-                      <Text color="#66889a" fontSize="sm">カルテ保存済み</Text>
+                      <Text color="#71717a" fontSize="sm">カルテ保存済み</Text>
                       <Text fontSize="2xl" fontWeight="bold">{savedCount}</Text>
                     </Box>
                     <Box>
-                      <Text color="#66889a" fontSize="sm">残り面談回数</Text>
+                      <Text color="#71717a" fontSize="sm">残り面談回数</Text>
                       <Text fontSize="2xl" fontWeight="bold">{remaining}</Text>
                     </Box>
                     <Box>
-                      <Text color="#66889a" fontSize="sm">最大ターン数</Text>
+                      <Text color="#71717a" fontSize="sm">最大ターン数</Text>
                       <Text fontSize="2xl" fontWeight="bold">{perMeetingTurnLimit}</Text>
                     </Box>
                   </SimpleGrid>
-                  <Text color="#3f6678" fontSize="sm">使用状況: {usageLabel}</Text>
+                  <Text color="#52525b" fontSize="sm">使用状況: {usageLabel}</Text>
                 </Stack>
               </Box>
             ))}
@@ -267,7 +267,7 @@ function OperationsAdminHome() {
           <Box {...panelProps}>
             <Stack spacing={4}>
               <Heading size="lg">横断ユーザー管理</Heading>
-              <Text color="#3f6678">
+              <Text color="#52525b">
                 ユーザーが所属している企業名を確認し、氏名・フリガナ・メール・企業名・職種で検索できます。
               </Text>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
@@ -276,14 +276,14 @@ function OperationsAdminHome() {
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="ID / 氏名 / フリガナ / メール / 会社名 / 部署 / 職種 で検索"
                   bg="#fcfcfd"
-                  color="#12384d"
-                  _placeholder={{ color: '#66889a' }}
+                  color="#27272a"
+                  _placeholder={{ color: '#71717a' }}
                 />
                 <Select
                   value={tenantFilter}
                   onChange={(event) => setTenantFilter(event.target.value)}
                   bg="#fcfcfd"
-                  color="#12384d"
+                  color="#27272a"
                 >
                   <option value="all">すべての管理対象企業</option>
                   {managedTenants.map((tenant) => (
@@ -293,7 +293,7 @@ function OperationsAdminHome() {
                   ))}
                 </Select>
               </SimpleGrid>
-              <Box overflowX="auto" borderWidth="1px" borderColor="rgba(22, 94, 131, 0.18)">
+              <Box overflowX="auto" borderWidth="1px" borderColor="rgba(82, 82, 91, 0.18)">
                 <Table variant="simple" size="md" minW="1120px">
                   <Thead bg="rgba(244, 244, 245, 0.86)">
                     <Tr>
@@ -306,7 +306,7 @@ function OperationsAdminHome() {
                       <Th><SortButton label="職種" column="jobTitle" onSort={handleSort} /></Th>
                       <Th><SortButton label="ステータス" column="status" onSort={handleSort} /></Th>
                       <Th><SortButton label="カルテ" column="karteStatus" onSort={handleSort} /></Th>
-                      <Th color="#1f4f68">操作</Th>
+                      <Th color="#3f3f46">操作</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
@@ -322,10 +322,10 @@ function OperationsAdminHome() {
                           <Td>{employee.department || '-'}</Td>
                           <Td>{employee.jobTitle || '-'}</Td>
                           <Td>
-                            <Badge colorScheme={employee.status === '完了' ? 'green' : 'cyan'}>{employee.status}</Badge>
+                            <Badge colorScheme={employee.status === '完了' ? 'green' : 'gray'}>{employee.status}</Badge>
                           </Td>
                           <Td>
-                            <Badge colorScheme={hasKarte ? 'green' : 'cyan'}>{getKarteStatus(employee)}</Badge>
+                            <Badge colorScheme={hasKarte ? 'green' : 'gray'}>{getKarteStatus(employee)}</Badge>
                           </Td>
                           <Td>
                             <Flex gap={2} wrap="wrap">
@@ -352,8 +352,8 @@ function OperationsAdminHome() {
       </Container>
 
       <Modal isOpen={karteModal.isOpen} onClose={karteModal.onClose} size="full" scrollBehavior="inside">
-        <ModalOverlay bg="rgba(22, 94, 131, 0.30)" backdropFilter="blur(7px)" />
-        <ModalContent bg="rgba(252, 252, 253, 0.98)" color="#12384d" borderRadius="0" maxW={{ base: '100vw', xl: '1480px' }}>
+        <ModalOverlay bg="rgba(82, 82, 91, 0.18)" backdropFilter="blur(7px)" />
+        <ModalContent bg="rgba(252, 252, 253, 0.98)" color="#27272a" borderRadius="0" maxW={{ base: '100vw', xl: '1480px' }}>
           <ModalHeader>{viewingEmployee?.name ?? 'カルテ'} のカルテ</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={8}>

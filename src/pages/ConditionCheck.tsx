@@ -74,7 +74,7 @@ function ConditionCheck() {
         <Stack spacing={6}>
           <Stack spacing={2}>
             <Heading size="lg">面談前コンディションチェック</Heading>
-            <Text color="#3f6678">
+            <Text color="#52525b">
               この機能は表情から面談前後の緊張傾向を参考値として表示する想定のデモです。医療・心理診断ではありません。
             </Text>
           </Stack>
@@ -82,13 +82,13 @@ function ConditionCheck() {
           <Box bg="#fcfcfd" borderRadius="xl" borderWidth="1px" borderColor="orange.100" boxShadow="sm" p={{ base: 5, md: 7 }}>
             <Stack spacing={5}>
               <Stack spacing={2}>
-                <Badge alignSelf="flex-start" colorScheme={stressEnabled ? 'orange' : 'cyan'}>
+                <Badge alignSelf="flex-start" colorScheme={stressEnabled ? 'orange' : 'gray'}>
                   {stressEnabled ? '契約オプション有効' : '契約オプション未有効'}
                 </Badge>
-                <Text fontSize="sm" color="#3f6678">
+                <Text fontSize="sm" color="#52525b">
                   顔画像・動画は保存しません。現時点では実測せず、ダミースコアは画面確認用の一時状態として扱います。
                 </Text>
-                <Text fontSize="sm" color="#66889a">
+                <Text fontSize="sm" color="#71717a">
                   直近の測定: {latestCondition ? `${latestCondition.score} / 100 (${latestCondition.level})` : '未測定'}
                   {' / '}
                   {formatMeasuredAt(latestCondition?.measuredAt)}
@@ -96,8 +96,8 @@ function ConditionCheck() {
               </Stack>
 
               {!stressEnabled ? (
-                <Box borderWidth="1px" borderRadius="lg" bg="rgba(244, 244, 245, 0.86)" borderColor="rgba(22, 94, 131, 0.18)" p={4}>
-                  <Text fontSize="sm" color="#3f6678">
+                <Box borderWidth="1px" borderRadius="lg" bg="rgba(244, 244, 245, 0.86)" borderColor="rgba(82, 82, 91, 0.18)" p={4}>
+                  <Text fontSize="sm" color="#52525b">
                     現在の企業では面談前コンディションチェックが無効です。管理画面または企業管理者画面で有効化できます。
                   </Text>
                 </Box>

@@ -47,13 +47,7 @@ type NavigationItem = {
   icon: JSX.Element;
 };
 
-const getRoleColorScheme = (role: DemoAuthRole) => {
-  if (role === 'admin') return 'orange';
-  if (role === 'operations-admin') return 'cyan';
-  if (role === 'company-admin') return 'pink';
-  if (role === 'consultant') return 'purple';
-  return 'teal';
-};
+const roleColorScheme = 'gray';
 
 const getNavigationItems = (role: DemoAuthRole): NavigationItem[] => {
   if (role === 'admin') {
@@ -156,7 +150,7 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                     size="sm"
                     variant="ghost"
                     color={lightText}
-                    _hover={{ bg: 'rgba(22, 94, 131, 0.08)' }}
+                    _hover={{ bg: 'rgba(82, 82, 91, 0.18)' }}
                     onClick={() => setIsOpen(false)}
                   />
                 </Flex>
@@ -171,7 +165,7 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                         {session.accountId}
                       </Text>
                     </Stack>
-                    <Badge colorScheme={getRoleColorScheme(session.role)}>{getRoleLabel(session.role)}</Badge>
+                    <Badge colorScheme={roleColorScheme}>{getRoleLabel(session.role)}</Badge>
                   </Flex>
                 </Box>
 
@@ -184,11 +178,11 @@ function AuthNavigation({ session, onLogout }: AuthNavigationProps) {
                         justifyContent="flex-start"
                         leftIcon={item.icon}
                         variant={isActive ? 'solid' : 'ghost'}
-                        bg={isActive ? 'rgba(22, 94, 131, 0.18)' : 'transparent'}
+                        bg={isActive ? 'rgba(82, 82, 91, 0.18)' : 'transparent'}
                         color={lightText}
                         borderWidth="1px"
                         borderColor={isActive ? lightBorderStrong : 'transparent'}
-                        _hover={{ bg: 'rgba(22, 94, 131, 0.08)', borderColor: lightBorder }}
+                        _hover={{ bg: 'rgba(82, 82, 91, 0.18)', borderColor: lightBorder }}
                         onClick={() => handleNavigate(item.to)}
                       >
                         {item.label}
