@@ -142,7 +142,7 @@ const decoratedPanelProps = {
     left: 0,
     right: 0,
     height: '6px',
-    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 18%, rgba(31, 41, 55, 0.76) 32%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
+    bgGradient: 'linear(104deg, rgba(75, 85, 99, 0.12) 0%, rgba(31, 41, 55, 0.76) 32%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
   },
 } as const;
 
@@ -736,7 +736,7 @@ function UserHome() {
               left: 0,
               right: 0,
               height: '6px',
-              bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 18%, rgba(31, 41, 55, 0.76) 32%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
+              bgGradient: 'linear(104deg, rgba(75, 85, 99, 0.12) 0%, rgba(31, 41, 55, 0.76) 32%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
               zIndex: 1,
             }}
           >
@@ -1153,7 +1153,7 @@ function UserHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.16) 20%, rgba(31, 41, 55, 0.48) 31%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
+            bgGradient: 'linear(112deg, rgba(156, 163, 175, 0.16) 0%, rgba(31, 41, 55, 0.48) 31%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
             zIndex: 1,
           }}
         >
@@ -1456,7 +1456,7 @@ function UserHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.16) 20%, rgba(31, 41, 55, 0.48) 31%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
+            bgGradient: 'linear(112deg, rgba(156, 163, 175, 0.16) 0%, rgba(31, 41, 55, 0.48) 31%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>

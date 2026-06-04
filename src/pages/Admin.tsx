@@ -179,7 +179,7 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 18%, rgba(31, 41, 55, 0.76) 32%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
+    bgGradient: 'linear(104deg, rgba(75, 85, 99, 0.12) 0%, rgba(31, 41, 55, 0.76) 32%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
   },
   sx: {
     '& th': { color: 'rgba(63, 63, 70, 0.78)', borderColor: 'rgba(82, 82, 91, 0.18)' },
