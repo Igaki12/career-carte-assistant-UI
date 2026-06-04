@@ -68,7 +68,7 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, d
       boxShadow={
         isButtonDisabled
           ? 'inset 0 1px 0 rgba(255, 255, 255, 0.20)'
-          : '0 14px 30px rgba(2, 6, 23, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.24)'
+          : '0 16px 38px rgba(2, 6, 23, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
       }
       animation={isButtonDisabled ? 'none' : `${gradientFlow} 9s ease-in-out infinite`}
       transition="transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, filter 0.18s ease"
@@ -78,7 +78,7 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, d
         inset: '-75%',
         bg: isButtonDisabled
           ? 'linear-gradient(135deg, rgba(244, 244, 245, 0.22), transparent 44%, rgba(82, 82, 91, 0.12))'
-          : 'radial-gradient(ellipse at 20% 50%, rgba(244, 244, 245, 0.20), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(75, 85, 99, 0.30), transparent 32%)',
+          : 'radial-gradient(ellipse at 20% 50%, rgba(226, 232, 240, 0.22), transparent 34%), radial-gradient(ellipse at 72% 44%, rgba(100, 116, 139, 0.28), transparent 32%)',
         filter: isButtonDisabled ? 'none' : 'blur(10px)',
         animation: isButtonDisabled ? 'none' : `${waveDrift} 6.8s ease-in-out infinite`,
         pointerEvents: 'none',
@@ -96,14 +96,14 @@ function PrimaryButton({ children, sx, _hover, _active, _disabled, isDisabled, d
       }}
       _hover={{
         transform: 'translateY(-1px)',
-        borderColor: 'rgba(244, 244, 245, 0.46)',
-        boxShadow: '0 18px 38px rgba(2, 6, 23, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.28)',
+        borderColor: 'rgba(241, 245, 249, 0.42)',
+        boxShadow: '0 20px 48px rgba(2, 6, 23, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
         filter: 'saturate(1.04)',
         ..._hover,
       }}
       _active={{
         transform: 'translateY(0)',
-        boxShadow: '0 9px 22px rgba(2, 6, 23, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18)',
+        boxShadow: '0 10px 26px rgba(2, 6, 23, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.14)',
         ..._active,
       }}
       _disabled={{
