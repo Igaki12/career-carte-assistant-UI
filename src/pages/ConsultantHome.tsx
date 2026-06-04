@@ -134,7 +134,7 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 8%, rgba(31, 41, 55, 0.76) 16%, rgba(156, 163, 175, 0.28) 31%, rgba(75, 85, 99, 0.62) 43%, rgba(31, 41, 55, 0.76) 58%, rgba(75, 85, 99, 0.42) 82%, transparent 100%)',
+    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 18%, rgba(31, 41, 55, 0.76) 42%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
   },
   _after: {
     content: '""',
@@ -143,7 +143,7 @@ const linePanelProps = {
     left: 0,
     right: 0,
     height: { base: '4px', md: '6px' },
-    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.10) 10%, rgba(31, 41, 55, 0.72) 18%, rgba(156, 163, 175, 0.28) 34%, rgba(75, 85, 99, 0.58) 45%, rgba(31, 41, 55, 0.72) 60%, rgba(75, 85, 99, 0.40) 83%, transparent 100%)',
+    bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 18%, rgba(31, 41, 55, 0.76) 42%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
   },
 } as const;
 
@@ -575,7 +575,7 @@ function ConsultantHome() {
               right: 0,
               bottom: 0,
               height: { base: '4px', md: '6px' },
-              bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 8%, rgba(31, 41, 55, 0.76) 16%, rgba(156, 163, 175, 0.28) 31%, rgba(75, 85, 99, 0.62) 43%, rgba(31, 41, 55, 0.76) 58%, rgba(75, 85, 99, 0.42) 82%, transparent 100%)',
+              bgGradient: 'linear(104deg, transparent 0%, rgba(75, 85, 99, 0.12) 18%, rgba(31, 41, 55, 0.76) 42%, rgba(75, 85, 99, 0.38) 70%, transparent 100%)',
             }}
           >
             <Flex
@@ -753,7 +753,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
+            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.16) 20%, rgba(31, 41, 55, 0.48) 41%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
             zIndex: 1,
           }}
         >
@@ -963,7 +963,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
+            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.16) 20%, rgba(31, 41, 55, 0.48) 41%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
             zIndex: 1,
           }}
         >
@@ -1041,7 +1041,7 @@ function ConsultantHome() {
             left: 0,
             right: 0,
             height: '5px',
-            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.18) 11%, rgba(75, 85, 99, 0.42) 20%, rgba(31, 41, 55, 0.36) 39%, rgba(75, 85, 99, 0.58) 50%, rgba(31, 41, 55, 0.42) 76%, transparent 100%)',
+            bgGradient: 'linear(112deg, transparent 0%, rgba(156, 163, 175, 0.16) 20%, rgba(31, 41, 55, 0.48) 41%, rgba(75, 85, 99, 0.30) 72%, transparent 100%)',
           }}
         >
           <ModalHeader pt={8}>パスワードの再設定</ModalHeader>
